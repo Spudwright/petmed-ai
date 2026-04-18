@@ -1,4 +1,4 @@
------00"""
+"""
 Crittr — AI-Powered Pet Pharmacy
 Fully automated: AI chatbot, product recommendations, content generation, operations.
 Flask + PostgreSQL + OpenAI. Deployed on Railway.
@@ -98,7 +98,7 @@ def init_db():
             name TEXT NOT NULL,
             slug TEXT UNIQUE NOT NULL,
             description TEXT DEFAULT '',
-            icon TEXT DEFAULT 'U0001f48a',
+            icon TEXT DEFAULT '\U0001f48a',
             sort_order INT DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS products (
@@ -156,65 +156,73 @@ def seed_products(cur):
         return
 
     categories = [
-        ("Flea & Tick", "flea-tick", "Preventive treatments for fleas, ticks, and parasites", "U0001f6e1️", 1),
-        ("Heartworm", "heartworm", "Monthly heartworm prevention medications", "❤️", 2),
-        ("Joint & Mobility", "joint-mobility", "Supplements and medications for joint health", "U0001f9b4", 3),
-        ("Anxiety & Calming", "anxiety-calming", "Calming supplements and anxiety relief", "U0001f9d8", 4),
-        ("Digestive Health", "digestive", "Probiotics, enzymes, and digestive support", "U0001fac4", 5),
-        ("Skin & Coat", "skin-coat", "Supplements for healthy skin and shiny coat", "✨", 6),
-        ("Dental Care", "dental", "Dental chews, rinses, and oral health products", "U0001f9b7", 7),
-        ("Vitamins & Supplements", "vitamins", "Daily vitamins and nutritional supplements", "U0001f48a", 8),
+        ("Flea & Tick", "flea-tick", "Preventive treatments for fleas, ticks, and parasites", "\U0001f6e1\ufe0f", 1),
+        ("Heartworm", "heartworm", "Monthly heartworm prevention medications", "\u2764\ufe0f", 2),
+        ("Joint & Mobility", "joint-mobility", "Supplements and medications for joint health", "\U0001f9b4", 3),
+        ("Anxiety & Calming", "anxiety-calming", "Calming supplements and anxiety relief", "\U0001f9d8", 4),
+        ("Digestive Health", "digestive", "Probiotics, enzymes, and digestive support", "\U0001fac4", 5),
+        ("Skin & Coat", "skin-coat", "Supplements for healthy skin and shiny coat", "\u2728", 6),
+        ("Dental Care", "dental", "Dental chews, rinses, and oral health products", "\U0001f9b7", 7),
+        ("Vitamins & Supplements", "vitamins", "Daily vitamins and nutritional supplements", "\U0001f48a", 8),
     ]
     for name, slug, desc, icon, sort in categories:
         cur.execute("INSERT INTO categories (name,slug,description,icon,sort_order) VALUES (%s,%s,%s,%s,%s)",
                     (name, slug, desc, icon, sort))
 
     products = [
+        # Flea & Tick
         ("NexGard Plus", "nexgard-plus", 1, 4999, 5999, "dog", True,
          "Monthly chewable that kills fleas, ticks, and prevents heartworm. For dogs 24-60 lbs.",
-         "Give one chew monthly. For dogs 24.1-60 lbs only.", "Not for use in cats."),
+         "Give one chew monthly. For dogs 24.1-60 lbs only.", "Not for use in cats. Keep out of reach of children."),
         ("Frontline Gold", "frontline-gold", 1, 3899, 4499, "dog,cat", False,
          "Topical flea and tick treatment. Kills fleas, flea eggs, larvae, and ticks for 30 days.",
-         "Apply to skin between shoulder blades monthly.", "Avoid bathing 24hrs before/after."),
+         "Apply to skin between shoulder blades monthly.", "Avoid bathing 24hrs before/after application."),
         ("Seresto Collar", "seresto-collar", 1, 5499, 6499, "dog,cat", False,
          "8-month flea and tick prevention collar. Odorless, non-greasy, water-resistant.",
-         "Replace every 8 months.", "Remove if skin irritation occurs."),
+         "Replace every 8 months. Adjust to fit with 2-finger gap.", "Remove if skin irritation occurs."),
+        # Heartworm
         ("Heartgard Plus", "heartgard-plus", 2, 4599, 5299, "dog", True,
-         "Monthly chewable heartworm preventive. Treats and controls roundworms and hookworms.",
-         "Give one chew monthly, year-round.", "Test for heartworm before starting."),
+         "Monthly chewable heartworm preventive that also treats and controls roundworms and hookworms.",
+         "Give one chew monthly, year-round.", "Dogs should be tested for heartworm before starting."),
         ("Revolution Plus", "revolution-plus", 2, 5299, None, "cat", True,
-         "Monthly topical that prevents heartworm and kills fleas, ticks, ear mites in cats.",
-         "Apply monthly to skin at base of neck.", "For cats only."),
+         "Monthly topical that prevents heartworm and kills fleas, ticks, ear mites, roundworms, and hookworms in cats.",
+         "Apply monthly to skin at base of neck.", "For cats only. Do not use on dogs."),
+        # Joint & Mobility
         ("Cosequin DS Plus MSM", "cosequin-ds-msm", 3, 3299, 3999, "dog", False,
          "Joint health supplement with glucosamine, chondroitin, and MSM for dogs.",
-         "Loading: 1-3 tablets daily based on weight.", ""),
+         "Loading: 1-3 tablets daily based on weight. Maintenance: half dose.", ""),
         ("Dasuquin Advanced", "dasuquin-advanced", 3, 5499, None, "dog", False,
-         "Advanced joint supplement with ASU, glucosamine, and chondroitin.",
+         "Advanced joint supplement with ASU, glucosamine, and chondroitin. Veterinarian recommended.",
          "See weight-based dosing chart.", ""),
+        # Anxiety & Calming
         ("Composure Pro", "composure-pro", 4, 2499, 2999, "dog,cat", False,
-         "Calming chews with colostrum, L-theanine, and thiamine.",
-         "1-3 chews based on weight.", ""),
+         "Calming chews with colostrum, L-theanine, and thiamine. Supports calm behavior during stress.",
+         "1-3 chews based on weight. Can double for acute stress.", ""),
         ("Adaptil Calm Diffuser", "adaptil-calm", 4, 3499, None, "dog", False,
-         "Pheromone diffuser that releases dog-appeasing pheromone. Covers 700 sq ft.",
-         "Plug in continuously. Replace refill every 30 days.", "For dogs only."),
+         "Pheromone diffuser that releases dog-appeasing pheromone. Covers up to 700 sq ft.",
+         "Plug in and leave on continuously. Replace refill every 30 days.", "For dogs only."),
+        # Digestive
         ("FortiFlora Probiotic", "fortiflora", 5, 3099, 3499, "dog,cat", False,
-         "Veterinary-strength probiotic supplement. Promotes intestinal health.",
+         "Veterinary-strength probiotic supplement. Promotes intestinal health and balance.",
          "Sprinkle one packet on food daily.", ""),
-        ("Purina Pro Plan Vet Diets EN", "purina-en", 5, 4299, None, "dog", True,
+        ("Purina Pro Plan Veterinary Diets EN", "purina-en", 5, 4299, None, "dog", True,
          "Prescription gastroenteric formula for dogs with digestive issues.",
-         "Feed according to weight chart.", "Prescription required."),
+         "Feed according to weight chart. Transition over 7 days.", "Prescription required."),
+        # Skin & Coat
         ("Welactin Omega-3", "welactin-omega3", 6, 2899, 3299, "dog,cat", False,
-         "Liquid omega-3 from cold-water fish. Supports healthy skin, coat, and joints.",
-         "Pump onto food daily.", ""),
+         "Liquid omega-3 supplement from cold-water fish. Supports healthy skin, coat, and joints.",
+         "Pump onto food daily. See weight-based dosing.", ""),
+        # Dental
         ("Greenies Original", "greenies-original", 7, 2199, 2499, "dog", False,
          "Dental chews that clean teeth, freshen breath, and are highly digestible.",
          "One chew daily for dogs 25-50 lbs.", "Supervise while chewing."),
-        ("Oravet Dental Chews", "oravet-chews", 7, 2999, None, "dog", False,
-         "Dual-action dental chew with barrier against plaque and bacteria.",
+        ("Oravet Dental Hygiene Chews", "oravet-chews", 7, 2999, None, "dog", False,
+         "Dual-action dental chew with delmopinol that creates a barrier against plaque and bacteria.",
          "One chew daily.", "For dogs 25-50 lbs."),
+        # Vitamins
         ("Pet-Tabs Plus", "pet-tabs-plus", 8, 1899, 2199, "dog", False,
          "Daily multivitamin with minerals, amino acids, and fatty acids for dogs.",
-         "One tablet daily for dogs up to 50 lbs.", ""),
+         "One tablet daily for dogs up to 50 lbs. Two for larger dogs.", ""),
         ("VetriScience Nu Cat", "nucat-multivitamin", 8, 1499, None, "cat", False,
          "Complete multivitamin for cats. Supports immune, digestive, and overall health.",
          "One chew daily for adult cats.", ""),
@@ -249,6 +257,7 @@ def login_required(f):
 # AI Engine
 # ---------------------------------------------------------------------------
 def ai_chat(messages, system_prompt=None):
+    """Call OpenAI for chat completion."""
     if not OPENAI_API_KEY:
         return "AI features require an OpenAI API key. Please configure OPENAI_API_KEY."
     try:
@@ -258,10 +267,12 @@ def ai_chat(messages, system_prompt=None):
 
 Rules:
 - Always recommend consulting a veterinarian for serious conditions
-- Never diagnose conditions definitively
+- Never diagnose conditions definitively — suggest possibilities and recommend vet visits
 - Be helpful with OTC product recommendations based on symptoms
 - For prescription items, explain that a vet prescription is required
-- Be warm and empathetic
+- Know common pet medications, their uses, dosages, and interactions
+- Be warm and empathetic — people love their pets
+- If asked about pricing, refer to the product catalog
 - Keep responses concise but thorough"""
 
         full_messages = [{"role": "system", "content": sys_msg}] + messages
@@ -273,10 +284,11 @@ Rules:
         )
         return resp.choices[0].message.content
     except Exception as e:
-        return f"Sorry, I'm having trouble connecting right now. ({str(e)[:100]})"
+        return f"Sorry, I'm having trouble connecting right now. Please try again. ({str(e)[:100]})"
 
 
 def ai_product_recommendation(pet_info, symptoms):
+    """AI recommends products based on pet info and symptoms."""
     products = q("SELECT id,name,description,price_cents,species,requires_rx,category_id FROM products WHERE in_stock=TRUE")
     product_list = "\n".join([f"- {p['name']} (${p['price_cents']/100:.2f}): {p['description'][:100]}" for p in (products or [])])
 
@@ -359,6 +371,7 @@ def api_products():
     category = request.args.get("category")
     species = request.args.get("species")
     search = request.args.get("q")
+
     sql = "SELECT p.*, c.name as category_name, c.slug as category_slug FROM products p JOIN categories c ON p.category_id=c.id WHERE p.in_stock=TRUE"
     params = []
     if category:
@@ -371,6 +384,7 @@ def api_products():
         sql += " AND (p.name ILIKE %s OR p.description ILIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
     sql += " ORDER BY c.sort_order, p.name"
+
     products = q(sql, params)
     return jsonify({"products": [dict(p) for p in (products or [])]})
 
@@ -392,11 +406,14 @@ def api_chat():
     history = d.get("history", [])
     if not message:
         return jsonify({"error": "Message required"}), 400
+
     messages = []
     for h in history[-10:]:
         messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
     messages.append({"role": "user", "content": message})
+
     reply = ai_chat(messages)
+
     user_id = session.get("user_id")
     sid = d.get("session_id", secrets.token_hex(8))
     try:
@@ -406,6 +423,7 @@ def api_chat():
           (user_id, sid, reply), fetch=False)
     except:
         pass
+
     return jsonify({"reply": reply, "session_id": sid})
 
 # ---------------------------------------------------------------------------
@@ -418,6 +436,7 @@ def api_recommend():
     symptoms = d.get("symptoms", "")
     if not symptoms:
         return jsonify({"error": "Please describe symptoms or needs"}), 400
+
     recs = ai_product_recommendation(pet_info, symptoms)
     results = []
     for rec in recs[:3]:
@@ -425,6 +444,7 @@ def api_recommend():
                       (rec.get("product_id"),))
         if product:
             results.append({"product": dict(product), "reason": rec.get("reason", "")})
+
     return jsonify({"recommendations": results})
 
 # ---------------------------------------------------------------------------
@@ -456,6 +476,7 @@ def api_create_order():
     items = d.get("items", [])
     if not items:
         return jsonify({"error": "Cart is empty"}), 400
+
     subtotal = 0
     order_items = []
     for item in items:
@@ -473,13 +494,16 @@ def api_create_order():
             "line_total": line_total,
             "requires_rx": product["requires_rx"]
         })
+
     tax = int(subtotal * 0.08)
     shipping = 0 if subtotal >= 4999 else 599
     total = subtotal + tax + shipping
+
     order = q1("""INSERT INTO orders (user_id,items,subtotal_cents,tax_cents,shipping_cents,total_cents,shipping_address)
         VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING *""",
         (session["user_id"], json.dumps(order_items), subtotal, tax, shipping, total,
          json.dumps(d.get("shipping_address", {}))))
+
     return jsonify({"order": dict(order)})
 
 @app.route("/api/orders", methods=["GET"])
