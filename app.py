@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, session, redirect, url_for, send_from_directory
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
+from stripe_routes import register_stripe_routes
 
 load_dotenv()
 
@@ -548,6 +549,7 @@ with app.app_context():
         print(f"Warning: Database initialization failed: {e}")
         print("App will continue without database.")
 
+register_stripe_routes(app, q=q, q1=q1, login_required=login_required, get_db=get_db)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
