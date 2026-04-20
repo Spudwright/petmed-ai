@@ -1,713 +1,322 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRITTR — AI-Powered Animal Pharmacy</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="crittr.ai — AI-powered pet pharmacy. Personalized meds, supplements, and care routines for happy, healthy animals." />
+<title>crittr — Personalized pet care, delivered</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-:root {
-  --bg:#f8f5ff; --surface:#ffffff; --surface2:#f3eeff;
-  --text:#1a1040; --text2:#5b4a8a; --text3:#9b8cc4;
-  --primary:#8b5cf6; --primary-hover:#7c3aed; --primary-light:#ede9fe;
-  --accent:#10b981; --accent-light:#d1fae5;
-  --danger:#f472b6; --danger-light:#fce7f3;
-  --warning:#f59e0b; --warning-light:#fef3c7;
-  --coral:#ff6b6b; --coral-light:#ffe0e0;
-  --sky:#38bdf8; --sky-light:#e0f2fe;
-  --mint:#34d399; --mint-light:#d1fae5;
-  --peach:#fb923c; --peach-light:#fff7ed;
-  --lavender:#a78bfa; --lavender-light:#ede9fe;
-  --border:#e0d4f5; --shadow:0 4px 20px rgba(139,92,246,0.1);
-  --radius:20px; --radius-sm:12px;
+:root{
+  --sage-50:  #F2F7F1;
+  --sage-100: #E4EFE2;
+  --sage-200: #C7DEC4;
+  --sage-300: #A6C9A2;
+  --sage-400: #82B17D;
+  --sage-500: #6B9E6B;
+  --sage-600: #527E54;
+  --sage-700: #3E6340;
+  --sage-800: #2D4A30;
+  --sage-900: #1F3221;
+  --cream:    #FDFBF5;
+  --cream-2:  #F6F1E7;
+  --sand:     #E9DDC7;
+  --terracotta: #D4956A;
+  --terracotta-dark: #B37450;
+  --ink:      #1C2A1F;
+  --muted:    #6E7D70;
+  --line:     #DFE5DB;
+  --danger:   #B4463B;
+  --success:  #4F8A54;
+  --shadow:   0 12px 40px -16px rgba(28,42,31,.18);
+  --shadow-sm:0 2px 10px -4px rgba(28,42,31,.14);
+  --radius:   14px;
+  --radius-sm: 10px;
+  --radius-lg: 22px;
+  --ease: cubic-bezier(.32,.72,.24,1);
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; font-size:16px; }
-a { color:var(--primary); text-decoration:none; }
-
-/* Header */
-.header { background:linear-gradient(135deg,#ffffff 0%,#f3eeff 50%,#ede9fe 100%); border-bottom:2px solid var(--border); padding:0 28px; position:sticky; top:0; z-index:100; backdrop-filter:blur(12px); }
-.header-inner { max-width:1280px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; height:80px; }
-.logo { font-family:'Poppins',sans-serif; font-size:42px; font-weight:900; letter-spacing:3px; background:linear-gradient(135deg,#8b5cf6 0%,#ec4899 40%,#f59e0b 70%,#10b981 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; cursor:pointer; text-transform:uppercase; display:flex; align-items:center; gap:10px; }
-.logo-paw { font-size:36px; -webkit-text-fill-color:initial; filter:drop-shadow(0 2px 4px rgba(139,92,246,0.3)); }
-.nav { display:flex; align-items:center; gap:6px; }
-.nav-btn { padding:10px 18px; border-radius:var(--radius-sm); border:none; background:transparent; color:var(--text2); font-size:15px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px; transition:all .2s; font-family:'Inter',sans-serif; }
-.nav-btn:hover { background:var(--primary-light); color:var(--primary); }
-.nav-btn.active { background:var(--primary-light); color:var(--primary); font-weight:700; }
-.nav-btn .badge { background:linear-gradient(135deg,var(--primary),var(--coral)); color:white; font-size:12px; padding:2px 8px; border-radius:12px; font-weight:700; }
-.btn { padding:12px 24px; border-radius:var(--radius-sm); border:none; font-size:15px; font-weight:700; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; }
-.btn-primary { background:linear-gradient(135deg,var(--primary),#7c3aed); color:white; box-shadow:0 4px 16px rgba(139,92,246,0.3); }
-.btn-primary:hover { background:linear-gradient(135deg,#7c3aed,#6d28d9); transform:translateY(-2px); box-shadow:0 6px 20px rgba(139,92,246,0.4); }
-.btn-accent { background:linear-gradient(135deg,var(--accent),#059669); color:white; box-shadow:0 4px 16px rgba(16,185,129,0.3); }
-.btn-accent:hover { background:linear-gradient(135deg,#059669,#047857); transform:translateY(-2px); }
-.btn-outline { background:transparent; border:2px solid var(--border); color:var(--text2); }
-.btn-outline:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
-.btn-sm { padding:8px 16px; font-size:14px; }
-.btn-danger { background:var(--danger); color:white; }
-
-/* Main */
-.main { max-width:1280px; margin:0 auto; padding:28px; }
-
-/* Hero */
-.hero { text-align:center; padding:64px 32px; background:linear-gradient(135deg,#ede9fe 0%,#fce7f3 25%,#d1fae5 50%,#e0f2fe 75%,#fef3c7 100%); border-radius:var(--radius); margin-bottom:36px; position:relative; overflow:hidden; }
-.hero::before { content:''; position:absolute; top:-30%; right:-30%; width:80%; height:80%; background:radial-gradient(circle,rgba(139,92,246,0.06) 0%,transparent 60%); }
-.hero::after { content:''; position:absolute; bottom:-20%; left:-20%; width:60%; height:60%; background:radial-gradient(circle,rgba(236,72,153,0.05) 0%,transparent 60%); }
-.hero h1 { font-family:'Poppins',sans-serif; font-size:44px; font-weight:900; margin-bottom:16px; background:linear-gradient(135deg,#8b5cf6,#ec4899,#f59e0b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; position:relative; z-index:1; }
-.hero p { font-size:20px; color:var(--text2); max-width:640px; margin:0 auto 28px; position:relative; z-index:1; }
-.hero-search { display:flex; max-width:520px; margin:0 auto; gap:10px; position:relative; z-index:1; }
-.hero-search input { flex:1; padding:14px 20px; border:2px solid var(--border); border-radius:var(--radius-sm); font-size:16px; outline:none; background:rgba(255,255,255,0.95); }
-.hero-search input:focus { border-color:var(--primary); box-shadow:0 0 0 4px rgba(139,92,246,0.15); }
-
-/* Categories */
-.cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px; margin-bottom:36px; }
-.cat-card { background:var(--surface); border:2px solid var(--border); border-radius:var(--radius); padding:18px 12px; text-align:center; cursor:pointer; transition:all .25s; }
-.cat-card:hover { border-color:var(--lavender); box-shadow:0 6px 24px rgba(139,92,246,0.12); transform:translateY(-4px); }
-.cat-card.active { border-color:var(--primary); background:var(--primary-light); box-shadow:0 4px 16px rgba(139,92,246,0.15); }
-.cat-card .icon { font-size:34px; margin-bottom:8px; }
-.cat-card .name { font-size:14px; font-weight:700; color:var(--text); }
-
-/* Products */
-.product-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
-.product-card { background:var(--surface); border:2px solid var(--border); border-radius:var(--radius); padding:24px; transition:all .25s; display:flex; flex-direction:column; }
-.product-card:hover { box-shadow:0 12px 32px rgba(139,92,246,0.12); transform:translateY(-4px); border-color:var(--lavender); }
-.product-card .tag { display:inline-block; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; margin-bottom:10px; }
-.tag-rx { background:var(--warning-light); color:#92400e; }
-.tag-otc { background:var(--mint-light); color:#065f46; }
-.tag-species { background:var(--lavender-light); color:var(--primary); margin-left:4px; font-size:13px; }
-.product-card h3 { font-size:18px; font-weight:800; margin-bottom:8px; color:var(--text); font-family:'Poppins',sans-serif; }
-.product-card .desc { font-size:14px; color:var(--text2); margin-bottom:14px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; flex:1; }
-.product-card .price-row { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
-.price { font-size:22px; font-weight:800; color:var(--primary); font-family:'Poppins',sans-serif; }
-.compare-price { font-size:15px; color:var(--text3); text-decoration:line-through; margin-left:8px; }
-
-/* Chat widget */
-.chat-fab { position:fixed; bottom:28px; right:28px; width:68px; height:68px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--coral)); color:white; border:none; font-size:28px; cursor:pointer; box-shadow:0 6px 24px rgba(139,92,246,0.4); z-index:200; transition:transform .2s; }
-.chat-fab:hover { transform:scale(1.1); }
-.chat-panel { position:fixed; bottom:108px; right:28px; width:400px; max-height:540px; background:var(--surface); border:2px solid var(--border); border-radius:var(--radius); box-shadow:0 12px 40px rgba(139,92,246,0.15); z-index:200; display:none; flex-direction:column; overflow:hidden; }
-.chat-panel.open { display:flex; }
-.chat-header { padding:18px 20px; background:linear-gradient(135deg,var(--primary),#7c3aed); color:white; font-weight:700; font-size:16px; display:flex; justify-content:space-between; align-items:center; }
-.chat-header button { background:none; border:none; color:white; font-size:22px; cursor:pointer; }
-.chat-messages { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:14px; min-height:300px; background:var(--surface2); }
-.msg { padding:12px 16px; border-radius:var(--radius-sm); font-size:15px; max-width:85%; line-height:1.6; }
-.msg-user { background:linear-gradient(135deg,var(--primary),#7c3aed); color:white; align-self:flex-end; border-bottom-right-radius:4px; }
-.msg-ai { background:var(--surface); color:var(--text); align-self:flex-start; border-bottom-left-radius:4px; border:1px solid var(--border); }
-.msg-typing { background:var(--surface); color:var(--text3); align-self:flex-start; font-style:italic; border:1px solid var(--border); }
-.chat-input { display:flex; padding:14px; border-top:2px solid var(--border); gap:8px; background:var(--surface); }
-.chat-input input { flex:1; padding:12px 14px; border:2px solid var(--border); border-radius:var(--radius-sm); font-size:15px; outline:none; }
-.chat-input input:focus { border-color:var(--primary); }
-
-/* Cart sidebar */
-.cart-overlay { position:fixed; inset:0; background:rgba(26,16,64,0.35); z-index:300; display:none; backdrop-filter:blur(6px); }
-.cart-overlay.open { display:block; }
-.cart-sidebar { position:fixed; top:0; right:0; width:420px; max-width:92vw; height:100vh; background:var(--surface); z-index:301; transform:translateX(100%); transition:transform .3s ease; display:flex; flex-direction:column; }
-.cart-sidebar.open { transform:translateX(0); }
-.cart-header { padding:24px; border-bottom:2px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface2); }
-.cart-header h2 { font-size:22px; font-weight:800; color:var(--text); font-family:'Poppins',sans-serif; }
-.cart-items { flex:1; overflow-y:auto; padding:18px; }
-.cart-item { display:flex; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); align-items:center; }
-.cart-item .info { flex:1; }
-.cart-item .info h4 { font-size:15px; font-weight:700; }
-.cart-item .info .meta { font-size:13px; color:var(--text3); }
-.cart-item .qty { display:flex; align-items:center; gap:8px; }
-.cart-item .qty button { width:30px; height:30px; border-radius:8px; border:2px solid var(--border); background:var(--surface2); cursor:pointer; font-size:16px; transition:all .2s; }
-.cart-item .qty button:hover { border-color:var(--primary); color:var(--primary); }
-.cart-footer { padding:24px; border-top:2px solid var(--border); background:var(--surface2); }
-.cart-footer .totals { margin-bottom:18px; }
-.cart-footer .totals div { display:flex; justify-content:space-between; margin-bottom:6px; font-size:15px; }
-.cart-footer .totals .total { font-size:20px; font-weight:800; border-top:2px solid var(--border); padding-top:10px; margin-top:10px; color:var(--primary); font-family:'Poppins',sans-serif; }
-
-/* Auth modal */
-.modal-overlay { position:fixed; inset:0; background:rgba(26,16,64,0.45); z-index:400; display:none; justify-content:center; align-items:center; backdrop-filter:blur(6px); }
-.modal-overlay.open { display:flex; }
-.modal { background:var(--surface); border-radius:var(--radius); padding:36px; max-width:440px; width:92%; box-shadow:0 20px 56px rgba(139,92,246,0.2); }
-.modal h2 { font-size:24px; font-weight:800; margin-bottom:24px; color:var(--text); font-family:'Poppins',sans-serif; }
-.field { margin-bottom:18px; }
-.field label { display:block; font-size:14px; font-weight:700; color:var(--text2); margin-bottom:6px; }
-.field input, .field select, .field textarea { width:100%; padding:12px 14px; border:2px solid var(--border); border-radius:var(--radius-sm); font-size:15px; outline:none; transition:border-color .2s; font-family:'Inter',sans-serif; }
-.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--primary); box-shadow:0 0 0 4px rgba(139,92,246,0.1); }
-
-/* Sections */
-.section-title { font-size:24px; font-weight:800; margin-bottom:18px; display:flex; align-items:center; gap:10px; color:var(--text); font-family:'Poppins',sans-serif; }
-.empty-state { text-align:center; padding:56px; color:var(--text3); }
-.empty-state .icon { font-size:56px; margin-bottom:14px; }
-
-/* Pet recommendation */
-.rec-card { background:var(--surface); border:2px solid var(--accent); border-radius:var(--radius); padding:24px; margin-bottom:14px; box-shadow:0 4px 16px rgba(16,185,129,0.1); }
-.rec-card h4 { font-size:17px; font-weight:800; margin-bottom:6px; font-family:'Poppins',sans-serif; }
-.rec-card .reason { font-size:14px; color:var(--text2); margin-bottom:10px; font-style:italic; }
-
-/* Checkout form */
-.checkout-form { max-width:600px; margin:24px auto; background:var(--surface); padding:28px; border-radius:var(--radius); border:2px solid var(--border); }
-
-/* Toast */
-.toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,var(--primary),#7c3aed); color:white; padding:14px 28px; border-radius:var(--radius-sm); font-size:15px; font-weight:600; z-index:500; display:none; box-shadow:0 6px 24px rgba(139,92,246,0.3); }
-.toast.show { display:block; animation:fadeIn .3s ease; }
-@keyframes fadeIn { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-
-/* Responsive */
-@media(max-width:768px) {
-  .logo { font-size:30px; letter-spacing:2px; }
-  .logo-paw { font-size:26px; }
-  .hero h1 { font-size:30px; }
-  .hero p { font-size:17px; }
-  .hero-search { flex-direction:column; }
-  .cat-grid { grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); }
-  .product-grid { grid-template-columns:1fr; }
-  .chat-panel { width:calc(100vw - 32px); right:16px; bottom:100px; }
-  .nav-btn span.hide-mobile { display:none; }
-  .header-inner { height:70px; }
-}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--cream);line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,.serif{font-family:'Fraunces','Playfair Display',Georgia,serif;font-weight:500;letter-spacing:-0.01em;line-height:1.12;color:var(--sage-900);margin:0 0 .4em}
+h1{font-size:clamp(2.4rem,5vw,4.2rem);font-weight:500}
+h2{font-size:clamp(1.8rem,3vw,2.6rem)}
+h3{font-size:1.35rem;font-weight:600}
+p{margin:0 0 1em;color:#374C3C}
+a{color:var(--sage-700);text-decoration:none}
+a:hover{color:var(--sage-500)}
+.container{max-width:1180px;margin:0 auto;padding:0 28px}
+.muted{color:var(--muted)}
+.italic{font-style:italic}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.82rem 1.5rem;border-radius:999px;border:1px solid transparent;font-weight:600;font-size:.96rem;cursor:pointer;transition:background .2s var(--ease),border-color .2s var(--ease),transform .1s var(--ease),box-shadow .2s var(--ease);font-family:inherit;letter-spacing:-.005em;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--sage-600);color:#fff}
+.btn-primary:hover{background:var(--sage-700);color:#fff;box-shadow:0 6px 18px -8px rgba(62,99,64,.6)}
+.btn-secondary{background:var(--cream);color:var(--sage-800);border-color:var(--sage-300)}
+.btn-secondary:hover{background:var(--sage-100);border-color:var(--sage-400)}
+.btn-ghost{background:transparent;color:var(--sage-800);border-color:var(--line)}
+.btn-ghost:hover{background:var(--sage-50)}
+.btn-terra{background:var(--terracotta);color:#fff}
+.btn-terra:hover{background:var(--terracotta-dark)}
+.btn-sm{padding:.55rem 1rem;font-size:.86rem}
+.btn-lg{padding:1rem 1.8rem;font-size:1.02rem}
+.nav{position:sticky;top:0;z-index:40;background:rgba(253,251,245,.88);backdrop-filter:saturate(1.6) blur(8px);-webkit-backdrop-filter:saturate(1.6) blur(8px);border-bottom:1px solid rgba(223,229,219,.6)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:.5rem;font-family:'Fraunces',serif;font-size:1.52rem;font-weight:600;color:var(--sage-800);letter-spacing:-.02em}
+.logo-dot{width:14px;height:14px;border-radius:50%;background:var(--sage-500);box-shadow:0 0 0 4px var(--sage-100);display:inline-block}
+.nav-links{display:flex;align-items:center;gap:2rem;list-style:none;margin:0;padding:0}
+.nav-links a{color:var(--ink);font-weight:500;font-size:.95rem}
+.nav-links a:hover{color:var(--sage-600)}
+.nav-right{display:flex;align-items:center;gap:.75rem}
+.cart-btn{position:relative;padding:.55rem;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer}
+.cart-btn:hover{background:var(--sage-50);border-color:var(--sage-300)}
+.cart-count{position:absolute;top:-4px;right:-4px;background:var(--terracotta);color:#fff;font-size:.65rem;font-weight:700;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--cream)}
+.cart-count.hidden{display:none}
+@media(max-width:820px){.nav-links{display:none}}
+.hero{position:relative;padding:72px 0 88px;background:radial-gradient(80% 60% at 90% 10%, rgba(130,177,125,.22), transparent 60%),radial-gradient(70% 60% at 10% 95%, rgba(212,149,106,.12), transparent 60%),linear-gradient(180deg,var(--sage-50),var(--cream));overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:3rem;align-items:center}
+@media(max-width:960px){.hero-grid{grid-template-columns:1fr;gap:2rem}}
+.hero h1 em{font-style:italic;color:var(--sage-600);font-weight:500}
+.hero-sub{font-size:1.15rem;color:#3D4F40;max-width:520px;margin:1.2rem 0 2rem}
+.hero-ctas{display:flex;gap:.75rem;flex-wrap:wrap}
+.hero-trust{margin-top:2.5rem;display:flex;gap:2rem;color:var(--muted);font-size:.85rem;flex-wrap:wrap}
+.hero-trust span{display:inline-flex;align-items:center;gap:.4rem}
+.hero-trust svg{color:var(--sage-500)}
+.hero-photo{position:relative;border-radius:var(--radius-lg);aspect-ratio:4/5;background:linear-gradient(135deg,rgba(62,99,64,.15),rgba(212,149,106,.1)),url('https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80') center/cover no-repeat,var(--sage-200);box-shadow:var(--shadow);overflow:hidden}
+.hero-badge{position:absolute;right:36px;bottom:36px;z-index:2;width:88px;height:88px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:.75rem;font-weight:600;color:var(--sage-800);text-align:center;line-height:1.15;box-shadow:var(--shadow-sm)}
+section{padding:88px 0}
+.section-head{text-align:center;max-width:640px;margin:0 auto 3rem}
+.section-head .eyebrow{display:inline-block;font-size:.78rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--sage-600);margin-bottom:.8rem}
+.values{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
+@media(max-width:820px){.values-grid{grid-template-columns:1fr}}
+.value-card{text-align:center;padding:1rem}
+.value-icon{width:56px;height:56px;border-radius:50%;background:var(--sage-100);color:var(--sage-700);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem}
+.cats{background:var(--cream-2)}
+.cats-row{display:flex;gap:.7rem;overflow-x:auto;padding-bottom:8px}
+.cat-chip{flex-shrink:0;padding:.7rem 1.3rem;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s var(--ease);color:var(--ink)}
+.cat-chip:hover{border-color:var(--sage-400);background:var(--sage-50)}
+.cat-chip.active{background:var(--sage-600);color:#fff;border-color:var(--sage-600)}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.6rem}
+.product-card{background:#fff;border-radius:var(--radius);overflow:hidden;transition:transform .25s var(--ease),box-shadow .25s var(--ease);border:1px solid var(--line);display:flex;flex-direction:column}
+.product-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--sage-200)}
+.product-img{aspect-ratio:1/1;background:var(--sage-50);position:relative;display:flex;align-items:center;justify-content:center;font-size:3.5rem;background-size:cover;background-position:center}
+.product-badge{position:absolute;top:12px;left:12px;background:var(--terracotta);color:#fff;padding:.25rem .65rem;border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.product-badge.rx{background:var(--sage-700)}
+.product-body{padding:1.2rem 1.2rem 1.4rem;flex:1;display:flex;flex-direction:column}
+.product-title{font-size:1.05rem;font-weight:600;color:var(--ink);margin:0 0 .3rem;line-height:1.25}
+.product-species{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem}
+.product-price-row{display:flex;align-items:baseline;gap:.5rem;margin:.4rem 0 1rem}
+.price{font-size:1.3rem;font-weight:700;color:var(--sage-800);font-family:'Fraunces',serif}
+.price-compare{color:var(--muted);text-decoration:line-through;font-size:.9rem}
+.product-actions{margin-top:auto;display:grid;gap:.5rem;grid-template-columns:1fr auto}
+.subscribe-btn{background:transparent;border:1px solid var(--sage-400);color:var(--sage-700);padding:.55rem .75rem;border-radius:999px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s var(--ease);white-space:nowrap}
+.subscribe-btn:hover{background:var(--sage-500);color:#fff;border-color:var(--sage-500)}
+.videos{background:linear-gradient(180deg,var(--sage-50),var(--cream))}
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.5rem}
+.video-card{border-radius:var(--radius);overflow:hidden;background:#000;aspect-ratio:16/9;box-shadow:var(--shadow-sm);border:1px solid var(--line);position:relative}
+.video-card iframe{border:0;width:100%;height:100%;display:block}
+.video-card-caption{padding:.9rem 1.1rem;background:#fff;font-size:.92rem;font-weight:500;color:var(--ink)}
+.video-empty{text-align:center;padding:3rem;background:#fff;border:2px dashed var(--sage-200);border-radius:var(--radius);color:var(--muted)}
+.testimonials{background:var(--sage-800);color:#EEF3EC}
+.testimonials h2{color:#fff}
+.testimonials .eyebrow{color:var(--sage-300)}
+.t-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem}
+@media(max-width:820px){.t-grid{grid-template-columns:1fr}}
+.t-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:1.5rem}
+.t-card .quote{font-family:'Fraunces',serif;font-style:italic;font-size:1.08rem;color:#F6F8F5;line-height:1.5;margin-bottom:1rem}
+.t-card .author{font-size:.85rem;color:var(--sage-200);font-weight:500}
+footer{background:var(--sage-900);color:#D7E0D6;padding:64px 0 32px}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2rem;margin-bottom:3rem}
+@media(max-width:820px){.foot-grid{grid-template-columns:1fr 1fr}}
+footer h4{color:#fff;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;margin:0 0 1rem}
+footer ul{list-style:none;padding:0;margin:0}
+footer li{margin:.5rem 0}
+footer a{color:#B2C3B2;font-size:.9rem}
+footer a:hover{color:#fff}
+.foot-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:1.5rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-size:.82rem;color:#89968A}
+.overlay{position:fixed;inset:0;z-index:60;background:rgba(28,42,31,.5);display:none;align-items:center;justify-content:flex-end;animation:fadeIn .25s var(--ease)}
+.overlay.active{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.drawer{width:min(460px,100%);height:100vh;background:var(--cream);display:flex;flex-direction:column;animation:slideIn .3s var(--ease)}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.drawer-head{padding:1.5rem;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.drawer-head h3{margin:0;font-family:'Fraunces',serif;font-size:1.3rem}
+.drawer-close{background:none;border:0;cursor:pointer;padding:.4rem;border-radius:50%;color:var(--muted)}
+.drawer-close:hover{background:var(--sage-100);color:var(--ink)}
+.drawer-body{padding:1.5rem;overflow-y:auto;flex:1}
+.drawer-foot{padding:1.5rem;border-top:1px solid var(--line);background:#fff}
+.modal{position:fixed;inset:0;z-index:70;background:rgba(28,42,31,.55);display:none;align-items:center;justify-content:center;padding:1rem}
+.modal.active{display:flex}
+.modal-card{background:var(--cream);border-radius:var(--radius-lg);max-width:440px;width:100%;padding:2rem;box-shadow:0 40px 80px -20px rgba(0,0,0,.3)}
+.modal-card h2{font-size:1.6rem;margin-bottom:.4rem}
+.field{display:block;margin-bottom:1rem}
+.field label{display:block;font-size:.85rem;font-weight:500;margin-bottom:.35rem;color:var(--ink)}
+.field input,.field select,.field textarea{width:100%;padding:.75rem 1rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:#fff;font-family:inherit;font-size:.95rem;color:var(--ink);transition:border .2s var(--ease),box-shadow .2s var(--ease)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--sage-500);box-shadow:0 0 0 3px rgba(107,158,107,.12)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.cart-item{display:grid;grid-template-columns:64px 1fr auto;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--line)}
+.cart-item-img{width:64px;height:64px;background:var(--sage-50);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.8rem;background-size:cover;background-position:center}
+.cart-item-title{font-weight:600;font-size:.95rem;margin:0 0 .2rem}
+.cart-item-meta{font-size:.82rem;color:var(--muted)}
+.qty-ctrl{display:inline-flex;align-items:center;gap:.3rem;border:1px solid var(--line);border-radius:999px;padding:.15rem}
+.qty-ctrl button{background:transparent;border:0;width:26px;height:26px;border-radius:50%;cursor:pointer;color:var(--ink)}
+.qty-ctrl button:hover{background:var(--sage-100)}
+.cart-totals{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line)}
+.cart-totals .row{display:flex;justify-content:space-between;margin:.4rem 0;font-size:.9rem}
+.cart-totals .row.grand{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600;color:var(--sage-900);border-top:1px solid var(--line);padding-top:.8rem;margin-top:.8rem}
+.hidden{display:none !important}
+.center{text-align:center}
+.flex{display:flex;align-items:center;gap:.5rem}
+.spacer{height:48px}
+.pill{display:inline-block;padding:.25rem .7rem;border-radius:999px;font-size:.72rem;font-weight:600;background:var(--sage-100);color:var(--sage-800)}
+.chat-section{background:linear-gradient(180deg,var(--cream),var(--sage-50));padding:72px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.chat-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:3rem;align-items:stretch}
+@media(max-width:920px){.chat-grid{grid-template-columns:1fr}}
+.chat-copy h2{margin-bottom:1rem}
+.chat-copy .feat-list{list-style:none;padding:0;margin:1.2rem 0 0}
+.chat-copy .feat-list li{display:flex;align-items:flex-start;gap:.6rem;margin:.7rem 0;font-size:.95rem;color:#3D4F40}
+.chat-copy .feat-list li::before{content:'';flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--sage-200) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232D4A30" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>') center/12px no-repeat;margin-top:2px}
+.chatbox{background:#fff;border-radius:var(--radius-lg);border:1px solid var(--line);display:flex;flex-direction:column;box-shadow:var(--shadow);height:540px;max-height:70vh;overflow:hidden}
+.chat-header{padding:1rem 1.25rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.75rem;background:var(--sage-50)}
+.chat-avatar{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--sage-300),var(--sage-600));position:relative;flex-shrink:0}
+.chat-avatar::after{content:'';position:absolute;right:-2px;bottom:0;width:11px;height:11px;border-radius:50%;background:#4CAF50;border:2px solid #fff}
+.chat-name{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;color:var(--sage-900);line-height:1.2}
+.chat-status{font-size:.78rem;color:var(--muted);margin-top:1px}
+.chat-messages{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:.85rem;background:var(--cream)}
+.chat-msg{max-width:85%;padding:.75rem 1rem;border-radius:18px;font-size:.95rem;line-height:1.5;word-wrap:break-word;animation:slideUp .3s var(--ease)}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg-ai{background:#fff;border:1px solid var(--line);color:var(--ink);align-self:flex-start;border-bottom-left-radius:4px}
+.chat-msg-user{background:var(--sage-600);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-msg .reco{margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--sage-100);display:flex;gap:.5rem;flex-wrap:wrap}
+.chat-msg .reco-pill{display:inline-flex;align-items:center;gap:.3rem;background:var(--sage-50);color:var(--sage-800);padding:.35rem .8rem;border-radius:999px;font-size:.78rem;font-weight:500;cursor:pointer;border:1px solid var(--sage-200);transition:all .2s var(--ease)}
+.chat-msg .reco-pill:hover{background:var(--sage-500);color:#fff;border-color:var(--sage-500)}
+.chat-typing{display:flex;gap:4px;padding:.6rem 1rem;background:#fff;border:1px solid var(--line);border-radius:18px;border-bottom-left-radius:4px;align-self:flex-start;width:60px}
+.chat-typing span{width:8px;height:8px;border-radius:50%;background:var(--sage-400);animation:bounce 1.2s ease-in-out infinite}
+.chat-typing span:nth-child(2){animation-delay:.15s}
+.chat-typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+.chat-input-row{padding:.75rem;border-top:1px solid var(--line);background:#fff;display:flex;gap:.5rem}
+.chat-input-row input{flex:1;padding:.75rem 1rem;border:1px solid var(--line);border-radius:999px;background:var(--cream);font-family:inherit;font-size:.95rem;transition:border .2s var(--ease),background .2s var(--ease)}
+.chat-input-row input:focus{outline:none;border-color:var(--sage-500);background:#fff}
+.chat-input-row button{background:var(--sage-600);color:#fff;border:0;border-radius:50%;width:42px;height:42px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .2s var(--ease)}
+.chat-input-row button:hover:not(:disabled){background:var(--sage-700)}
+.chat-input-row button:disabled{opacity:.4;cursor:not-allowed}
+.chat-mic{background:#fff !important;color:var(--sage-700) !important;border:1px solid var(--line) !important}
+.chat-mic:hover:not(:disabled){background:var(--sage-50) !important;color:var(--sage-800) !important}
+.chat-mic.recording{background:var(--terracotta) !important;color:#fff !important;border-color:var(--terracotta) !important;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,149,106,.6)}50%{box-shadow:0 0 0 10px rgba(212,149,106,0)}}
+.chat-voice-toggle{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;color:var(--muted);cursor:pointer;padding:.3rem .6rem;border-radius:999px;user-select:none;background:var(--cream);border:1px solid var(--line);transition:all .2s var(--ease)}
+.chat-voice-toggle.on{background:var(--sage-100);color:var(--sage-800);border-color:var(--sage-300)}
+.chat-voice-toggle input{display:none}
+.chat-speaker{background:transparent;border:0;cursor:pointer;color:var(--sage-600);padding:.2rem;margin-left:.3rem;vertical-align:middle;opacity:.6;transition:opacity .2s var(--ease),color .2s var(--ease)}
+.chat-speaker:hover{opacity:1;color:var(--sage-800)}
+.chat-speaker.playing{color:var(--sage-700);opacity:1;animation:pulse 1.2s infinite}
+.chat-suggestions{display:flex;gap:.5rem;padding:0 1rem 1rem;flex-wrap:wrap;background:#fff}
+.chat-suggest{background:var(--sage-50);color:var(--sage-800);padding:.5rem .9rem;border-radius:999px;font-size:.8rem;cursor:pointer;border:1px solid var(--sage-200);transition:all .2s var(--ease);font-family:inherit}
+.chat-suggest:hover{background:var(--sage-200)}
+.chat-fab{position:fixed;bottom:24px;right:24px;z-index:50;width:60px;height:60px;border-radius:50%;background:var(--sage-600);color:#fff;border:0;cursor:pointer;box-shadow:0 8px 24px -6px rgba(62,99,64,.45);display:flex;align-items:center;justify-content:center;transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.chat-fab:hover{transform:scale(1.05);box-shadow:0 12px 32px -6px rgba(62,99,64,.6)}
+.chat-fab::after{content:'';position:absolute;top:2px;right:2px;width:12px;height:12px;background:var(--terracotta);border-radius:50%;border:2px solid #fff}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--sage-800);color:#fff;padding:.9rem 1.4rem;border-radius:999px;font-weight:500;font-size:.92rem;box-shadow:var(--shadow);z-index:100;transition:transform .3s var(--ease)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.error{background:var(--danger)}
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.reveal.seen{opacity:1;transform:translateY(0)}
+.view{display:none}
+.view.active{display:block}
+.success-page{text-align:center;padding:6rem 1rem}
+.success-check{width:88px;height:88px;border-radius:50%;background:var(--sage-500);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
+.account-tabs{display:flex;gap:.5rem;border-bottom:1px solid var(--line);margin-bottom:2rem}
+.account-tab{padding:.8rem 1.4rem;background:transparent;border:0;cursor:pointer;font-family:inherit;font-size:.95rem;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.account-tab.active{color:var(--sage-700);border-bottom-color:var(--sage-500)}
+.account-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:1.2rem;margin-bottom:1rem}
 </style>
 </head>
 <body>
-
-<!-- Header -->
-<header class="header">
-  <div class="header-inner">
-    <div class="logo" onclick="navigate('home')"><span class="logo-paw">&#x1f43e;</span>CRITTR</div>
-    <nav class="nav">
-      <button class="nav-btn" onclick="navigate('home')" data-nav="home">&#x1f3e0; <span class="hide-mobile">Shop</span></button>
-      <button class="nav-btn" onclick="navigate('recommend')" data-nav="recommend">&#x1f916; <span class="hide-mobile">AI Advisor</span></button>
-      <button class="nav-btn" onclick="openCart()">&#x1f6d2; <span class="badge" id="cart-badge">0</span></button>
-      <button class="nav-btn" onclick="handleAuth()" id="auth-btn">&#x1f464; <span class="hide-mobile" id="auth-label">Sign In</span></button>
-    </nav>
-  </div>
-</header>
-
-<!-- Main Content -->
-<main class="main" id="app"></main>
-
-<!-- AI Chat Widget -->
-<button class="chat-fab" onclick="toggleChat()" title="Chat with AI Vet Assistant">&#x1f4ac;</button>
-<div class="chat-panel" id="chat-panel">
-  <div class="chat-header">
-    <span>&#x1f43e; CRITTR AI Assistant</span>
-    <button onclick="toggleChat()">&#x2715;</button>
-  </div>
-  <div class="chat-messages" id="chat-messages">
-    <div class="msg msg-ai">Hi! I'm your AI animal health assistant. I can help you find the right medications and supplements for dogs, cats, horses, cattle, poultry, and more. What can I help with today?</div>
-  </div>
-  <div class="chat-input">
-    <input type="text" id="chat-input" placeholder="Ask about animal medications..." onkeydown="if(event.key==='Enter')sendChat()">
-    <button class="btn btn-primary btn-sm" onclick="sendChat()">Send</button>
-  </div>
+<nav class="nav"><div class="container nav-inner"><a href="#/" class="logo" data-route="home"><span class="logo-dot"></span>crittr</a><ul class="nav-links"><li><a href="#/shop" data-route="shop">Shop</a></li><li><a href="#/videos" data-route="videos">FUNNY CRITTERS</a></li><li><a href="#/learn" data-route="learn">Learn</a></li><li><a href="#/" data-route="home">Home</a></li></ul><div class="nav-right"><button class="cart-btn" onclick="openCart()" aria-label="Cart"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-2.3-8M7 13l-1.5 3h11M10 19a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM18 19a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg><span class="cart-count hidden" id="cartCount">0</span></button><button class="btn btn-ghost btn-sm" id="authBtn" onclick="openAuth()">Sign in</button></div></div></nav>
+<main>
+<div class="view active" id="view-home">
+<section class="hero"><div class="container hero-grid"><div><span class="pill">AI-powered pet care</span><h1 style="margin-top:1.2rem">Personalized pet medicine,<br /><em>delivered to your door.</em></h1><p class="hero-sub">Smarter prescriptions, supplements, and recovery routines for dogs, cats, and more — tailored by AI to your pet's species, breed, age, and specific symptoms.</p><div class="hero-ctas"><button class="btn btn-primary btn-lg" onclick="go('shop')">Shop products</button><button class="btn btn-secondary btn-lg" onclick="go('learn')">How it works</button></div><div class="hero-trust"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Licensed veterinary pharmacy</span><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Free shipping $50+</span><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Cancel subscriptions anytime</span></div></div><div class="hero-photo"><div class="hero-badge">Loved by<br>10,000+<br>pets</div></div></div></section>
+<section class="chat-section" id="chatSection"><div class="container chat-grid"><div class="chat-copy"><span class="pill">AI pharmacist</span><h2 style="margin-top:1.2rem">Meet crittr.<br /><em style="font-style:italic;color:var(--sage-600)">Your pet's new best listener.</em></h2><p class="hero-sub" style="margin:1.2rem 0 0">Tell us what's going on with your critter. No judgment, no rushing — just a genuinely warm conversation that leads to the right product for your pet's actual situation.</p><ul class="feat-list"><li>Trained on veterinary medicine and pet health research</li><li>Knows every product in our pharmacy inside out</li><li>Grounded, compassionate tone — because your pet isn't a number</li><li>Helps you understand safety, dosages, and what to expect</li></ul></div><div class="chatbox"><div class="chat-header"><div class="chat-avatar"></div><div style="flex:1"><div class="chat-name">crittr</div><div class="chat-status">online · here to listen</div></div><label class="chat-voice-toggle" id="voiceToggle" title="Auto-play AI responses as speech"><input type="checkbox" id="voiceToggleCheck" /><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span id="voiceToggleText">Voice</span></label></div><div class="chat-messages" id="chatMessages"><div class="chat-msg chat-msg-ai">Hi — I'm really glad you're here. Whether this is a routine question or something that's been weighing on you, I'm ready to listen. Tell me about your critter. What's going on?</div></div><div class="chat-suggestions" id="chatSuggestions"><button class="chat-suggest" onclick="seedChat('My dog has been itching a lot lately.')">My dog is itching a lot</button><button class="chat-suggest" onclick="seedChat('My cat seems lethargic and eating less.')">Cat seems off</button><button class="chat-suggest" onclick="seedChat('I need a flea and tick preventive for my 45lb dog.')">Flea &amp; tick for my dog</button><button class="chat-suggest" onclick="seedChat('Is this product safe for senior pets?')">Is this safe for seniors?</button></div><form class="chat-input-row" onsubmit="sendChat(event)"><button type="button" class="chat-mic" id="chatMic" onclick="toggleRecording()" aria-label="Speak"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg></button><input type="text" id="chatInput" placeholder="Type or tap mic to speak..." autocomplete="off" /><button type="submit" id="chatSend" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button></form></div></div></section>
+<section class="values"><div class="container"><div class="values-grid"><div class="value-card reveal"><div class="value-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg></div><h3>Tailored to your pet</h3><p>Our AI reviews your pet's weight, breed, age, and symptoms to recommend exactly what they need — no more, no less.</p></div><div class="value-card reveal"><div class="value-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg></div><h3>Auto-refill, never run out</h3><p>Set monthly or quarterly delivery. We ship it before the bottle runs dry — pause, skip, or cancel anytime.</p></div><div class="value-card reveal"><div class="value-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg></div><h3>Vet-approved, pharmacy-backed</h3><p>Every Rx is reviewed by licensed veterinarians. Every product dispensed from our accredited pharmacy partners.</p></div></div></div></section>
+<section class="cats" id="shopSection"><div class="container"><div class="section-head"><span class="eyebrow">Shop by need</span><h2>Everything your critter needs.</h2></div><div class="cats-row" id="catChips"></div><div class="spacer"></div><div class="products-grid" id="productsGrid"></div></div></section>
+<section class="videos" id="videosSection"><div class="container"><div class="section-head"><span class="eyebrow">FUNNY CRITTERS</span><h2>Funny critters, because serotonin.</h2><p class="muted">AI-generated shorts of our favorite animal moments. Queue one up between refills.</p></div><div class="video-grid" id="videoGrid"></div></div></section>
+<section class="testimonials"><div class="container"><div class="section-head"><span class="eyebrow">Happy critters</span><h2>Real pets. Real results.</h2></div><div class="t-grid"><div class="t-card"><div class="quote">"Bailey's joint pain dropped within the first month. The auto-refill means I literally never think about it anymore."</div><div class="author">— Sarah M., Golden Retriever mom</div></div><div class="t-card"><div class="quote">"The AI recommendation nailed exactly what our cat needed for her allergies. Cheaper and faster than the vet."</div><div class="author">— Raj K., Siamese dad</div></div><div class="t-card"><div class="quote">"Cancelled my subscription once. They asked how they could help. I'm back. Great customer care."</div><div class="author">— Mike O., Husky dad</div></div></div></div></section>
 </div>
-
-<!-- Cart Sidebar -->
-<div class="cart-overlay" id="cart-overlay" onclick="closeCart()"></div>
-<div class="cart-sidebar" id="cart-sidebar">
-  <div class="cart-header">
-    <h2>&#x1f6d2; Your Cart</h2>
-    <button class="btn btn-outline btn-sm" onclick="closeCart()">&#x2715; Close</button>
-  </div>
-  <div class="cart-items" id="cart-items"></div>
-  <div class="cart-footer" id="cart-footer"></div>
-</div>
-
-<!-- Auth Modal -->
-<div class="modal-overlay" id="auth-modal">
-  <div class="modal">
-    <h2 id="auth-modal-title">Sign In</h2>
-    <div id="auth-modal-body"></div>
-  </div>
-</div>
-
-<!-- Toast -->
+<div class="view" id="view-videos"><section><div class="container"><div class="section-head"><span class="eyebrow">FUNNY CRITTERS</span><h2>Funny critters.</h2><p class="muted">AI-generated short videos of the silliest animal moments. Updated regularly — check back for more.</p></div><div class="video-grid" id="videoGridFull"></div></div></section></div>
+<div class="view" id="view-learn"><section><div class="container" style="max-width:760px"><div class="section-head"><span class="eyebrow">How crittr works</span><h2>Pet care, reimagined by AI.</h2></div><h3>1. Tell us about your pet</h3><p>Add your dog, cat, or other critter. Include species, breed, weight, age, and any known conditions.</p><h3>2. Describe what's going on</h3><p>Symptoms, behaviors, goals — whatever you've noticed. Our AI reviews it and recommends targeted products.</p><h3>3. Shop or subscribe</h3><p>One-time order or set up auto-refill on monthly or quarterly cadence. Pause, skip, or cancel anytime from your account.</p><h3>4. Delivered in 2–5 days</h3><p>Free shipping over $50. Rx products are reviewed by our licensed vet pharmacy partners before dispensing.</p></div></section></div>
+<div class="view" id="view-account"><section><div class="container" style="max-width:860px"><h2>Your account</h2><div class="account-tabs" id="accountTabs"><button class="account-tab active" data-acct="orders">Orders</button><button class="account-tab" data-acct="subs">Subscriptions</button><button class="account-tab" data-acct="pets">Pets</button><button class="account-tab hidden" data-acct="videos" id="adminVideoTab">FUNNY CRITTERS</button></div><div class="account-pane" id="acctPane-orders">Loading…</div><div class="account-pane hidden" id="acctPane-subs">Loading…</div><div class="account-pane hidden" id="acctPane-pets">Loading…</div><div class="account-pane hidden" id="acctPane-videos">Loading…</div><div style="margin-top:2rem"><button class="btn btn-terra" onclick="openPortal()">Manage billing &amp; payment</button></div></div></section></div>
+<div class="view" id="view-success"><section><div class="container success-page"><div class="success-check"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div><h1>Thank you!</h1><p class="hero-sub" style="margin:1.5rem auto 2rem;max-width:520px">Your order is confirmed. We'll email you tracking as soon as it ships. Rx items are reviewed by our licensed pharmacy partner — usually within 24 hours.</p><button class="btn btn-primary" onclick="go('shop')">Keep shopping</button><button class="btn btn-ghost" onclick="go('account')" style="margin-left:.5rem">View orders</button></div></section></div>
+</main>
+<footer><div class="container"><div class="foot-grid"><div><div class="logo" style="color:#fff;margin-bottom:1rem"><span class="logo-dot" style="background:var(--sage-300);box-shadow:0 0 0 4px rgba(167,202,161,.15)"></span>crittr</div><p style="color:#B2C3B2;max-width:320px">Personalized pet medicine delivered to your door. AI-powered, vet-approved, and built with love for every critter.</p></div><div><h4>Shop</h4><ul><li><a href="#/shop">All products</a></li><li><a href="#/shop">Dogs</a></li><li><a href="#/shop">Cats</a></li><li><a href="#/shop">Supplements</a></li></ul></div><div><h4>Company</h4><ul><li><a href="#/learn">How it works</a></li><li><a href="#/videos">FUNNY CRITTERS</a></li><li><a href="#/about">About</a></li><li><a href="mailto:hello@crittr.ai">Contact</a></li></ul></div><div><h4>Support</h4><ul><li><a href="#/account">Account</a></li><li><a href="#/help">Help center</a></li><li><a href="#/privacy">Privacy</a></li><li><a href="#/terms">Terms</a></li></ul></div></div><div class="foot-bottom"><span>© <span id="year"></span> crittr.ai. All rights reserved.</span><span>Licensed veterinary pharmacy · USA</span></div></div></footer>
+<div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeCart()"><aside class="drawer"><div class="drawer-head"><h3>Your cart</h3><button class="drawer-close" onclick="closeCart()" aria-label="Close"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="drawer-body" id="cartBody"><p class="muted center" style="padding:3rem 0">Your cart is empty. <br>Go find something your critter will love.</p></div><div class="drawer-foot" id="cartFoot" style="display:none"><div class="cart-totals" id="cartTotals"></div><button class="btn btn-primary" style="width:100%;margin-top:1rem" onclick="checkout()">Checkout</button><p class="muted center" style="font-size:.78rem;margin-top:.6rem">Secure payment by Stripe</p></div></aside></div>
+<div class="modal" id="authModal" onclick="if(event.target===this)closeAuth()"><div class="modal-card"><h2 id="authTitle">Sign in</h2><p class="muted" id="authSub">Welcome back. Log in to manage your pets and subscriptions.</p><form id="authForm" onsubmit="event.preventDefault();submitAuth()"><div class="field" id="nameField" style="display:none"><label>Name</label><input type="text" id="authName" /></div><div class="field"><label>Email</label><input type="email" id="authEmail" required /></div><div class="field"><label>Password</label><input type="password" id="authPassword" minlength="6" required /></div><button type="submit" class="btn btn-primary" style="width:100%">Continue</button></form><p class="center muted" style="margin-top:1rem;font-size:.88rem"><span id="authSwitchText">New to crittr? </span><a href="#" onclick="event.preventDefault();toggleAuthMode()" id="authSwitchLink">Create an account</a></p></div></div>
+<button class="chat-fab" onclick="scrollToChat()" aria-label="Ask crittr AI"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></button>
 <div class="toast" id="toast"></div>
-
 <script>
-// ---------------------------------------------------------------------------
-// State
-// ---------------------------------------------------------------------------
-let cart = JSON.parse(localStorage.getItem('crittr_cart') || '[]');
-let user = null;
-let chatHistory = [];
-let chatSessionId = null;
-let currentCategory = null;
-let currentSearch = '';
-
-const SPECIES_EMOJI = {
-  'dog': '\u{1f415}', 'cat': '\u{1f408}', 'horse': '\u{1f40e}',
-  'cow': '\u{1f404}', 'chicken': '\u{1f414}', 'goat': '\u{1f410}',
-  'sheep': '\u{1f411}', 'pig': '\u{1f416}', 'duck': '\u{1f986}',
-  'turkey': '\u{1f983}'
-};
-
-function speciesIcons(speciesStr) {
-  if (!speciesStr) return '';
-  return speciesStr.split(',').map(s => SPECIES_EMOJI[s.trim()] || s.trim()).join('');
-}
-
-// ---------------------------------------------------------------------------
-// API helper
-// ---------------------------------------------------------------------------
-async function api(method, url, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(url, opts);
-  return r.json();
-}
-
-// ---------------------------------------------------------------------------
-// Toast
-// ---------------------------------------------------------------------------
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-// ---------------------------------------------------------------------------
-// Navigation
-// ---------------------------------------------------------------------------
-function navigate(page) {
-  document.querySelectorAll('.nav-btn[data-nav]').forEach(b => b.classList.remove('active'));
-  const active = document.querySelector(`.nav-btn[data-nav="${page}"]`);
-  if (active) active.classList.add('active');
-
-  if (page === 'home') renderHome();
-  else if (page === 'recommend') renderRecommend();
-  else if (page === 'orders') renderOrders();
-  else if (page === 'checkout') renderCheckout();
-}
-
-// ---------------------------------------------------------------------------
-// Home / Product Catalog
-// ---------------------------------------------------------------------------
-async function renderHome() {
-  const app = document.getElementById('app');
-  app.innerHTML = `
-    <div class="hero">
-      <h1>&#x1f43e; Your Animals' Health, Powered by AI</h1>
-      <p>Smart recommendations, trusted medications, and an AI assistant for dogs, cats, horses, livestock &amp; more.</p>
-      <div class="hero-search">
-        <input type="text" placeholder="Search medications, supplements..." id="search-input" value="${currentSearch}" onkeydown="if(event.key==='Enter')doSearch()">
-        <button class="btn btn-primary" onclick="doSearch()">Search</button>
-      </div>
-    </div>
-    <div class="section-title">&#x1f4c2; Categories</div>
-    <div class="cat-grid" id="cat-grid">Loading...</div>
-    <div class="section-title" style="margin-top:28px">&#x1f6cd;&#xfe0f; Products</div>
-    <div class="product-grid" id="product-grid">Loading...</div>
-  `;
-  loadCategories();
-  loadProducts();
-}
-
-async function loadCategories() {
-  const r = await api('GET', '/api/categories');
-  const grid = document.getElementById('cat-grid');
-  if (!grid) return;
-  const cats = r.categories || [];
-  grid.innerHTML = `<div class="cat-card ${!currentCategory?'active':''}" onclick="filterCategory(null)">
-    <div class="icon">&#x1f3ea;</div><div class="name">All</div></div>` +
-    cats.map(c => `<div class="cat-card ${currentCategory===c.slug?'active':''}" onclick="filterCategory('${c.slug}')">
-      <div class="icon">${c.icon}</div><div class="name">${c.name}</div></div>`).join('');
-}
-
-async function loadProducts() {
-  let url = '/api/products?';
-  if (currentCategory) url += `category=${currentCategory}&`;
-  if (currentSearch) url += `q=${encodeURIComponent(currentSearch)}&`;
-  const r = await api('GET', url);
-  const grid = document.getElementById('product-grid');
-  if (!grid) return;
-  const prods = r.products || [];
-  if (!prods.length) {
-    grid.innerHTML = '<div class="empty-state"><div class="icon">&#x1f50d;</div><p>No products found. Try a different search or category.</p></div>';
-    return;
-  }
-  grid.innerHTML = prods.map(p => `
-    <div class="product-card">
-      <div>
-        <span class="tag ${p.requires_rx?'tag-rx':'tag-otc'}">${p.requires_rx?'\u211e Prescription':'OTC'}</span>
-        <span class="tag tag-species">${speciesIcons(p.species)}</span>
-      </div>
-      <h3>${p.name}</h3>
-      <div class="desc">${p.description}</div>
-      <div class="price-row">
-        <div>
-          <span class="price">$${(p.price_cents/100).toFixed(2)}</span>
-          ${p.compare_price_cents ? `<span class="compare-price">$${(p.compare_price_cents/100).toFixed(2)}</span>` : ''}
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="addToCart(${p.id},'${p.name.replace(/'/g,"\\'")}',${p.price_cents})">${p.requires_rx?'Request Rx':'Add to Cart'}</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function filterCategory(slug) {
-  currentCategory = slug;
-  loadCategories();
-  loadProducts();
-}
-
-function doSearch() {
-  currentSearch = document.getElementById('search-input')?.value || '';
-  loadProducts();
-}
-
-// ---------------------------------------------------------------------------
-// AI Recommendation Page
-// ---------------------------------------------------------------------------
-function renderRecommend() {
-  const app = document.getElementById('app');
-  const speciesOptions = Object.entries(SPECIES_EMOJI).map(([k,v]) =>
-    `<option value="${k}">${v} ${k.charAt(0).toUpperCase()+k.slice(1)}</option>`
-  ).join('');
-
-  app.innerHTML = `
-    <div class="hero" style="background:linear-gradient(135deg,#d1fae5 0%,#ede9fe 30%,#fce7f3 60%,#fef3c7 100%)">
-      <h1>&#x1f916; AI Animal Health Advisor</h1>
-      <p>Tell us about your animal and what's going on. Our AI will recommend the best products.</p>
-    </div>
-    <div style="max-width:640px;margin:28px auto;background:var(--surface);padding:28px;border-radius:var(--radius);border:2px solid var(--border);">
-      <div class="section-title">&#x1f43e; About Your Animal</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <div class="field"><label>Name</label><input id="rec-name" placeholder="Buddy"></div>
-        <div class="field"><label>Species</label><select id="rec-species">${speciesOptions}</select></div>
-        <div class="field"><label>Breed</label><input id="rec-breed" placeholder="Golden Retriever"></div>
-        <div class="field"><label>Weight (lbs)</label><input id="rec-weight" type="number" placeholder="50"></div>
-        <div class="field"><label>Age (years)</label><input id="rec-age" type="number" placeholder="5"></div>
-        <div class="field"><label>Known Conditions</label><input id="rec-conditions" placeholder="Arthritis, allergies..."></div>
-      </div>
-      <div class="field" style="margin-top:14px;">
-        <label>What's going on? Describe symptoms or what you need:</label>
-        <textarea id="rec-symptoms" rows="3" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:15px;resize:vertical;font-family:'Inter',sans-serif;" placeholder="e.g. My dog has been scratching a lot and I noticed some fleas. Also looking for joint supplements since he's getting older."></textarea>
-      </div>
-      <button class="btn btn-accent" style="width:100%;margin-top:14px;justify-content:center;" onclick="getRecommendations()" id="rec-btn">&#x1f916; Get AI Recommendations</button>
-    </div>
-    <div id="rec-results" style="max-width:640px;margin:0 auto;"></div>
-  `;
-}
-
-async function getRecommendations() {
-  const btn = document.getElementById('rec-btn');
-  btn.disabled = true;
-  btn.textContent = 'Analyzing...';
-  const pet = {
-    name: document.getElementById('rec-name')?.value,
-    species: document.getElementById('rec-species')?.value,
-    breed: document.getElementById('rec-breed')?.value,
-    weight_lbs: parseFloat(document.getElementById('rec-weight')?.value) || null,
-    age_years: parseFloat(document.getElementById('rec-age')?.value) || null,
-    conditions: document.getElementById('rec-conditions')?.value
-  };
-  const symptoms = document.getElementById('rec-symptoms')?.value;
-  if (!symptoms) { toast('Please describe symptoms or needs'); btn.disabled=false; btn.textContent='\u{1f916} Get AI Recommendations'; return; }
-
-  const r = await api('POST', '/api/recommend', { pet, symptoms });
-  btn.disabled = false;
-  btn.textContent = '\u{1f916} Get AI Recommendations';
-
-  const results = document.getElementById('rec-results');
-  if (!r.recommendations?.length) {
-    results.innerHTML = '<div class="empty-state" style="margin-top:24px"><p>No specific recommendations found. Try the AI chat for more help!</p></div>';
-    return;
-  }
-  results.innerHTML = '<div class="section-title" style="margin-top:28px">\u2705 Recommended for Your Animal</div>' +
-    r.recommendations.map(rec => `
-      <div class="rec-card">
-        <div><span class="tag ${rec.product.requires_rx?'tag-rx':'tag-otc'}">${rec.product.requires_rx?'\u211e Prescription':'OTC'}</span></div>
-        <h4>${rec.product.name} \u2014 $${(rec.product.price_cents/100).toFixed(2)}</h4>
-        <div class="reason">"${rec.reason}"</div>
-        <p style="font-size:14px;color:var(--text2);margin-bottom:10px;">${rec.product.description}</p>
-        <button class="btn btn-primary btn-sm" onclick="addToCart(${rec.product.id},'${rec.product.name.replace(/'/g,"\\'")}',${rec.product.price_cents})">Add to Cart</button>
-      </div>
-    `).join('');
-}
-
-// ---------------------------------------------------------------------------
-// Cart
-// ---------------------------------------------------------------------------
-function updateCartBadge() {
-  const count = cart.reduce((s, i) => s + i.quantity, 0);
-  document.getElementById('cart-badge').textContent = count;
-  localStorage.setItem('crittr_cart', JSON.stringify(cart));
-}
-
-function addToCart(productId, name, priceCents) {
-  const existing = cart.find(i => i.product_id === productId);
-  if (existing) { existing.quantity++; }
-  else { cart.push({ product_id: productId, name, price_cents: priceCents, quantity: 1 }); }
-  updateCartBadge();
-  toast(`${name} added to cart!`);
-}
-
-function removeFromCart(productId) {
-  cart = cart.filter(i => i.product_id !== productId);
-  updateCartBadge();
-  renderCartItems();
-}
-
-function updateQty(productId, delta) {
-  const item = cart.find(i => i.product_id === productId);
-  if (!item) return;
-  item.quantity = Math.max(1, item.quantity + delta);
-  updateCartBadge();
-  renderCartItems();
-}
-
-function openCart() {
-  document.getElementById('cart-overlay').classList.add('open');
-  document.getElementById('cart-sidebar').classList.add('open');
-  renderCartItems();
-}
-
-function closeCart() {
-  document.getElementById('cart-overlay').classList.remove('open');
-  document.getElementById('cart-sidebar').classList.remove('open');
-}
-
-function renderCartItems() {
-  const container = document.getElementById('cart-items');
-  const footer = document.getElementById('cart-footer');
-  if (!cart.length) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">&#x1f6d2;</div><p>Your cart is empty</p></div>';
-    footer.innerHTML = '';
-    return;
-  }
-  container.innerHTML = cart.map(i => `
-    <div class="cart-item">
-      <div class="info">
-        <h4>${i.name}</h4>
-        <div class="meta">$${(i.price_cents/100).toFixed(2)} each</div>
-      </div>
-      <div class="qty">
-        <button onclick="updateQty(${i.product_id},-1)">\u2212</button>
-        <span style="font-weight:700;font-size:15px;">${i.quantity}</span>
-        <button onclick="updateQty(${i.product_id},1)">+</button>
-      </div>
-      <div style="font-weight:700;min-width:65px;text-align:right;font-size:15px;">$${(i.price_cents*i.quantity/100).toFixed(2)}</div>
-      <button style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:18px;" onclick="removeFromCart(${i.product_id})">\u2715</button>
-    </div>
-  `).join('');
-
-  const subtotal = cart.reduce((s, i) => s + i.price_cents * i.quantity, 0);
-  const tax = Math.round(subtotal * 0.08);
-  const shipping = subtotal >= 4999 ? 0 : 599;
-  const total = subtotal + tax + shipping;
-
-  footer.innerHTML = `
-    <div class="totals">
-      <div><span>Subtotal</span><span>$${(subtotal/100).toFixed(2)}</span></div>
-      <div><span>Tax (8%)</span><span>$${(tax/100).toFixed(2)}</span></div>
-      <div><span>Shipping</span><span>${shipping ? '$'+((shipping/100).toFixed(2)) : 'FREE'}</span></div>
-      ${subtotal < 4999 ? '<div style="font-size:13px;color:var(--accent);font-weight:600;">Free shipping on orders over $49.99!</div>' : ''}
-      <div class="total"><span>Total</span><span>$${(total/100).toFixed(2)}</span></div>
-    </div>
-    <button class="btn btn-accent" style="width:100%;justify-content:center;font-size:16px;" onclick="checkout()">Proceed to Checkout</button>
-  `;
-}
-
-async function checkout() {
-  if (!user) { toast('Please sign in to checkout'); closeCart(); showAuthModal('login'); return; }
-  if (!cart.length) { toast('Cart is empty'); return; }
-  closeCart();
-  navigate('checkout');
-}
-
-// ---------------------------------------------------------------------------
-// Checkout Page
-// ---------------------------------------------------------------------------
-function renderCheckout() {
-  const subtotal = cart.reduce((s, i) => s + i.price_cents * i.quantity, 0);
-  const tax = Math.round(subtotal * 0.08);
-  const shipping = subtotal >= 4999 ? 0 : 599;
-  const total = subtotal + tax + shipping;
-
-  const app = document.getElementById('app');
-  app.innerHTML = `
-    <div class="section-title">&#x1f4b3; Checkout</div>
-    <div class="checkout-form">
-      <div class="section-title" style="font-size:20px;">&#x1f4e6; Shipping Address</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <div class="field" style="grid-column:1/-1;"><label>Full Name</label><input id="ship-name" placeholder="John Doe" value="${user?.name||''}"></div>
-        <div class="field" style="grid-column:1/-1;"><label>Street Address</label><input id="ship-address" placeholder="123 Main St"></div>
-        <div class="field"><label>City</label><input id="ship-city" placeholder="Anytown"></div>
-        <div class="field"><label>State</label><input id="ship-state" placeholder="CA"></div>
-        <div class="field"><label>ZIP Code</label><input id="ship-zip" placeholder="90210"></div>
-        <div class="field"><label>Phone</label><input id="ship-phone" placeholder="(555) 123-4567"></div>
-      </div>
-
-      <div class="section-title" style="font-size:20px;margin-top:20px;">&#x1f6d2; Order Summary</div>
-      <div style="margin-bottom:16px;">
-        ${cart.map(i => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:15px;">
-          <span>${i.name} x${i.quantity}</span><span style="font-weight:700;">$${(i.price_cents*i.quantity/100).toFixed(2)}</span>
-        </div>`).join('')}
-      </div>
-      <div class="totals" style="font-size:15px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Subtotal</span><span>$${(subtotal/100).toFixed(2)}</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Tax (8%)</span><span>$${(tax/100).toFixed(2)}</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Shipping</span><span>${shipping?'$'+(shipping/100).toFixed(2):'FREE'}</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:800;border-top:2px solid var(--border);padding-top:10px;margin-top:10px;color:var(--primary);font-family:'Poppins',sans-serif;"><span>Total</span><span>$${(total/100).toFixed(2)}</span></div>
-      </div>
-
-      <button class="btn btn-accent" style="width:100%;justify-content:center;font-size:17px;margin-top:20px;padding:16px;" onclick="placeOrder()">&#x1f512; Place Order &mdash; $${(total/100).toFixed(2)}</button>
-      <p style="text-align:center;margin-top:12px;font-size:13px;color:var(--text3);">Payment processing via Stripe coming soon. Orders are confirmed instantly.</p>
-    </div>
-  `;
-}
-
-async function placeOrder() {
-  const address = {
-    name: document.getElementById('ship-name')?.value,
-    address: document.getElementById('ship-address')?.value,
-    city: document.getElementById('ship-city')?.value,
-    state: document.getElementById('ship-state')?.value,
-    zip: document.getElementById('ship-zip')?.value,
-    phone: document.getElementById('ship-phone')?.value
-  };
-  if (!address.name || !address.address || !address.city || !address.state || !address.zip) {
-    toast('Please fill in all shipping fields');
-    return;
-  }
-  const r = await api('POST', '/api/orders', { items: cart, shipping_address: address });
-  if (r.error) { toast(r.error); return; }
-  cart = [];
-  updateCartBadge();
-  toast('Order placed successfully!');
-  navigate('orders');
-}
-
-// ---------------------------------------------------------------------------
-// Orders
-// ---------------------------------------------------------------------------
-async function renderOrders() {
-  if (!user) { toast('Please sign in to view orders'); return; }
-  const r = await api('GET', '/api/orders');
-  const app = document.getElementById('app');
-  const orders = r.orders || [];
-  if (!orders.length) {
-    app.innerHTML = '<div class="section-title">&#x1f4e6; My Orders</div><div class="empty-state"><div class="icon">&#x1f4e6;</div><p>No orders yet. Start shopping!</p></div>';
-    return;
-  }
-  app.innerHTML = '<div class="section-title">&#x1f4e6; My Orders</div>' +
-    orders.map(o => `
-      <div style="background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:14px;">
-          <div><strong style="font-size:16px;">Order #${o.id}</strong><br><span style="font-size:13px;color:var(--text3)">${new Date(o.created_at).toLocaleDateString()}</span></div>
-          <div style="text-align:right"><span class="tag tag-otc">${o.status}</span><br><strong style="font-size:18px;color:var(--primary);">$${(o.total_cents/100).toFixed(2)}</strong></div>
-        </div>
-        <div style="font-size:14px;color:var(--text2);">${(typeof o.items === 'string' ? JSON.parse(o.items) : o.items).map(i => `${i.name} \u00d7 ${i.quantity}`).join(', ')}</div>
-      </div>
-    `).join('');
-}
-
-// ---------------------------------------------------------------------------
-// Auth
-// ---------------------------------------------------------------------------
-function handleAuth() {
-  if (user) { navigate('orders'); }
-  else { showAuthModal('login'); }
-}
-
-function showAuthModal(mode) {
-  const modal = document.getElementById('auth-modal');
-  const title = document.getElementById('auth-modal-title');
-  const body = document.getElementById('auth-modal-body');
-  modal.classList.add('open');
-
-  if (mode === 'login') {
-    title.textContent = 'Sign In';
-    body.innerHTML = `
-      <div class="field"><label>Email</label><input id="auth-email" type="email" placeholder="you@email.com"></div>
-      <div class="field"><label>Password</label><input id="auth-pw" type="password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()">Sign In</button>
-      <p style="text-align:center;margin-top:14px;font-size:14px;">Don't have an account? <a href="#" onclick="showAuthModal('register');return false;">Register</a></p>
-    `;
-  } else {
-    title.textContent = 'Create Account';
-    body.innerHTML = `
-      <div class="field"><label>Name</label><input id="auth-name" placeholder="Your name"></div>
-      <div class="field"><label>Email</label><input id="auth-email" type="email" placeholder="you@email.com"></div>
-      <div class="field"><label>Password</label><input id="auth-pw" type="password" placeholder="Min 6 characters"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()">Create Account</button>
-      <p style="text-align:center;margin-top:14px;font-size:14px;">Already have an account? <a href="#" onclick="showAuthModal('login');return false;">Sign in</a></p>
-    `;
-  }
-}
-
-function closeAuthModal() { document.getElementById('auth-modal').classList.remove('open'); }
-document.getElementById('auth-modal').addEventListener('click', function(e) { if (e.target === this) closeAuthModal(); });
-
-async function doLogin() {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-pw').value;
-  const r = await api('POST', '/api/login', { email, password });
-  if (r.error) { toast(r.error); return; }
-  user = r.user;
-  updateAuthUI();
-  closeAuthModal();
-  toast('Welcome back!');
-}
-
-async function doRegister() {
-  const name = document.getElementById('auth-name').value;
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-pw').value;
-  const r = await api('POST', '/api/register', { name, email, password });
-  if (r.error) { toast(r.error); return; }
-  user = r.user;
-  updateAuthUI();
-  closeAuthModal();
-  toast('Account created!');
-}
-
-function updateAuthUI() {
-  const label = document.getElementById('auth-label');
-  if (user) { label.textContent = user.name || user.email.split('@')[0]; }
-  else { label.textContent = 'Sign In'; }
-}
-
-// ---------------------------------------------------------------------------
-// Chat
-// ---------------------------------------------------------------------------
-function toggleChat() {
-  document.getElementById('chat-panel').classList.toggle('open');
-  if (document.getElementById('chat-panel').classList.contains('open')) {
-    document.getElementById('chat-input').focus();
-  }
-}
-
-async function sendChat() {
-  const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-
-  const container = document.getElementById('chat-messages');
-  container.innerHTML += `<div class="msg msg-user">${escHtml(msg)}</div>`;
-  container.innerHTML += `<div class="msg msg-typing" id="typing">Thinking...</div>`;
-  container.scrollTop = container.scrollHeight;
-
-  chatHistory.push({ role: 'user', content: msg });
-  const r = await api('POST', '/api/chat', { message: msg, history: chatHistory, session_id: chatSessionId });
-  chatSessionId = r.session_id;
-
-  document.getElementById('typing')?.remove();
-  const reply = r.reply || 'Sorry, something went wrong.';
-  chatHistory.push({ role: 'assistant', content: reply });
-  container.innerHTML += `<div class="msg msg-ai">${formatChat(reply)}</div>`;
-  container.scrollTop = container.scrollHeight;
-}
-
-function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function formatChat(s) {
-  return escHtml(s).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-}
-
-// ---------------------------------------------------------------------------
-// Init
-// ---------------------------------------------------------------------------
-async function init() {
-  updateCartBadge();
-  const r = await api('GET', '/api/me');
-  if (r.user) { user = r.user; updateAuthUI(); }
-  navigate('home');
-}
-init();
+const State={cart:JSON.parse(localStorage.getItem('crittr_cart')||'[]'),products:[],categories:[],user:null,authMode:'login',activeCategory:null};
+let FUNNY_VIDEOS=[];
+async function loadVideos(){try{const r=await api('/api/videos');FUNNY_VIDEOS=(r.videos||[]).map(v=>({id:v.youtube_id,title:v.title,db_id:v.id,caption:v.caption}));}catch(e){FUNNY_VIDEOS=[];}renderVideos();}
+const $=(s)=>document.querySelector(s);
+const $$=(s)=>document.querySelectorAll(s);
+const toast=(msg,err=false)=>{const el=$('#toast');el.textContent=msg;el.classList.toggle('error',err);el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);};
+const fmt=(cents)=>`$${(cents/100).toFixed(2)}`;
+const api=async(url,opts={})=>{const r=await fetch(url,{credentials:'include',headers:{'Content-Type':'application/json'},...opts});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||`HTTP ${r.status}`);return data;};
+const saveCart=()=>localStorage.setItem('crittr_cart',JSON.stringify(State.cart));
+const emojiFor=(species)=>{const s=(species||'').toLowerCase();if(s.includes('dog'))return '🐕';if(s.includes('cat'))return '🐈';if(s.includes('bird'))return '🦜';if(s.includes('rabbit'))return '🐇';if(s.includes('horse'))return '🐎';return '🐾';};
+function go(view,opts={}){const route=opts.route||view;location.hash='#/'+(route==='home'?'':route);}
+function route(){const h=location.hash.replace(/^#\/?/,'')||'home';const path=location.pathname;if(path==='/order/success')return activateView('success');if(path==='/account/subscriptions')return activateView('account',()=>showAccountTab('subs'));if(path==='/cart')return openCart();let view='home';if(h.startsWith('shop')){view='home';setTimeout(()=>$('#shopSection')?.scrollIntoView({behavior:'smooth'}),50);}else if(h.startsWith('videos')){view='videos';}else if(h.startsWith('learn')){view='learn';}else if(h.startsWith('account')){view='account';loadAccount();}window.scrollTo({top:0,behavior:h?'smooth':'auto'});activateView(view);}
+function activateView(name,after){$$('.view').forEach(v=>v.classList.remove('active'));$('#view-'+name)?.classList.add('active');if(after)after();}
+window.addEventListener('hashchange',route);
+async function loadCatalog(){try{const[cats,prods]=await Promise.all([api('/api/categories'),api('/api/products')]);State.categories=cats.categories||cats||[];State.products=prods.products||prods||[];renderCategories();renderProducts();}catch(e){console.warn('Catalog load failed',e);$('#productsGrid').innerHTML='<p class="muted center" style="grid-column:1/-1">Loading catalog…</p>';}}
+function renderCategories(){const row=$('#catChips');if(!row)return;const all=[{slug:null,name:'All'},...State.categories];row.innerHTML=all.map(c=>`<button class="cat-chip ${State.activeCategory===c.slug?'active':''}" data-slug="${c.slug??''}">${c.name}</button>`).join('');row.querySelectorAll('.cat-chip').forEach(el=>el.addEventListener('click',()=>{State.activeCategory=el.dataset.slug||null;renderCategories();renderProducts();}));}
+function renderProducts(){const grid=$('#productsGrid');if(!grid)return;const filtered=State.activeCategory?State.products.filter(p=>p.category_slug===State.activeCategory||(p.category&&p.category.slug===State.activeCategory)):State.products;if(!filtered.length){grid.innerHTML='<p class="muted center" style="grid-column:1/-1">No products yet — check back soon.</p>';return;}grid.innerHTML=filtered.map(p=>`<div class="product-card"><div class="product-img" style="${p.image_url?`background-image:url('${p.image_url}')`:''}">${!p.image_url?emojiFor(p.species):''}${p.requires_rx?'<span class="product-badge rx">Rx</span>':''}${p.compare_price_cents&&p.price_cents<p.compare_price_cents?'<span class="product-badge">Sale</span>':''}</div><div class="product-body"><h3 class="product-title">${p.name}</h3><div class="product-species">${p.species||'All pets'}</div><div class="product-price-row"><span class="price">${fmt(p.price_cents)}</span>${p.compare_price_cents&&p.price_cents<p.compare_price_cents?`<span class="price-compare">${fmt(p.compare_price_cents)}</span>`:''}</div><div class="product-actions"><button class="btn btn-primary btn-sm" onclick="addToCart(${p.id})">Add to cart</button><button class="subscribe-btn" onclick="subscribe(${p.id})" title="Monthly auto-refill">Subscribe</button></div></div></div>`).join('');}
+function addToCart(productId){const product=State.products.find(p=>p.id===productId);if(!product)return;const existing=State.cart.find(c=>c.product_id===productId);if(existing)existing.quantity++;else State.cart.push({product_id:productId,quantity:1,name:product.name,price_cents:product.price_cents,image_url:product.image_url,species:product.species});saveCart();updateCartCount();toast(`Added ${product.name} to cart`);}
+function updateCartCount(){const n=State.cart.reduce((s,c)=>s+c.quantity,0);const el=$('#cartCount');el.textContent=n;el.classList.toggle('hidden',n===0);}
+function openCart(){renderCart();$('#cartOverlay').classList.add('active');}
+function closeCart(){$('#cartOverlay').classList.remove('active');}
+function renderCart(){const body=$('#cartBody');const foot=$('#cartFoot');if(!State.cart.length){body.innerHTML='<p class="muted center" style="padding:3rem 0">Your cart is empty.<br>Go find something your critter will love.</p>';foot.style.display='none';return;}body.innerHTML=State.cart.map((c,i)=>`<div class="cart-item"><div class="cart-item-img" style="${c.image_url?`background-image:url('${c.image_url}')`:''}">${!c.image_url?emojiFor(c.species):''}</div><div><div class="cart-item-title">${c.name}</div><div class="cart-item-meta">${fmt(c.price_cents)} each</div><div class="qty-ctrl" style="margin-top:.5rem"><button onclick="updateQty(${i},-1)">−</button><span style="padding:0 .4rem;font-weight:500">${c.quantity}</span><button onclick="updateQty(${i},1)">+</button></div></div><button class="drawer-close" onclick="removeItem(${i})" aria-label="Remove"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`).join('');const subtotal=State.cart.reduce((s,c)=>s+c.price_cents*c.quantity,0);const tax=Math.round(subtotal*0.08);const shipping=subtotal>=5000?0:599;$('#cartTotals').innerHTML=`<div class="row"><span>Subtotal</span><span>${fmt(subtotal)}</span></div><div class="row"><span>Tax (est.)</span><span>${fmt(tax)}</span></div><div class="row"><span>Shipping</span><span>${shipping===0?'Free':fmt(shipping)}</span></div><div class="row grand"><span>Total</span><span>${fmt(subtotal+tax+shipping)}</span></div>`;foot.style.display='block';}
+function updateQty(i,delta){State.cart[i].quantity+=delta;if(State.cart[i].quantity<=0)State.cart.splice(i,1);saveCart();renderCart();updateCartCount();}
+function removeItem(i){State.cart.splice(i,1);saveCart();renderCart();updateCartCount();}
+async function checkout(){if(!State.cart.length)return toast('Cart is empty',true);if(!State.user){closeCart();openAuth('Sign in to check out');return;}try{const r=await api('/api/checkout',{method:'POST',body:JSON.stringify({items:State.cart.map(c=>({product_id:c.product_id,quantity:c.quantity}))})});if(r.url){location.href=r.url;}else{toast('Checkout failed',true);}}catch(e){toast('Checkout error: '+e.message,true);}}
+async function subscribe(productId){if(!State.user){openAuth('Sign in to subscribe');return;}try{const r=await api('/api/subscribe',{method:'POST',body:JSON.stringify({product_id:productId,interval:'monthly'})});if(r.url)location.href=r.url;}catch(e){toast('Subscribe error: '+e.message,true);}}
+async function openPortal(){try{const r=await api('/api/portal',{method:'POST'});if(r.url)location.href=r.url;}catch(e){toast(e.message,true);}}
+function openAuth(msg){State.authMode='login';$('#authTitle').textContent='Sign in';$('#authSub').textContent=msg||'Welcome back.';$('#nameField').style.display='none';$('#authSwitchText').textContent='New to crittr? ';$('#authSwitchLink').textContent='Create an account';$('#authModal').classList.add('active');setTimeout(()=>$('#authEmail')?.focus(),80);}
+function closeAuth(){$('#authModal').classList.remove('active');}
+function toggleAuthMode(){if(State.authMode==='login'){State.authMode='register';$('#authTitle').textContent='Create your account';$('#authSub').textContent="Start by telling us you're human.";$('#nameField').style.display='block';$('#authSwitchText').textContent='Already have an account? ';$('#authSwitchLink').textContent='Sign in';}else{openAuth();}}
+async function submitAuth(){const body={email:$('#authEmail').value.trim(),password:$('#authPassword').value};if(State.authMode==='register')body.name=$('#authName').value.trim();try{const endpoint=State.authMode==='register'?'/api/register':'/api/login';const r=await api(endpoint,{method:'POST',body:JSON.stringify(body)});State.user=r.user||{email:body.email,name:body.name};closeAuth();updateAuthUI();toast(State.authMode==='register'?'Welcome to crittr!':'Signed in');}catch(e){toast(e.message,true);}}
+function updateAuthUI(){const btn=$('#authBtn');if(State.user){btn.textContent=State.user.name||'Account';btn.onclick=()=>go('account');}else{btn.textContent='Sign in';btn.onclick=openAuth;}}
+async function loadMe(){try{const r=await api('/api/me');State.user=r.user||r;updateAuthUI();}catch(e){}}
+async function loadAccount(){if(!State.user){openAuth('Sign in to view your account');return;}const isAdmin=(State.user.role||'').toLowerCase()==='admin';$('#adminVideoTab')?.classList.toggle('hidden',!isAdmin);showAccountTab('orders');$$('.account-tab').forEach(t=>t.onclick=()=>showAccountTab(t.dataset.acct));}
+async function showAccountTab(tab){$$('.account-tab').forEach(t=>t.classList.toggle('active',t.dataset.acct===tab));$$('.account-pane').forEach(p=>p.classList.add('hidden'));const pane=$('#acctPane-'+tab);pane.classList.remove('hidden');pane.innerHTML='<p class="muted">Loading…</p>';try{if(tab==='orders'){const r=await api('/api/orders');const orders=r.orders||[];pane.innerHTML=orders.length?orders.map(o=>`<div class="account-card"><div class="flex" style="justify-content:space-between"><strong>Order #${o.id}</strong><span class="pill">${o.status}</span></div><div class="muted" style="font-size:.88rem;margin-top:.3rem">${new Date(o.created_at).toLocaleDateString()} · ${fmt(o.total_cents)}</div></div>`).join(''):'<p class="muted">No orders yet.</p>';}else if(tab==='subs'){const r=await api('/api/subscriptions');const subs=r.subscriptions||[];pane.innerHTML=subs.length?subs.map(s=>`<div class="account-card"><div class="flex" style="justify-content:space-between"><strong>${s.product_name||'Membership'}</strong><span class="pill">${s.status}</span></div><div class="muted" style="font-size:.88rem;margin-top:.3rem">${s.interval} · next charge ${s.current_period_end?new Date(s.current_period_end).toLocaleDateString():'—'}</div></div>`).join(''):'<p class="muted">No active subscriptions.</p>';}else if(tab==='pets'){const r=await api('/api/pets');const pets=r.pets||[];pane.innerHTML=pets.length?pets.map(p=>`<div class="account-card"><strong>${p.name}</strong><div class="muted" style="font-size:.88rem">${p.species}${p.breed?' · '+p.breed:''}${p.age_years?' · '+p.age_years+'y':''}</div></div>`).join(''):'<p class="muted">No pets yet. Add one to get AI recommendations.</p>';}else if(tab==='videos'){await renderVideoAdmin(pane);}}catch(e){pane.innerHTML=`<p class="muted">${e.message}</p>`;}}
+async function renderVideoAdmin(pane){const r=await api('/api/videos');const videos=r.videos||[];pane.innerHTML=`<div class="account-card" style="background:var(--sage-50);border-color:var(--sage-200)"><h3 style="margin-top:0;font-size:1.1rem">Add a video</h3><p class="muted" style="font-size:.88rem;margin-bottom:.8rem">Paste a YouTube URL or just the video ID.</p><form onsubmit="event.preventDefault();addVideo(this)"><div class="form-row"><div class="field" style="margin:0"><label>YouTube URL or ID</label><input name="youtube_id" required placeholder="https://youtu.be/XXXX or XXXX" /></div><div class="field" style="margin:0"><label>Title</label><input name="title" required placeholder="e.g. Dog on skateboard" /></div></div><button class="btn btn-primary btn-sm" style="margin-top:.75rem">Add video</button></form></div><div style="margin-top:1rem" id="adminVideoList"></div>`;const list=$('#adminVideoList');if(!videos.length){list.innerHTML='<p class="muted">No videos yet.</p>';return;}list.innerHTML=videos.map(v=>`<div class="account-card" style="display:flex;align-items:center;gap:1rem"><div style="width:120px;aspect-ratio:16/9;flex-shrink:0;background:#000;border-radius:8px;overflow:hidden"><iframe src="https://www.youtube.com/embed/${v.youtube_id}" style="width:100%;height:100%;border:0" allowfullscreen loading="lazy"></iframe></div><div style="flex:1;min-width:0"><strong style="display:block">${v.title}</strong><div class="muted" style="font-size:.82rem">ID: ${v.youtube_id}${v.caption?' · '+v.caption:''}</div></div><button class="btn btn-ghost btn-sm" onclick="deleteVideo(${v.id})" style="color:var(--danger)">Remove</button></div>`).join('');}
+async function addVideo(form){const body={youtube_id:form.youtube_id.value.trim(),title:form.title.value.trim()};try{await api('/api/videos',{method:'POST',body:JSON.stringify(body)});toast('Video added');form.reset();showAccountTab('videos');loadVideos();}catch(e){toast(e.message,true);}}
+async function deleteVideo(id){if(!confirm('Remove this video from the site?'))return;try{await api('/api/videos/'+id,{method:'DELETE'});toast('Removed');showAccountTab('videos');loadVideos();}catch(e){toast(e.message,true);}}
+function renderVideos(){const html=FUNNY_VIDEOS.map(v=>`<div class="video-card"><iframe src="https://www.youtube.com/embed/${v.id}" title="${v.title}" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`).join('');const grid1=$('#videoGrid');if(grid1)grid1.innerHTML=html||'<div class="video-empty">Funny videos coming soon.</div>';const grid2=$('#videoGridFull');if(grid2)grid2.innerHTML=html||'<div class="video-empty">Funny videos coming soon.</div>';}
+const Chat={history:[],sessionId:null,thinking:false,voiceOn:localStorage.getItem('crittr_voice_on')==='1',recognizing:false,recognition:null,currentAudio:null};
+function scrollToChat(){$('#chatSection')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>$('#chatInput')?.focus(),500);}
+function seedChat(text){const input=$('#chatInput');input.value=text;input.focus();}
+function appendMsg(role,content,recommendations){const msgs=$('#chatMessages');const el=document.createElement('div');el.className='chat-msg chat-msg-'+(role==='user'?'user':'ai');const textNode=document.createElement('span');textNode.textContent=content;el.appendChild(textNode);if(role==='assistant'){const speaker=document.createElement('button');speaker.className='chat-speaker';speaker.title='Hear this';speaker.setAttribute('aria-label','Play audio');speaker.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';speaker.onclick=()=>playTTS(content,speaker);el.appendChild(speaker);}if(recommendations&&recommendations.length){const reco=document.createElement('div');reco.className='reco';recommendations.forEach(r=>{const pill=document.createElement('button');pill.className='reco-pill';pill.textContent='→ '+r.name+(r.price_cents?'  '+fmt(r.price_cents):'');pill.onclick=()=>{if(r.id)addToCart(r.id);else toast('Added to cart');};reco.appendChild(pill);});el.appendChild(reco);}msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;if(role==='user')$('#chatSuggestions')?.classList.add('hidden');if(role==='assistant'&&Chat.voiceOn){const speaker=el.querySelector('.chat-speaker');playTTS(content,speaker);}}
+function showTyping(){const msgs=$('#chatMessages');const el=document.createElement('div');el.className='chat-typing';el.id='chatTyping';el.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;}
+function hideTyping(){$('#chatTyping')?.remove();}
+async function sendChat(ev){if(ev)ev.preventDefault();if(Chat.thinking)return;const input=$('#chatInput');const text=input.value.trim();if(!text)return;appendMsg('user',text);Chat.history.push({role:'user',content:text});input.value='';Chat.thinking=true;$('#chatSend').disabled=true;showTyping();try{const body={message:text,history:Chat.history.slice(-12),session_id:Chat.sessionId,pet_context:State.user?{user_id:State.user.id,user_name:State.user.name}:null,catalog_hint:State.products.slice(0,18).map(p=>({id:p.id,name:p.name,species:p.species,price_cents:p.price_cents,requires_rx:!!p.requires_rx}))};const r=await api('/api/chat',{method:'POST',body:JSON.stringify(body)});hideTyping();const reply=r.reply||r.response||r.message||"I'm here. Could you tell me a bit more?";if(r.session_id)Chat.sessionId=r.session_id;appendMsg('assistant',reply,r.recommendations||r.products||[]);Chat.history.push({role:'assistant',content:reply});}catch(e){hideTyping();appendMsg('assistant',"It sounds like something on my end got in the way — and that's frustrating, I get it. Could you try that once more in a moment? I want to hear you.");console.warn('Chat error',e);}finally{Chat.thinking=false;$('#chatSend').disabled=false;input.focus();}}
+function updateVoiceToggleUI(){const t=$('#voiceToggle');const c=$('#voiceToggleCheck');if(!t)return;c.checked=Chat.voiceOn;t.classList.toggle('on',Chat.voiceOn);$('#voiceToggleText').textContent=Chat.voiceOn?'Voice on':'Voice';}
+function setupVoiceToggle(){const t=$('#voiceToggle');if(!t)return;t.addEventListener('click',(ev)=>{if(ev.target.tagName==='INPUT')return;Chat.voiceOn=!Chat.voiceOn;localStorage.setItem('crittr_voice_on',Chat.voiceOn?'1':'0');updateVoiceToggleUI();if(!Chat.voiceOn&&Chat.currentAudio){try{Chat.currentAudio.pause();}catch(e){}}});updateVoiceToggleUI();}
+function getRecognizer(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return null;const rec=new SR();rec.lang='en-US';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;return rec;}
+function toggleRecording(){const btn=$('#chatMic');if(Chat.recognizing){try{Chat.recognition?.stop();}catch(e){}return;}const rec=getRecognizer();if(!rec){toast('Voice input not supported in this browser — try Chrome or Edge',true);return;}Chat.recognition=rec;Chat.recognizing=true;btn.classList.add('recording');const input=$('#chatInput');let finalText='';rec.onresult=(ev)=>{let interim='';for(let i=ev.resultIndex;i<ev.results.length;i++){const r=ev.results[i];if(r.isFinal)finalText+=r[0].transcript;else interim+=r[0].transcript;}input.value=(finalText+interim).trim();};rec.onend=()=>{Chat.recognizing=false;btn.classList.remove('recording');if(input.value.trim()){sendChat();}};rec.onerror=(e)=>{Chat.recognizing=false;btn.classList.remove('recording');if(e.error==='not-allowed'){toast('Microphone permission blocked. Enable it in your browser settings.',true);}else if(e.error!=='aborted'&&e.error!=='no-speech'){toast('Voice input error: '+e.error,true);}};try{rec.start();}catch(e){Chat.recognizing=false;btn.classList.remove('recording');}}
+async function playTTS(text,speakerEl){try{if(Chat.currentAudio){try{Chat.currentAudio.pause();}catch(e){}$$('.chat-speaker.playing').forEach(s=>s.classList.remove('playing'));}speakerEl?.classList.add('playing');const resp=await fetch('/api/tts',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text.slice(0,1500),voice:'echo'})});if(!resp.ok)throw new Error('TTS failed');const blob=await resp.blob();const url=URL.createObjectURL(blob);const audio=new Audio(url);Chat.currentAudio=audio;audio.onended=()=>{speakerEl?.classList.remove('playing');URL.revokeObjectURL(url);};audio.onerror=()=>{speakerEl?.classList.remove('playing');};try{await audio.play();}catch(e){speakerEl?.classList.remove('playing');}}catch(e){speakerEl?.classList.remove('playing');if('speechSynthesis' in window){const utt=new SpeechSynthesisUtterance(text);const voices=window.speechSynthesis.getVoices();const maleVoice=voices.find(v=>/male|daniel|alex|fred|nathan|aaron/i.test(v.name))||voices.find(v=>v.lang?.startsWith('en'))||voices[0];if(maleVoice)utt.voice=maleVoice;utt.rate=0.98;utt.pitch=0.92;window.speechSynthesis.speak(utt);}}}
+setupVoiceToggle();
+const io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('seen');io.unobserve(e.target);}});},{threshold:.1});
+setTimeout(()=>$$('.reveal').forEach(el=>io.observe(el)),100);
+$('#year').textContent=new Date().getFullYear();
+updateCartCount();
+loadVideos();
+route();
+loadCatalog();
+loadMe();
 </script>
 </body>
 </html>
