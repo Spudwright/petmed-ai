@@ -360,10 +360,28 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                             cust_name = (ship_det.get("name") if ship_det else None) or cust.get("name")
                             td = obj.get("total_details") or {}
                             items = []
+                            db_subtotal = None
+                            db_tax = None
+                            db_shipping = None
+                            db_total = None
                             try:
-                                row = q("SELECT items FROM orders WHERE id = %s", (order_id,), fetch="one")
+                                row = q(
+                                    "SELECT items, subtotal_cents, tax_cents, shipping_cents, total_cents FROM orders WHERE id = %s",
+                                    (order_id,), fetch="one",
+                                )
                                 if row:
-                                    raw_items = row.get("items") if isinstance(row, dict) else (row[0] if hasattr(row, "__getitem__") else None)
+                                    if isinstance(row, dict):
+                                        raw_items = row.get("items")
+                                        db_subtotal = row.get("subtotal_cents")
+                                        db_tax = row.get("tax_cents")
+                                        db_shipping = row.get("shipping_cents")
+                                        db_total = row.get("total_cents")
+                                    else:
+                                        raw_items = row[0] if hasattr(row, "__getitem__") else None
+                                        try:
+                                            db_subtotal = row[1]; db_tax = row[2]; db_shipping = row[3]; db_total = row[4]
+                                        except Exception:
+                                            pass
                                     if raw_items:
                                         if isinstance(raw_items, str):
                                             import json as _json
@@ -378,10 +396,10 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                             if to_email:
                                 send_order_confirmation(
                                     to_email=to_email, name=cust_name, order_id=order_id, items=items,
-                                    subtotal_cents=obj.get("amount_subtotal") or 0,
-                                    tax_cents=td.get("amount_tax") or 0,
-                                    shipping_cents=td.get("amount_shipping") or 0,
-                                    total_cents=obj.get("amount_total") or 0,
+                                    subtotal_cents=db_subtotal if db_subtotal is not None else (obj.get("amount_subtotal") or 0),
+                                    tax_cents=db_tax if db_tax is not None else (td.get("amount_tax") or 0),
+                                    shipping_cents=db_shipping if db_shipping is not None else (td.get("amount_shipping") or 0),
+                                    total_cents=db_total if db_total is not None else (obj.get("amount_total") or 0),
                                     shipping_address=ship_addr,
                                 )
                         except Exception as _e:
