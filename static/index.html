@@ -234,7 +234,13 @@ footer a:hover{color:#fff}
 .account-tab.active{color:var(--sage-700);border-bottom-color:var(--sage-500)}
 .account-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:1.2rem;margin-bottom:1rem}
 
-/* ChatGPT-style focused chat mode on /chat */
+/* ChatGPT-style centered chat section on homepage */
+      html:not(.chat-mode) #chatSection .container.chat-grid { display: flex; flex-direction: column; align-items: center; max-width: 820px; gap: 1.25rem; }
+      html:not(.chat-mode) #chatSection .chat-copy { display: none; }
+      html:not(.chat-mode) #chatSection .container.chat-grid::before { content: 'Meet crittr — your pet’s new best listener.'; font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 400; color: var(--sage-900); text-align: center; line-height: 1.25; padding: 0 1rem; }
+      html:not(.chat-mode) #chatSection .chatbox { width: 100%; max-width: 720px; margin: 0 auto; }
+
+      /* ChatGPT-style focused chat mode on /chat */
 html.chat-mode, html.chat-mode body { height: 100vh; overflow: hidden; background: var(--cream); }
 html.chat-mode nav.nav, html.chat-mode footer, html.chat-mode .chat-fab,
 html.chat-mode main > .view:not(#view-home),
