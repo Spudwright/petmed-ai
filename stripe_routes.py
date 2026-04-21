@@ -351,6 +351,42 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                             (payment_intent, order_id),
                             fetch=False,
                         )
+                        try:
+                            from emails import send_order_confirmation
+                            cust = obj.get("customer_details") or {}
+                            to_email = cust.get("email") or obj.get("customer_email")
+                            ship_det = obj.get("shipping_details") or {}
+                            ship_addr = ship_det.get("address") if ship_det else None
+                            cust_name = (ship_det.get("name") if ship_det else None) or cust.get("name")
+                            td = obj.get("total_details") or {}
+                            items = []
+                            try:
+                                row = q("SELECT items FROM orders WHERE id = %s", (order_id,), fetch="one")
+                                if row:
+                                    raw_items = row.get("items") if isinstance(row, dict) else (row[0] if hasattr(row, "__getitem__") else None)
+                                    if raw_items:
+                                        if isinstance(raw_items, str):
+                                            import json as _json
+                                            try:
+                                                items = _json.loads(raw_items)
+                                            except Exception:
+                                                items = []
+                                        elif isinstance(raw_items, list):
+                                            items = raw_items
+                            except Exception:
+                                pass
+                            if to_email:
+                                send_order_confirmation(
+                                    to_email=to_email, name=cust_name, order_id=order_id, items=items,
+                                    subtotal_cents=obj.get("amount_subtotal") or 0,
+                                    tax_cents=td.get("amount_tax") or 0,
+                                    shipping_cents=td.get("amount_shipping") or 0,
+                                    total_cents=obj.get("amount_total") or 0,
+                                    shipping_address=ship_addr,
+                                )
+                        except Exception as _e:
+                            import logging
+                            logging.getLogger(__name__).error(f"[emails] webhook send failed: {_e}")
 
             elif etype in ("customer.subscription.created",
                            "customer.subscription.updated"):
