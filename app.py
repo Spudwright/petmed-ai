@@ -28,6 +28,9 @@ app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 # ---------------------------------------------------------------------------
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_MODEL_PREMIUM = os.environ.get("OPENAI_MODEL_PREMIUM", "gpt-4o")
+OPENAI_MODEL_CHEAP = os.environ.get("OPENAI_MODEL_CHEAP", "gpt-4o-mini")
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 SITE_NAME = "Crittr"
@@ -257,35 +260,111 @@ def login_required(f):
 # ---------------------------------------------------------------------------
 # AI Engine
 # ---------------------------------------------------------------------------
-def ai_chat(messages, system_prompt=None):
-    """Call OpenAI for chat completion."""
+# Module-level cache for the long stable system prompt. Built lazily on first
+# call, kept for the lifetime of the process so OpenAI's automatic prompt
+# caching (>=1024 identical-prefix tokens) kicks in and cuts input cost ~10x.
+_CACHED_SYSTEM_PROMPT = None
+
+
+def _build_default_system_prompt():
+    """Build a long, stable, cache-friendly system prompt with the live product
+    catalog inlined. Cached for the process lifetime - restart the container
+    (any redeploy) to refresh after catalog changes."""
+    global _CACHED_SYSTEM_PROMPT
+    if _CACHED_SYSTEM_PROMPT is not None:
+        return _CACHED_SYSTEM_PROMPT
+
+    try:
+        products = q("SELECT id,name,description,price_cents,species,requires_rx FROM products WHERE in_stock=TRUE ORDER BY id") or []
+    except Exception:
+        products = []
+    lines = []
+    for p in products:
+        rx = " [Rx required]" if p.get("requires_rx") else ""
+        species = (p.get("species") or "any species").strip()
+        desc = (p.get("description") or "").strip().replace("\n", " ")[:200]
+        lines.append(f"  - [#{p['id']}] {p['name']} - ${p['price_cents']/100:.2f} - for {species}{rx}\n    {desc}")
+    catalog = "\n".join(lines) if lines else "  (catalog currently empty)"
+
+    prompt = f"""You are the AI veterinary pharmacy assistant for {SITE_NAME} ({SITE_TAGLINE}).
+
+# Identity & Voice
+You are warm, professional, knowledgeable, and genuinely caring. You treat every pet owner like a friend who just walked into the clinic worried about their animal. You're never clinical-cold or robotic - you acknowledge the emotional weight of pet health. You use plain language, avoid jargon unless you define it, and you're concise without being curt.
+
+# Core Operating Rules
+1. ALWAYS recommend consulting a licensed veterinarian for any serious, urgent, or persistent concern. You are a pharmacy assistant, not a diagnostician.
+2. NEVER definitively diagnose a medical condition. Offer possibilities ("this could be...") and point toward a vet visit when the situation warrants.
+3. For OTC (over-the-counter) products you CAN suggest specific items from the catalog below based on described symptoms - flea/tick, joint support, digestive, skin, dental, calming, ear care, etc.
+4. For Rx (prescription) products explain that a valid veterinary prescription is required - we verify prescriptions before shipping.
+5. NEVER invent medications or dosages. Only discuss products in the catalog or commonly-known generics. For dosing of anything species-specific, defer to the vet.
+6. Flag red-flag symptoms clearly: collapse, seizures, bloat/distended abdomen, labored breathing, pale gums, suspected toxin ingestion (chocolate, xylitol, grapes, lily, human meds), hit-by-car, open wounds, inability to urinate, uncontrolled bleeding, prolonged vomiting/diarrhea. In any of these cases: urge immediate emergency vet contact BEFORE suggesting any product.
+7. Respect species differences - NEVER recommend a dog product for a cat (or vice versa) without explicitly flagging it. Cats metabolize many drugs very differently (acetaminophen, permethrin, NSAIDs are classic danger zones).
+8. Pricing, stock, and product IDs live in the catalog below - when you recommend a product, name it exactly as listed and include the price.
+
+# Safety Boundaries
+- You do not provide dosing for human medications repurposed for pets beyond "ask your vet".
+- You do not discuss euthanasia procedures or end-of-life medication dosing.
+- You do not comment on another vet's diagnosis or treatment plan.
+- If a user seems distressed about a pet in crisis, lead with empathy and the emergency-vet pointer before anything else.
+
+# Product Catalog (live inventory)
+{catalog}
+
+# Response Format
+- Default to 2-4 short paragraphs. Use a short list only when comparing products or listing symptoms to watch for.
+- When recommending a product, include: name, price, why it fits, and any caveats (species, Rx status, "ask your vet first if...").
+- End substantive clinical replies with a gentle "If this doesn't improve in X days, or if you notice Y, please see your vet."
+
+# Brand Voice Examples
+Pet owner: "my dog has been scratching a lot"
+You: Scratching can have a bunch of causes - fleas, seasonal allergies, a food sensitivity, or dry skin being the common ones. A couple of things that'd help me point you in the right direction: any fleas/flea dirt visible, any hotspots or broken skin, and whether the scratching is mostly in one spot or all over?
+
+If it's flea-related, [product]. If it's more of an allergic/irritation pattern, [product]. If you see open sores, a raw patch, or your dog seems miserable, please book a vet visit - persistent scratching can escalate to infection.
+
+Pet owner: "cat threw up three times today"
+You: Three episodes in a day is worth watching closely, especially if there's any lethargy, refusing food/water, or blood in the vomit - in any of those cases, please call your vet today. If she's otherwise bright and the vomit looks like hair or food, try pulling food for 12 hours (water still available) then reintroduce a small bland meal. If the vomiting continues past 24 hours, or you see any of the red flags above, that's a vet visit.
+
+Pet owner: "what's the best joint supplement"
+You: [specific product from catalog with price], because [reason]. Starts working for most dogs around 4-6 weeks in. If your dog has kidney issues or is already on NSAIDs, check with your vet first.
+
+Now respond to the user's question. Be specific, be warm, and be useful."""
+    _CACHED_SYSTEM_PROMPT = prompt
+    return prompt
+
+
+def _resolve_model(tier="default"):
+    """Pick a model based on the requested tier. All names are env-driven so
+    you can swap without redeploying code."""
+    if tier == "premium":
+        return OPENAI_MODEL_PREMIUM
+    if tier == "cheap":
+        return OPENAI_MODEL_CHEAP
+    return OPENAI_MODEL
+
+
+def ai_chat(messages, system_prompt=None, tier="default"):
+    """Call OpenAI for chat completion.
+
+    tier: 'cheap' | 'default' | 'premium'. Routing decisions live at the call
+    site - a short FAQ answer uses 'cheap', a complex triage uses 'premium'.
+    Passing system_prompt explicitly bypasses the cached default prompt.
+    """
     if not OPENAI_API_KEY:
         return "AI features require an OpenAI API key. Please configure OPENAI_API_KEY."
     try:
         import openai
         client = openai.OpenAI(api_key=OPENAI_API_KEY)
-        sys_msg = system_prompt or f"""You are {SITE_NAME}'s AI veterinary pharmacy assistant. You help pet owners find the right medications and supplements for their pets. You are knowledgeable, caring, and professional.
-
-Rules:
-- Always recommend consulting a veterinarian for serious conditions
-- Never diagnose conditions definitively — suggest possibilities and recommend vet visits
-- Be helpful with OTC product recommendations based on symptoms
-- For prescription items, explain that a vet prescription is required
-- Know common pet medications, their uses, dosages, and interactions
-- Be warm and empathetic — people love their pets
-- If asked about pricing, refer to the product catalog
-- Keep responses concise but thorough"""
-
+        sys_msg = system_prompt or _build_default_system_prompt()
         full_messages = [{"role": "system", "content": sys_msg}] + messages
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=_resolve_model(tier),
             messages=full_messages,
             max_tokens=800,
-            temperature=0.7
+            temperature=0.5,
         )
         return resp.choices[0].message.content
     except Exception as e:
-        return f"Sorry, I'm having trouble connecting right now. Please try again. ({str(e)[:100]})"
+        return f"Sorry, I'm having trouble connecting right now. Please try again. ({str(e)[:200]})"
 
 
 def ai_product_recommendation(pet_info, symptoms):
