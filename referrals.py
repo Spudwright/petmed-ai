@@ -172,6 +172,55 @@ def redeem_referral(q, code, new_user_id):
 
 
 # ---------------------------------------------------------------
+# Credit ledger helpers
+# ---------------------------------------------------------------
+def get_credit_balance(q, user_id):
+    """Net credit balance in cents for a user (>=0)."""
+    try:
+        row = q(
+            "SELECT COALESCE(SUM(amount_cents), 0) AS bal FROM user_credits WHERE user_id = %s;",
+            (user_id,),
+        )
+        if row:
+            return max(0, int(row[0]["bal"] or 0))
+    except Exception as e:
+        log.warning("[referrals] get_credit_balance failed: %s", e)
+    return 0
+
+
+def record_credit_debit(q, user_id, amount_cents, reason):
+    """Insert a negative ledger entry; returns True on success."""
+    if amount_cents <= 0:
+        return False
+    try:
+        q(
+            "INSERT INTO user_credits (user_id, amount_cents, reason) VALUES (%s, %s, %s);",
+            (user_id, -abs(int(amount_cents)), reason),
+            fetch=False,
+        )
+        return True
+    except Exception as e:
+        log.warning("[referrals] record_credit_debit failed: %s", e)
+        return False
+
+
+def record_credit_reversal(q, user_id, amount_cents, reason):
+    """Insert a positive entry to reverse a prior debit."""
+    if amount_cents <= 0:
+        return False
+    try:
+        q(
+            "INSERT INTO user_credits (user_id, amount_cents, reason) VALUES (%s, %s, %s);",
+            (user_id, abs(int(amount_cents)), reason),
+            fetch=False,
+        )
+        return True
+    except Exception as e:
+        log.warning("[referrals] record_credit_reversal failed: %s", e)
+        return False
+
+
+# ---------------------------------------------------------------
 # Stats
 # ---------------------------------------------------------------
 def _stats(q, user_id):

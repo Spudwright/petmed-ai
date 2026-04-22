@@ -167,6 +167,261 @@ _TOPICS = [
         related=["cat-throwing-up-foam", "cat-drinking-more-water",
                  "cat-hairball-every-day"],
     ),
+    Topic(
+        slug="dog-ate-onion",
+        species="dog",
+        title="My dog ate onion — how serious is it?",
+        question="My dog ate onion. What do I need to watch for?",
+        meta_description=(
+            "Onion contains thiosulfate, which damages a dog's red blood cells. "
+            "Even small amounts can cause hemolytic anemia over a few days."
+        ),
+        watch_for=[
+            "Pale gums or weakness 1–5 days after ingestion",
+            "Dark brown or bloody urine",
+            "Rapid breathing, reluctance to move",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-ate-garlic", "dog-ate-grapes", "dog-ate-chocolate"],
+    ),
+    Topic(
+        slug="dog-ate-garlic",
+        species="dog",
+        title="My dog ate garlic — is that toxic?",
+        question="My dog ate garlic. Is that dangerous?",
+        meta_description=(
+            "Garlic is roughly 5x more toxic to dogs than onion by weight. "
+            "Small single exposures often pass; repeated doses build up."
+        ),
+        watch_for=[
+            "Vomiting or diarrhea in the first 24 hours",
+            "Pale gums, lethargy, or collapse 1–5 days later",
+            "Any breed with known sensitivity (Akita, Shiba Inu, Japanese breeds)",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-ate-onion", "dog-ate-grapes", "dog-ate-chocolate"],
+    ),
+    Topic(
+        slug="dog-ate-raisins",
+        species="dog",
+        title="My dog ate raisins — emergency?",
+        question="My dog ate raisins. How much is dangerous?",
+        meta_description=(
+            "Raisins are concentrated grapes — dose for dose, more toxic. "
+            "There's no established safe amount. Treat every exposure seriously."
+        ),
+        watch_for=[
+            "Vomiting or retching within 2–4 hours",
+            "Reduced urination in the next 24–48 hours",
+            "Lethargy, wobbly walk, or bad breath (uremia)",
+        ],
+        lean="ER NOW",
+        related=["dog-ate-grapes", "dog-ate-chocolate", "dog-ate-xylitol"],
+    ),
+    Topic(
+        slug="dog-ate-avocado",
+        species="dog",
+        title="My dog ate avocado — should I worry?",
+        question="My dog ate avocado. Is that toxic?",
+        meta_description=(
+            "The flesh of avocado is mostly fine for dogs in small amounts. "
+            "The pit is the real risk — choking and intestinal obstruction."
+        ),
+        watch_for=[
+            "Gagging or repeated retching (possible pit)",
+            "Vomiting more than twice, or dry heaves",
+            "Belly that feels tight or painful to touch",
+        ],
+        lean="SAFE AT HOME",
+        related=["dog-ate-bone", "dog-ate-chocolate", "puppy-not-eating"],
+    ),
+    Topic(
+        slug="dog-ate-ibuprofen",
+        species="dog",
+        title="My dog ate ibuprofen (Advil) — what now?",
+        question="My dog ate an ibuprofen pill. What should I do?",
+        meta_description=(
+            "Ibuprofen is toxic to dogs at doses people consider normal. "
+            "Even one 200mg tablet can injure the stomach of a small dog."
+        ),
+        watch_for=[
+            "Vomiting (sometimes with blood) within a few hours",
+            "Black, tarry stool over the next 1–2 days",
+            "Decreased urination, lethargy (kidney sign)",
+        ],
+        lean="ER NOW",
+        related=["dog-ate-acetaminophen", "dog-ate-xylitol", "dog-ate-grapes"],
+    ),
+    Topic(
+        slug="dog-ate-acetaminophen",
+        species="dog",
+        title="My dog ate Tylenol (acetaminophen) — emergency?",
+        question="My dog ate acetaminophen. Is that bad?",
+        meta_description=(
+            "Acetaminophen damages a dog's liver and red blood cells. "
+            "Cats are even more sensitive — a single regular-strength tablet can kill."
+        ),
+        watch_for=[
+            "Brown/blue gums or dark urine (methemoglobinemia)",
+            "Vomiting, drooling, or loss of appetite",
+            "Facial or paw swelling",
+        ],
+        lean="ER NOW",
+        related=["dog-ate-ibuprofen", "cat-ate-lily", "dog-ate-xylitol"],
+    ),
+    Topic(
+        slug="cat-ate-lily",
+        species="cat",
+        title="My cat chewed on a lily — what now?",
+        question="My cat chewed on a lily plant. Is that dangerous?",
+        meta_description=(
+            "True lilies (Lilium and Hemerocallis) cause acute kidney failure in "
+            "cats within 24–72 hours. Even pollen or vase water can do it."
+        ),
+        watch_for=[
+            "Vomiting, drooling, or hiding within a few hours",
+            "Reduced or no urination over 1–2 days",
+            "Any plant material visible in the mouth or fur",
+        ],
+        lean="ER NOW",
+        related=["cat-not-eating", "cat-throwing-up-foam", "dog-ate-grapes"],
+    ),
+    Topic(
+        slug="dog-vomiting-yellow",
+        species="dog",
+        title="My dog is vomiting yellow foam — what does it mean?",
+        question="My dog keeps throwing up yellow foam. Should I worry?",
+        meta_description=(
+            "Yellow foam is stomach bile. In dogs, an occasional morning "
+            "episode is usually bilious vomiting syndrome and benign."
+        ),
+        watch_for=[
+            "More than 2 episodes in 24 hours",
+            "Any blood or coffee-ground material in the vomit",
+            "Belly looks bloated or painful",
+        ],
+        lean="SAFE AT HOME",
+        related=["dog-diarrhea", "dog-ate-bone", "puppy-not-eating"],
+    ),
+    Topic(
+        slug="dog-diarrhea",
+        species="dog",
+        title="My dog has diarrhea — when do I need the vet?",
+        question="My dog has diarrhea. How long should I wait?",
+        meta_description=(
+            "Most dog diarrhea resolves in 24–48 hours with a bland diet. "
+            "A short list of red flags tells you when to stop waiting."
+        ),
+        watch_for=[
+            "Frank red blood or black, tarry stool",
+            "Lethargy, refusal to drink, or sunken eyes",
+            "Puppy under 6 months, or any lasting past 48 hours",
+        ],
+        lean="SAFE AT HOME",
+        related=["dog-vomiting-yellow", "puppy-not-eating", "dog-ate-bone"],
+    ),
+    Topic(
+        slug="dog-ate-bone",
+        species="dog",
+        title="My dog swallowed a bone — is it dangerous?",
+        question="My dog just swallowed a cooked bone. What should I do?",
+        meta_description=(
+            "Cooked bones splinter and can perforate the GI tract; raw bones "
+            "tend to pass. Size of the bone vs size of the dog matters most."
+        ),
+        watch_for=[
+            "Retching, drooling, or pawing at the mouth",
+            "Refusal to eat or drink past the next meal",
+            "Belly tense or painful; dark/bloody stool",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-ate-avocado", "dog-vomiting-yellow", "dog-diarrhea"],
+    ),
+    Topic(
+        slug="cat-constipation",
+        species="cat",
+        title="My cat is constipated — how long is too long?",
+        question="My cat hasn't pooped in a couple days. What should I do?",
+        meta_description=(
+            "Occasional constipation is common in cats — chronic cases can "
+            "progress to megacolon. The 72-hour mark is a useful threshold."
+        ),
+        watch_for=[
+            "More than 72 hours without a bowel movement",
+            "Straining in the litter box with little or no output",
+            "Vomiting, lethargy, or bloated belly",
+        ],
+        lean="VET TOMORROW",
+        related=["cat-not-eating", "cat-uti", "cat-throwing-up-foam"],
+    ),
+    Topic(
+        slug="dog-shaking",
+        species="dog",
+        title="My dog is shaking — what could it be?",
+        question="My dog is shaking and I don't know why. What should I check?",
+        meta_description=(
+            "Shaking in dogs can mean cold, fear, pain, nausea, or toxin "
+            "exposure. Context — and what changed in the last 24 hours — matters."
+        ),
+        watch_for=[
+            "Recent access to chocolate, xylitol, marijuana, or human meds",
+            "Shaking plus vomiting, stumbling, or glazed eyes",
+            "Shaking that doesn't stop with warmth and calm",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-ate-chocolate", "dog-ate-xylitol", "dog-limping-after-walk"],
+    ),
+    Topic(
+        slug="dog-ear-infection",
+        species="dog",
+        title="My dog has a smelly ear — is it an ear infection?",
+        question="My dog's ear is smelly and he keeps scratching. What is it?",
+        meta_description=(
+            "Smelly discharge plus head shaking is almost always an ear "
+            "infection. Waiting can push it from outer ear to middle ear."
+        ),
+        watch_for=[
+            "Head tilt, balance trouble, or eye flicking (middle-ear spread)",
+            "Dark debris that looks like coffee grounds (possible mites)",
+            "Swollen, hot flap — can be an aural hematoma",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-hot-spot", "dog-limping-after-walk", "dog-diarrhea"],
+    ),
+    Topic(
+        slug="dog-hot-spot",
+        species="dog",
+        title="My dog has a hot spot — what should I do tonight?",
+        question="My dog has a raw, wet spot on his skin. How do I treat it?",
+        meta_description=(
+            "Hot spots (acute moist dermatitis) spread fast if left wet and "
+            "licked. Keep it dry, keep it covered, and block the tongue."
+        ),
+        watch_for=[
+            "Spreading redness past the original patch in 24 hours",
+            "Yellow pus, thick crust, or fever (systemic infection)",
+            "Hot spot on the ear flap — usually needs an oral antibiotic",
+        ],
+        lean="SAFE AT HOME",
+        related=["dog-ear-infection", "dog-limping-after-walk", "dog-diarrhea"],
+    ),
+    Topic(
+        slug="cat-uti",
+        species="cat",
+        title="My cat is straining in the litter box — UTI or blockage?",
+        question="My cat is straining to pee. Is that a urinary blockage?",
+        meta_description=(
+            "A male cat straining with no urine output is an emergency — a "
+            "full urethral blockage can be fatal within 24–48 hours."
+        ),
+        watch_for=[
+            "No urine produced despite repeated straining (male cats)",
+            "Crying in the box, licking genitals, vomiting",
+            "Blood in urine or urinating outside the box",
+        ],
+        lean="ER NOW",
+        related=["cat-not-eating", "cat-constipation", "cat-throwing-up-foam"],
+    ),
 ]
 
 TOPICS = {t.slug: t for t in _TOPICS}

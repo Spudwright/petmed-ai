@@ -17,7 +17,7 @@ from flask import Flask, request, jsonify, session, redirect, url_for, send_from
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from stripe_routes import register_stripe_routes
-from pets_routes import register_pets_routes, ensure_pets_schema
+from pets_routes import register_pets_routes
 # --- Phase 6: AI operations ---
 from llm_client import set_fallback_observer
 from admin_dashboard import register_admin_dashboard
@@ -657,10 +657,9 @@ with app.app_context():
 register_stripe_routes(app, q=q, q1=q1, login_required=login_required, get_db=get_db)
 
 # Phase 3 - Pet profile + pet-scoped chat (Voss-enhanced)
-try:
-    ensure_pets_schema()
-except Exception as _e:
-    print(f"Warning: ensure_pets_schema failed: {_e}")
+# (register_pets_routes internally calls ensure_pets_schema after wiring _q = q,
+# so we don't invoke it directly here — doing so before the register call leaves
+# the pets_routes module-level _q helper as None and the schema call no-ops.)
 register_pets_routes(app, q=q, q1=q1, login_required=login_required, get_db=get_db)
 
 # CRITTR CHANNEL - YouTube integration blueprint

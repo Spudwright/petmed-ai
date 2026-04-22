@@ -42,6 +42,7 @@ def ensure_stripe_schema():
     _q("ALTER TABLE products ADD COLUMN IF NOT EXISTS stripe_price_monthly_id TEXT;", fetch=False)
     _q("ALTER TABLE products ADD COLUMN IF NOT EXISTS stripe_price_quarterly_id TEXT;", fetch=False)
     _q("ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_session_id TEXT;", fetch=False)
+    _q("ALTER TABLE orders ADD COLUMN IF NOT EXISTS credit_applied_cents INT DEFAULT 0;", fetch=False)
     _q(
         """
         CREATE TABLE IF NOT EXISTS subscriptions (
@@ -203,11 +204,43 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
 
         customer_id = _get_or_create_stripe_customer(user)
 
+        # ---- Referral credit redemption (Phase 8) ----
+        # Apply whatever credit the user has (capped at pre-tax subtotal) as a
+        # one-time Stripe coupon. Debit the ledger now; a webhook on
+        # checkout.session.expired reverses the debit if they never pay.
+        credit_applied = 0
+        coupon_id = None
+        try:
+            from referrals import get_credit_balance
+            credit_balance = get_credit_balance(q, user["id"])
+        except Exception as _ce:
+            app.logger.warning(f"[checkout] credit balance lookup failed: {_ce}")
+            credit_balance = 0
+        if credit_balance > 0 and subtotal > 0:
+            credit_applied = min(credit_balance, subtotal)
+            try:
+                coupon = stripe.Coupon.create(
+                    amount_off=credit_applied,
+                    currency="usd",
+                    duration="once",
+                    max_redemptions=1,
+                    name=f"crittr credit (${credit_applied/100:.2f})",
+                    metadata={"crittr_user_id": str(user["id"])},
+                )
+                coupon_id = coupon.id
+                # Recompute totals so the stored order reflects the discount.
+                total = max(0, subtotal - credit_applied) + tax + shipping
+            except Exception as _cpe:
+                app.logger.warning(f"[checkout] Stripe coupon create failed: {_cpe}")
+                coupon_id = None
+                credit_applied = 0
+
         pending = q1(
             """
             INSERT INTO orders (user_id, status, items, subtotal_cents, tax_cents,
-                                shipping_cents, total_cents, shipping_address)
-            VALUES (%s, 'pending', %s::jsonb, %s, %s, %s, %s, %s::jsonb)
+                                shipping_cents, total_cents, shipping_address,
+                                credit_applied_cents)
+            VALUES (%s, 'pending', %s::jsonb, %s, %s, %s, %s, %s::jsonb, %s)
             RETURNING id;
             """,
             (
@@ -215,11 +248,20 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                 json.dumps(order_items),
                 subtotal, tax, shipping, total,
                 json.dumps(shipping_address),
+                credit_applied,
             ),
         )
         order_id = pending["id"]
 
-        checkout = stripe.checkout.Session.create(
+        # Debit the ledger now (idempotent on order_id via reason tag).
+        if credit_applied > 0:
+            try:
+                from referrals import record_credit_debit
+                record_credit_debit(q, user["id"], credit_applied, f"checkout_pending:{order_id}")
+            except Exception as _de:
+                app.logger.warning(f"[checkout] ledger debit failed: {_de}")
+
+        session_kwargs = dict(
             mode="payment",
             customer=customer_id,
             line_items=line_items,
@@ -229,11 +271,16 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                 "crittr_order_id": str(order_id),
                 "crittr_user_id": str(user["id"]),
                 "flow": "one_time_order",
+                "credit_applied_cents": str(credit_applied),
             },
             payment_intent_data={
                 "metadata": {"crittr_order_id": str(order_id)},
             },
         )
+        if coupon_id:
+            session_kwargs["discounts"] = [{"coupon": coupon_id}]
+
+        checkout = stripe.checkout.Session.create(**session_kwargs)
 
         q(
             "UPDATE orders SET stripe_session_id = %s WHERE id = %s;",
@@ -241,7 +288,12 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
             fetch=False,
         )
 
-        return jsonify({"url": checkout.url, "session_id": checkout.id, "order_id": order_id})
+        return jsonify({
+            "url": checkout.url,
+            "session_id": checkout.id,
+            "order_id": order_id,
+            "credit_applied_cents": credit_applied,
+        })
 
     @app.route("/api/subscribe", methods=["POST"])
     @login_required
@@ -405,6 +457,25 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                         except Exception as _e:
                             import logging
                             logging.getLogger(__name__).error(f"[emails] webhook send failed: {_e}")
+
+            elif etype in ("checkout.session.expired", "checkout.session.async_payment_failed"):
+                md = obj.get("metadata") or {}
+                flow = md.get("flow")
+                if flow == "one_time_order":
+                    try:
+                        order_id = int(md.get("crittr_order_id", 0))
+                        uid = int(md.get("crittr_user_id", 0))
+                        applied = int(md.get("credit_applied_cents", 0))
+                    except Exception:
+                        order_id = uid = applied = 0
+                    if order_id and uid and applied > 0:
+                        try:
+                            from referrals import record_credit_reversal
+                            record_credit_reversal(q, uid, applied, f"checkout_reversed:{order_id}")
+                            q("UPDATE orders SET status = 'expired' WHERE id = %s AND status = 'pending';", (order_id,), fetch=False)
+                        except Exception as _re:
+                            import logging
+                            logging.getLogger(__name__).warning(f"[webhook] credit reversal failed: {_re}")
 
             elif etype in ("customer.subscription.created",
                            "customer.subscription.updated"):
