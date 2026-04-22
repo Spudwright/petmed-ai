@@ -17,6 +17,11 @@ from flask import Flask, request, jsonify, session, redirect, url_for, send_from
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from stripe_routes import register_stripe_routes
+from pets_routes import register_pets_routes, ensure_pets_schema
+try:
+    from youtube import youtube_bp
+except Exception:  # pragma: no cover
+    youtube_bp = None
 
 load_dotenv()
 
@@ -638,6 +643,18 @@ with app.app_context():
         print("App will continue without database.")
 
 register_stripe_routes(app, q=q, q1=q1, login_required=login_required, get_db=get_db)
+
+# Phase 3 - Pet profile + pet-scoped chat (Voss-enhanced)
+try:
+    ensure_pets_schema()
+except Exception as _e:
+    print(f"Warning: ensure_pets_schema failed: {_e}")
+register_pets_routes(app, q=q, q1=q1, login_required=login_required, get_db=get_db)
+
+# CRITTR CHANNEL - YouTube integration blueprint
+if youtube_bp is not None:
+    app.register_blueprint(youtube_bp)
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
