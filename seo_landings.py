@@ -926,6 +926,9 @@ _LEAN_CLASS = {"ER NOW": "er", "VET TOMORROW": "vet", "SAFE AT HOME": "safe"}
 # ---------------------------------------------------------------
 def _sitemap_xml(base_url="https://crittr.ai"):
     urls = [f"{base_url}/"]
+    # Phase A — MEDVi-style category shop pages
+    for slug in ("dogs", "cats", "supplements", "rx"):
+        urls.append(f"{base_url}/shop/{slug}")
     urls.extend(f"{base_url}/c/{slug}" for slug in TOPICS)
     items = "".join(
         f"<url><loc>{u}</loc><changefreq>weekly</changefreq></url>"
