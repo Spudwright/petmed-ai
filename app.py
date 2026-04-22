@@ -18,6 +18,16 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from stripe_routes import register_stripe_routes
 from pets_routes import register_pets_routes, ensure_pets_schema
+# --- Phase 6: AI operations ---
+from llm_client import set_fallback_observer
+from admin_dashboard import register_admin_dashboard
+from events import register_event_routes
+from alerts import record_fallback
+# --- Phase 7: content, viral, regional ---
+from seo_landings import register_seo_landings
+from find_vet import register_find_vet_routes
+from referrals import register_referral_routes
+from regions import register_region_middleware
 try:
     from youtube import youtube_bp
 except Exception:  # pragma: no cover
@@ -654,6 +664,51 @@ register_pets_routes(app, q=q, q1=q1, login_required=login_required, get_db=get_
 # CRITTR CHANNEL - YouTube integration blueprint
 if youtube_bp is not None:
     app.register_blueprint(youtube_bp)
+
+# ---------------------------------------------------------------------------
+# Phase 6 — AI operations automation
+# ---------------------------------------------------------------------------
+try:
+    register_admin_dashboard(app, q)
+except Exception as _e:
+    print(f"Warning: register_admin_dashboard failed: {_e}")
+
+try:
+    register_event_routes(app, q)
+except Exception as _e:
+    print(f"Warning: register_event_routes failed: {_e}")
+
+# Wire LLM fallback observer so alerts.py can record anthropic->openai fallovers
+try:
+    set_fallback_observer(
+        lambda provider, stage, err: record_fallback(q, provider, stage, err)
+    )
+except Exception as _e:
+    print(f"Warning: set_fallback_observer failed: {_e}")
+
+# ---------------------------------------------------------------------------
+# Phase 7 — content, viral, regional
+# ---------------------------------------------------------------------------
+# Region middleware first — later handlers rely on g.region / g.region_config
+try:
+    register_region_middleware(app)
+except Exception as _e:
+    print(f"Warning: register_region_middleware failed: {_e}")
+
+try:
+    register_seo_landings(app)
+except Exception as _e:
+    print(f"Warning: register_seo_landings failed: {_e}")
+
+try:
+    register_find_vet_routes(app)
+except Exception as _e:
+    print(f"Warning: register_find_vet_routes failed: {_e}")
+
+try:
+    register_referral_routes(app, q, require_login=login_required)
+except Exception as _e:
+    print(f"Warning: register_referral_routes failed: {_e}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

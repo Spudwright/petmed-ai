@@ -14,8 +14,8 @@ working at every step.
 Wire-up (in `app.py`, after the app/db init):
 
 ```python
-from admin_dashboard import register_admin_dashboard_routes
-register_admin_dashboard_routes(app, q)
+from admin_dashboard import register_admin_dashboard
+register_admin_dashboard(app, q)
 ```
 
 Env: `ADMIN_USER`, `ADMIN_PASS`. If either is unset, the dashboard endpoints
@@ -224,12 +224,12 @@ init, and before the first existing `register_*` call:
 
 ```python
 # ---- Phase 6 ----
-from admin_dashboard import register_admin_dashboard_routes
+from admin_dashboard import register_admin_dashboard
 from events import register_event_routes
 from alerts import record_fallback
 from llm_client import set_fallback_observer
 
-register_admin_dashboard_routes(app, q)
+register_admin_dashboard(app, q)
 register_event_routes(app, q)
 set_fallback_observer(lambda p, s, e: record_fallback(q, p, s, e))
 
