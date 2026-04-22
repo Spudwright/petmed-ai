@@ -112,8 +112,8 @@ _TOPICS = [
             "Any blood streaks in the foam",
         ],
         lean="SAFE AT HOME",
-        related=["cat-not-eating", "cat-drinking-more-water",
-                 "cat-hairball-every-day"],
+        related=["cat-not-eating", "cat-sneezing",
+                 "cat-throwing-up-hairball"],
     ),
     Topic(
         slug="dog-limping-after-walk",
@@ -130,7 +130,7 @@ _TOPICS = [
             "Refusal to bear any weight at all",
         ],
         lean="VET TOMORROW",
-        related=["dog-yelped-once", "puppy-not-eating", "dog-scratching-ear"],
+        related=["tick-removal", "puppy-not-eating", "dog-ear-infection"],
     ),
     Topic(
         slug="puppy-not-eating",
@@ -148,7 +148,7 @@ _TOPICS = [
         ],
         lean="VET TOMORROW",
         related=["dog-ate-grapes", "dog-limping-after-walk",
-                 "puppy-soft-stool"],
+                 "puppy-diarrhea"],
     ),
     Topic(
         slug="cat-not-eating",
@@ -165,8 +165,8 @@ _TOPICS = [
             "Already underweight or a senior cat",
         ],
         lean="VET TOMORROW",
-        related=["cat-throwing-up-foam", "cat-drinking-more-water",
-                 "cat-hairball-every-day"],
+        related=["cat-throwing-up-foam", "cat-sneezing",
+                 "cat-throwing-up-hairball"],
     ),
     Topic(
         slug="dog-ate-onion",
@@ -422,6 +422,312 @@ _TOPICS = [
         ],
         lean="ER NOW",
         related=["cat-not-eating", "cat-constipation", "cat-throwing-up-foam"],
+    ),
+    Topic(
+        slug="dog-panting-heavily",
+        species="dog",
+        title="My dog is panting heavily — should I be worried?",
+        question="My dog is panting heavily and it's not hot out. What's going on?",
+        meta_description=(
+            "Heavy panting with no heat or exercise can mean pain, anxiety, heatstroke, "
+            "or heart trouble. Here's how to tell the difference in the next 20 minutes."
+        ),
+        watch_for=[
+            "Gums that are brick-red, pale, blue, or tacky",
+            "Refusing to lie down, or restless pacing with the panting",
+            "Body temperature above 103.5°F or collapse",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-shaking", "dog-bloated-stomach", "dog-excessive-thirst"],
+    ),
+    Topic(
+        slug="dog-ate-gum",
+        species="dog",
+        title="My dog ate gum — is it sugar-free (xylitol)?",
+        question="My dog just ate a piece of gum. What do I do?",
+        meta_description=(
+            "If the gum contains xylitol, this is a true emergency even at one or two pieces. "
+            "Check the ingredient list now — then act within minutes."
+        ),
+        watch_for=[
+            "Vomiting, weakness, or wobbliness within 30–60 minutes",
+            "Seizures or collapse (xylitol hypoglycemia)",
+            "Any sugar-free / 'diet' / 'sugarless' label on the wrapper",
+        ],
+        lean="ER NOW",
+        related=["dog-ate-xylitol", "dog-ate-chocolate", "dog-ate-grapes"],
+    ),
+    Topic(
+        slug="dog-ate-mushroom",
+        species="dog",
+        title="My dog ate a mushroom in the yard — is it toxic?",
+        question="My dog ate a wild mushroom from the yard. What should I do?",
+        meta_description=(
+            "Assume any wild mushroom is toxic until proven otherwise. Some species cause liver failure "
+            "within 6–24 hours with no early warning. Here's the playbook."
+        ),
+        watch_for=[
+            "Vomiting, drooling, or diarrhea in the first 6 hours",
+            "Yellowing of gums or eyes (liver sign) in 12–48 hours",
+            "Stumbling, tremors, or hallucinations (neurotoxic species)",
+        ],
+        lean="ER NOW",
+        related=["dog-ate-grapes", "dog-ate-onion", "dog-vomiting-yellow"],
+    ),
+    Topic(
+        slug="dog-ate-rat-poison",
+        species="dog",
+        title="My dog ate rat poison — how urgent is this?",
+        question="My dog ate rat poison. What do I do right now?",
+        meta_description=(
+            "Rodenticide is a true emergency — don't wait for symptoms. Bring the packaging with you. "
+            "The active ingredient determines the antidote and the window."
+        ),
+        watch_for=[
+            "Bruising, bleeding gums, or bloody urine (anticoagulants, 3–7 days out)",
+            "Tremors, seizures, or weakness (bromethalin, within 24 hours)",
+            "Excessive thirst and urination (cholecalciferol, 24–72 hours)",
+        ],
+        lean="ER NOW",
+        related=["dog-ate-ibuprofen", "dog-ate-acetaminophen", "dog-shaking"],
+    ),
+    Topic(
+        slug="dog-ate-battery",
+        species="dog",
+        title="My dog chewed a battery — what are the risks?",
+        question="My dog chewed a battery. Is it an emergency?",
+        meta_description=(
+            "Chewed alkaline or lithium batteries can cause severe chemical burns in the mouth and throat. "
+            "Swallowed button batteries can erode the esophagus within hours."
+        ),
+        watch_for=[
+            "Drooling, pawing at the mouth, or refusing food",
+            "Vomiting (don't induce — caustic reflux makes it worse)",
+            "Coughing, gagging, or black/bloody stool",
+        ],
+        lean="ER NOW",
+        related=["dog-ate-sock", "dog-ate-bone", "dog-vomiting-yellow"],
+    ),
+    Topic(
+        slug="dog-ate-sock",
+        species="dog",
+        title="My dog swallowed a sock — will it pass?",
+        question="My dog swallowed a sock. Will it come out on its own?",
+        meta_description=(
+            "Socks often pass in small dogs or get stuck and become a surgical emergency. "
+            "Size of dog vs. size of sock is the key variable. Here's how to read it."
+        ),
+        watch_for=[
+            "Repeated vomiting, especially after eating",
+            "Refusal to eat, bloated or painful belly",
+            "No bowel movement for 24+ hours",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-ate-bone", "dog-ate-battery", "dog-vomiting-yellow"],
+    ),
+    Topic(
+        slug="cat-ate-chocolate",
+        species="cat",
+        title="My cat ate chocolate — is it dangerous for cats too?",
+        question="My cat licked chocolate off a plate. Is that bad?",
+        meta_description=(
+            "Cats are less drawn to chocolate than dogs but just as vulnerable to theobromine toxicity. "
+            "Dark and baking chocolate are the real problems."
+        ),
+        watch_for=[
+            "Vomiting, diarrhea, or unusual thirst in the first 6 hours",
+            "Rapid heartbeat or restlessness",
+            "Muscle tremors or seizures (high dose)",
+        ],
+        lean="VET TOMORROW",
+        related=["cat-ate-string", "cat-not-eating", "cat-ate-lily"],
+    ),
+    Topic(
+        slug="cat-ate-string",
+        species="cat",
+        title="My cat swallowed string — should I pull it out?",
+        question="My cat swallowed a piece of string. Should I pull it out?",
+        meta_description=(
+            "Never pull visible string from a cat's mouth or bottom — linear foreign bodies can slice "
+            "through the intestines as they tighten. This needs imaging, not force."
+        ),
+        watch_for=[
+            "String still visible at the mouth or anus (don't pull)",
+            "Vomiting, refusing food, or hiding",
+            "Painful, bloated belly or straining with no stool",
+        ],
+        lean="ER NOW",
+        related=["cat-not-eating", "cat-throwing-up-foam", "cat-constipation"],
+    ),
+    Topic(
+        slug="cat-throwing-up-hairball",
+        species="cat",
+        title="My cat is throwing up hairballs — how often is too often?",
+        question="My cat keeps throwing up hairballs. Is that normal?",
+        meta_description=(
+            "An occasional hairball is normal — more than one a week, or retching with nothing coming up, "
+            "usually isn't. It's often a sign of GI motility or inflammation, not just grooming."
+        ),
+        watch_for=[
+            "More than one hairball per week or daily retching",
+            "Weight loss, decreased appetite, or diarrhea alongside",
+            "Retching with nothing produced (could be partial blockage)",
+        ],
+        lean="VET TOMORROW",
+        related=["cat-not-eating", "cat-sneezing", "cat-constipation"],
+    ),
+    Topic(
+        slug="cat-sneezing",
+        species="cat",
+        title="My cat won't stop sneezing — is it a cold?",
+        question="My cat has been sneezing all day. What's going on?",
+        meta_description=(
+            "Most cat sneezing is feline upper respiratory infection (herpesvirus or calicivirus). "
+            "Some cases are dental, fungal, or a stuck blade of grass. Here's how to sort them out."
+        ),
+        watch_for=[
+            "Yellow or green nasal discharge (not clear)",
+            "Eye discharge, squinting, or ulcers",
+            "Refusing to eat for more than 24 hours (a cat needs its nose to eat)",
+        ],
+        lean="VET TOMORROW",
+        related=["cat-not-eating", "cat-ate-string", "kitten-not-eating"],
+    ),
+    Topic(
+        slug="dog-bloated-stomach",
+        species="dog",
+        title="My dog's stomach looks bloated — is it GDV?",
+        question="My dog's belly looks huge and tight. Is this bloat?",
+        meta_description=(
+            "Gastric dilatation-volvulus (GDV / 'bloat') is a deep-chested-dog emergency. "
+            "Every hour without surgery increases mortality sharply."
+        ),
+        watch_for=[
+            "Visibly distended, drum-tight belly",
+            "Unproductive retching — trying to vomit with nothing coming up",
+            "Restlessness, pacing, drooling, and rapid breathing",
+        ],
+        lean="ER NOW",
+        related=["dog-vomiting-yellow", "dog-shaking", "dog-panting-heavily"],
+    ),
+    Topic(
+        slug="dog-scooting",
+        species="dog",
+        title="My dog is scooting its bottom — anal glands?",
+        question="My dog keeps scooting its butt on the floor. Why?",
+        meta_description=(
+            "Scooting is usually anal gland irritation, but it can also be worms, allergies, or an infected "
+            "anal sac. Most cases are not emergencies — a few are."
+        ),
+        watch_for=[
+            "Visible swelling or red/dark spot near the anus (possible abscess)",
+            "Strong fishy smell or licking constantly",
+            "Rice-like segments in stool or around the bottom (tapeworms)",
+        ],
+        lean="SAFE AT HOME",
+        related=["dog-diarrhea", "dog-ear-infection", "dog-hot-spot"],
+    ),
+    Topic(
+        slug="dog-excessive-thirst",
+        species="dog",
+        title="My dog is drinking way more water than usual — why?",
+        question="My dog is suddenly drinking a ton of water. What could that mean?",
+        meta_description=(
+            "A sudden, sustained jump in water intake (polydipsia) is a classic early sign of diabetes, "
+            "Cushing's, kidney disease, or uterine infection. Worth testing, not ignoring."
+        ),
+        watch_for=[
+            "Urinating far more often or inside the house after being trained",
+            "Weight loss with a big appetite (diabetes) or pot-bellied look (Cushing's)",
+            "Lethargy, vomiting, or a known unspayed female in heat recently (pyometra)",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-panting-heavily", "dog-bad-breath", "dog-vomiting-yellow"],
+    ),
+    Topic(
+        slug="dog-bad-breath",
+        species="dog",
+        title="My dog's breath is awful — is it just teeth?",
+        question="My dog's breath smells terrible. Is that normal?",
+        meta_description=(
+            "'Dog breath' shouldn't knock you over. Persistent foul breath usually means periodontal disease; "
+            "fruity or chemical breath can signal diabetes or kidney issues."
+        ),
+        watch_for=[
+            "Brown tartar, red gums, or loose teeth",
+            "Sweet/fruity breath (possible diabetes / ketoacidosis)",
+            "Ammonia-like breath plus vomiting (possible kidney disease)",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-excessive-thirst", "dog-ear-infection", "dog-vomiting-yellow"],
+    ),
+    Topic(
+        slug="puppy-diarrhea",
+        species="dog",
+        title="My puppy has diarrhea — how worried should I be?",
+        question="My puppy has diarrhea. Is this an emergency?",
+        meta_description=(
+            "Puppies dehydrate and crash fast. Bloody diarrhea, lethargy, or a puppy under 16 weeks "
+            "that hasn't finished vaccinations is a parvovirus red flag."
+        ),
+        watch_for=[
+            "Bloody or raspberry-jam-colored stool",
+            "Vomiting along with the diarrhea, or refusing water",
+            "Lethargy, sunken eyes, or gums that feel tacky",
+        ],
+        lean="ER NOW",
+        related=["puppy-not-eating", "dog-diarrhea", "dog-vomiting-yellow"],
+    ),
+    Topic(
+        slug="kitten-not-eating",
+        species="cat",
+        title="My kitten won't eat — how long is too long?",
+        question="My kitten hasn't eaten in a day. Should I worry?",
+        meta_description=(
+            "A kitten that skips more than 12 hours of food is at real risk of hypoglycemia and "
+            "hepatic lipidosis. Much tighter window than an adult cat."
+        ),
+        watch_for=[
+            "Wobbliness, cold ears/paws, or collapse (low blood sugar)",
+            "Diarrhea or vomiting alongside the not-eating",
+            "Dehydration — tacky gums, skin tent, sunken eyes",
+        ],
+        lean="ER NOW",
+        related=["cat-not-eating", "cat-sneezing", "cat-throwing-up-hairball"],
+    ),
+    Topic(
+        slug="dog-red-eyes",
+        species="dog",
+        title="My dog's eyes are red — allergies or emergency?",
+        question="My dog has red, irritated eyes. What should I do?",
+        meta_description=(
+            "Red eyes can be allergies, dry eye, a scratched cornea, or glaucoma. "
+            "Squinting plus a cloudy eye is an emergency — pressure can damage vision within hours."
+        ),
+        watch_for=[
+            "Squinting, pawing at the eye, or holding it shut",
+            "Cloudy or bluish cornea (possible glaucoma)",
+            "Yellow or green discharge, or an obvious injury",
+        ],
+        lean="VET TOMORROW",
+        related=["dog-ear-infection", "dog-hot-spot", "dog-shaking"],
+    ),
+    Topic(
+        slug="tick-removal",
+        species="dog",
+        title="I found a tick on my dog — how do I remove it safely?",
+        question="I found a tick on my dog. How should I remove it?",
+        meta_description=(
+            "Use fine-tipped tweezers, grip where the tick meets the skin, and pull straight out with "
+            "steady pressure. Skip the matches, alcohol, and petroleum jelly — those make it worse."
+        ),
+        watch_for=[
+            "Lameness, fever, or lethargy 1–3 weeks later (possible tick-borne disease)",
+            "A target-shaped rash or swollen joints",
+            "Head of the tick left behind — the skin usually heals without intervention",
+        ],
+        lean="SAFE AT HOME",
+        related=["dog-limping-after-walk", "dog-hot-spot", "dog-red-eyes"],
     ),
 ]
 
