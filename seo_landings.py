@@ -41,6 +41,7 @@ class Topic:
     watch_for: List[str]
     lean: str            # "ER NOW" | "VET TOMORROW" | "SAFE AT HOME"
     related: List[str] = field(default_factory=list)
+    faqs: List[tuple] = field(default_factory=list)  # [(question, answer), ...] — empty = auto-generate
 
 
 # Seed catalog. Copy is deliberately specific — thin pages don't rank.
@@ -461,6 +462,24 @@ _HTML = r"""<!doctype html>
     }
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {% for q, a in faqs %}
+      {
+        "@type": "Question",
+        "name": {{ q | tojson }},
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": {{ a | tojson }}
+        }
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }
+  </script>
   <style>
     :root {
       --bg:#FBF7EE; --ink:#2A2A2A; --muted:#6B6B6B; --accent:#6FA26F;
@@ -538,6 +557,22 @@ _HTML = r"""<!doctype html>
       </ul>
     </div>
 
+    {% if faqs %}
+    <div class="card faq">
+      <h3 style="margin:0 0 12px 0; font-family:'Fraunces',serif; font-weight:500;">
+        Common questions
+      </h3>
+      <div>
+        {% for q, a in faqs %}
+        <details style="border-bottom:1px dashed var(--line); padding:10px 0;">
+          <summary style="cursor:pointer; font-weight:500; font-size:15px;">{{ q }}</summary>
+          <p style="margin:8px 0 4px 0; font-size:14.5px; color:var(--muted); line-height:1.55;">{{ a }}</p>
+        </details>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <div class="related">
       {% for slug in topic.related %}
         {% if slug in all_topics %}
@@ -597,6 +632,61 @@ def _sitemap_xml(base_url="https://crittr.ai"):
     )
 
 
+
+# ---------------------------------------------------------------
+# FAQ generation (FAQPage JSON-LD)
+# ---------------------------------------------------------------
+_LEAN_FAQ_BASE = {
+    "ER NOW": (
+        "Should I go to the emergency vet right now?",
+        "Yes. Based on what you\'ve described, this is the kind of situation where minutes can matter. "
+        "Call your nearest 24/7 animal ER on the way. If you\'re not sure where that is, use our free triage chat above — "
+        "it\'ll confirm the urgency and surface a local ER in seconds.",
+    ),
+    "VET TOMORROW": (
+        "Can this wait until the morning?",
+        "In most cases, yes — a same-day or next-morning vet visit is the right call, not an ER run. "
+        "Watch the signs listed above. If any of them escalate overnight, escalate too. When in doubt, start the chat.",
+    ),
+    "SAFE AT HOME": (
+        "Is this actually an emergency?",
+        "Most of the time, no — this category is usually safe to manage at home with monitoring. "
+        "That said, every critter is different. Run your specifics through the chat above for a read on your pet, not the average.",
+    ),
+}
+
+
+def _build_faqs(topic):
+    """Return a list of (question, answer) tuples for this topic."""
+    if topic.faqs:
+        return list(topic.faqs)
+    faqs = []
+    # 1) Lean-specific question
+    lean_q = _LEAN_FAQ_BASE.get(topic.lean)
+    if lean_q:
+        faqs.append(lean_q)
+    # 2) Watch-for question
+    if topic.watch_for:
+        signs = "; ".join(topic.watch_for[:3])
+        faqs.append((
+            "What symptoms should I watch for?",
+            f"Three signs worth watching in the next 24\u201348 hours: {signs}. "
+            "If any of them show up or get worse, move up one tier (home \u2192 vet, vet \u2192 ER).",
+        ))
+    # 3) Vet visit cost + teletriage hook
+    faqs.append((
+        "Do I need to pay for a vet visit just to ask?",
+        "No. Our triage chat is free \u2014 it\'ll tell you whether a vet visit is actually warranted before you spend anything. "
+        "If you do need a licensed vet, we connect you to one via Vetster or AirVet in minutes, from your phone.",
+    ))
+    # 4) crittr pharmacy hook
+    faqs.append((
+        "Can crittr fill a prescription for this?",
+        "If a licensed vet prescribes meds during or after triage, yes \u2014 Rx orders are routed through our licensed pharmacy partner (Chewy Pharmacy). "
+        "You can also browse our OTC picks directly; we only stock items our vet advisors actually recommend.",
+    ))
+    return faqs
+
 # ---------------------------------------------------------------
 # Route registration
 # ---------------------------------------------------------------
@@ -612,6 +702,7 @@ def register_seo_landings(app):
             topic=topic,
             all_topics=TOPICS,
             lean_class=_LEAN_CLASS.get(topic.lean, "safe"),
+            faqs=_build_faqs(topic),
         )
 
     @app.route("/sitemap.xml")
