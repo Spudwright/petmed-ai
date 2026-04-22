@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="crittr.ai — 2am-ready AI pet triage. Licensed vet partners on tap. Food, supplements, and Rx shipped to your door." />
+<title>crittr — Pet healthcare, redefined for 2am.</title>
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="crittr.ai" />
+<meta property="og:title" content="crittr — Pet healthcare, redefined for 2am." />
+<meta property="og:description" content="2am-ready AI pet triage. Licensed vet partners on tap. Food, supplements, and Rx shipped to your door." />
+<meta property="og:url" content="https://crittr.ai/" />
+<meta property="og:image" content="https://crittr.ai/static/og/cover.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="crittr — Pet healthcare, redefined for 2am." />
+<meta name="twitter:description" content="2am-ready AI pet triage. Licensed vet partners on tap." />
+<meta name="twitter:image" content="https://crittr.ai/static/og/cover.png" />
+<link rel="canonical" href="https://crittr.ai/" />
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "crittr.ai",
+  "url": "https://crittr.ai/",
+  "description": "2am-ready AI pet triage with licensed vet partners.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://crittr.ai/c/{search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "crittr.ai",
+  "url": "https://crittr.ai/",
+  "logo": "https://crittr.ai/static/og/logo.png",
+  "sameAs": []
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --sage-50:#F2F7F1;--sage-100:#E4EFE2;--sage-200:#C7DEC4;--sage-300:#A6C9A2;
+  --sage-400:#82B17D;--sage-500:#6B9E6B;--sage-600:#527E54;--sage-700:#3E6340;
+  --sage-800:#2D4A30;--sage-900:#1F3221;
+  --cream:#FDFBF5;--cream-2:#F6F1E7;--sand:#E9DDC7;
+  --terracotta:#D4956A;--terracotta-dark:#B37450;
+  --ink:#1C2A1F;--muted:#6E7D70;--line:#DFE5DB;
+  --danger:#B4463B;--success:#4F8A54;
+  --shadow:0 12px 40px -16px rgba(28,42,31,.18);
+  --shadow-sm:0 2px 10px -4px rgba(28,42,31,.14);
+  --shadow-lg:0 28px 80px -24px rgba(28,42,31,.28);
+  --radius:14px;--radius-sm:10px;--radius-lg:22px;
+  --ease:cubic-bezier(.32,.72,.24,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{font-size:17.5px}
+body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--cream);line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,.serif{font-family:'Fraunces','Playfair Display',Georgia,serif;font-weight:500;letter-spacing:-.01em;line-height:1.12;color:var(--sage-900);margin:0 0 .4em}
+h1{font-size:clamp(2.9rem,5.6vw,4.9rem);font-weight:500;letter-spacing:-.02em}
+h2{font-size:clamp(2.1rem,3.4vw,3rem);line-height:1.14}
+h3{font-size:1.5rem;font-weight:600;line-height:1.25}
+h4{font-size:1.1rem;font-weight:600}
+p{margin:0 0 1em;color:#374C3C}
+a{color:var(--sage-700);text-decoration:none}
+a:hover{color:var(--sage-500)}
+.container{max-width:1220px;margin:0 auto;padding:0 28px}
+.muted{color:var(--muted)}
+.italic{font-style:italic}
+.eyebrow{display:inline-block;font-size:.74rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--sage-600);margin-bottom:.9rem}
+
+/* ── Announce bar ─────────────────────────────── */
+.announce{background:var(--sage-800);color:#EEF3EC;font-size:.82rem;text-align:center;padding:.55rem 1rem;letter-spacing:.02em}
+.announce strong{color:#fff;font-weight:600}
+.announce .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#6ECB70;margin:0 .5rem -1px;box-shadow:0 0 0 3px rgba(110,203,112,.25);animation:pulse-dot 1.6s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ── Nav ──────────────────────────────────────── */
+.nav{position:sticky;top:0;z-index:40;background:rgba(253,251,245,.92);backdrop-filter:saturate(1.6) blur(10px);-webkit-backdrop-filter:saturate(1.6) blur(10px);border-bottom:1px solid rgba(223,229,219,.6)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:.55rem;font-family:'Fraunces',serif;font-size:1.55rem;font-weight:600;color:var(--sage-800);letter-spacing:-.02em}
+.logo-dot{width:14px;height:14px;border-radius:50%;background:var(--sage-500);box-shadow:0 0 0 4px var(--sage-100);display:inline-block}
+.nav-links{display:flex;align-items:center;gap:1.9rem;list-style:none;margin:0;padding:0}
+.nav-links a{color:var(--ink);font-weight:500;font-size:.93rem}
+.nav-links a:hover{color:var(--sage-600)}
+.nav-right{display:flex;align-items:center;gap:.6rem}
+@media(max-width:900px){.nav-links{display:none}}
+
+/* ── Buttons ──────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.9rem 1.7rem;border-radius:999px;border:1px solid transparent;font-weight:600;font-size:1.02rem;cursor:pointer;transition:all .2s var(--ease);font-family:inherit;white-space:nowrap;letter-spacing:-.005em}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--sage-700);color:#fff}
+.btn-primary:hover{background:var(--sage-800);box-shadow:0 10px 24px -8px rgba(62,99,64,.55)}
+.btn-secondary{background:#fff;color:var(--sage-800);border-color:var(--line)}
+.btn-secondary:hover{background:var(--sage-50);border-color:var(--sage-300)}
+.btn-terra{background:var(--terracotta);color:#fff}
+.btn-terra:hover{background:var(--terracotta-dark)}
+.btn-sm{padding:.55rem 1rem;font-size:.84rem}
+.btn-lg{padding:1.05rem 1.9rem;font-size:1.05rem}
+
+/* ── Hero ─────────────────────────────────────── */
+.hero{position:relative;padding:72px 0 96px;background:radial-gradient(62% 48% at 88% 8%,rgba(130,177,125,.28),transparent 60%),radial-gradient(58% 54% at 6% 95%,rgba(212,149,106,.16),transparent 60%),linear-gradient(180deg,var(--sage-50),var(--cream));overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:3.2rem;align-items:center}
+@media(max-width:1020px){.hero-grid{grid-template-columns:1fr;gap:2.2rem}}
+.hero-copy h1{font-size:clamp(2.8rem,5.2vw,4.6rem);margin-bottom:1.1rem}
+.hero-copy h1 em{font-style:italic;color:var(--terracotta-dark);font-weight:500}
+.hero-sub{font-size:1.18rem;color:#3D4F40;max-width:540px;margin:0 0 2rem;line-height:1.55}
+.hero-ctas{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:2rem}
+.hero-bullets{list-style:none;padding:0;margin:1.6rem 0 0;display:grid;grid-template-columns:1fr 1fr;gap:.55rem 1.4rem;max-width:520px}
+.hero-bullets li{display:flex;align-items:flex-start;gap:.55rem;font-size:.92rem;color:#3D4F40;font-weight:500}
+.hero-bullets li::before{content:'';flex-shrink:0;width:18px;height:18px;border-radius:50%;background:var(--sage-200) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232D4A30" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg>') center/12px no-repeat;margin-top:2px}
+
+/* Hero chat card */
+.hero-chat{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);border:1px solid var(--line);display:flex;flex-direction:column;min-height:520px;max-height:640px;overflow:hidden;position:relative}
+.hero-chat::before{content:'';position:absolute;inset:-1px;border-radius:var(--radius-lg);background:linear-gradient(135deg,rgba(130,177,125,.35),transparent 40%,rgba(212,149,106,.25));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;padding:1px;pointer-events:none}
+.chat-head{padding:1.1rem 1.3rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.8rem;background:var(--sage-50)}
+.chat-avatar{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--sage-300),var(--sage-600));position:relative;flex-shrink:0}
+.chat-avatar::after{content:'';position:absolute;right:-2px;bottom:0;width:12px;height:12px;border-radius:50%;background:#4CAF50;border:2px solid #fff}
+.chat-name{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:600;color:var(--sage-900);line-height:1.2}
+.chat-status{font-size:.78rem;color:var(--muted);margin-top:1px;display:flex;align-items:center;gap:.3rem}
+.chat-status::before{content:'';width:6px;height:6px;border-radius:50%;background:#4CAF50}
+.chat-body{flex:1;overflow-y:auto;padding:1.3rem;display:flex;flex-direction:column;gap:.75rem;background:linear-gradient(180deg,#fff,var(--cream))}
+.chat-msg{max-width:86%;padding:.8rem 1.05rem;border-radius:18px;font-size:.98rem;line-height:1.5}
+.chat-msg-ai{background:#fff;border:1px solid var(--line);color:var(--ink);align-self:flex-start;border-bottom-left-radius:4px;box-shadow:var(--shadow-sm)}
+.chat-msg-ai strong{color:var(--sage-800)}
+.chat-msg-user{background:var(--sage-600);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-suggests{display:flex;gap:.45rem;padding:0 1rem 1rem;flex-wrap:wrap;background:linear-gradient(180deg,transparent,#fff)}
+.chat-suggest{background:var(--sage-50);color:var(--sage-800);padding:.5rem .9rem;border-radius:999px;font-size:.8rem;cursor:pointer;border:1px solid var(--sage-200);transition:all .2s var(--ease);font-family:inherit;font-weight:500}
+.chat-suggest:hover{background:var(--sage-200)}
+.chat-input-row{padding:.85rem;border-top:1px solid var(--line);background:#fff;display:flex;gap:.55rem}
+.chat-input-row input{flex:1;padding:.85rem 1.1rem;border:1px solid var(--line);border-radius:999px;background:var(--cream);font-family:inherit;font-size:.98rem;transition:all .2s var(--ease)}
+.chat-input-row input:focus{outline:none;border-color:var(--sage-500);background:#fff;box-shadow:0 0 0 3px rgba(130,177,125,.18)}
+.chat-input-row button{background:var(--sage-700);color:#fff;border:0;border-radius:50%;width:46px;height:46px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease)}
+.chat-input-row button:hover:not(:disabled){background:var(--sage-800);transform:scale(1.04)}
+.chat-tag{position:absolute;top:-14px;left:20px;background:var(--terracotta);color:#fff;padding:.3rem .8rem;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;box-shadow:var(--shadow-sm);z-index:2}
+
+/* ── Trust strip ─────────────────────────────── */
+.trust-strip{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:28px 0}
+.trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.6rem;text-align:center}
+@media(max-width:820px){.trust-grid{grid-template-columns:repeat(2,1fr)}}
+.trust-item{display:flex;align-items:center;justify-content:center;gap:.6rem;font-size:.9rem;font-weight:600;color:var(--sage-800)}
+.trust-item svg{color:var(--sage-600);flex-shrink:0}
+
+/* ── Category rail ───────────────────────────── */
+.cat-rail{background:var(--cream-2);padding:44px 0 32px;border-bottom:1px solid var(--line)}
+.cat-rail-head{text-align:center;margin-bottom:2rem}
+.cat-rail-head .eyebrow{color:var(--sage-700)}
+.cat-rail-head h3{font-size:1.55rem;font-weight:500;color:var(--sage-900)}
+.cat-rail-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.8rem}
+@media(max-width:960px){.cat-rail-row{grid-template-columns:repeat(2,1fr)}}
+.cat-chip-lg{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:1.1rem 1rem;text-align:center;cursor:pointer;transition:all .25s var(--ease);color:var(--ink);text-decoration:none;display:block}
+.cat-chip-lg:hover{border-color:var(--sage-400);background:var(--sage-50);transform:translateY(-2px);box-shadow:var(--shadow-sm);color:var(--ink)}
+.cat-chip-lg .icon{font-size:1.8rem;display:block;margin-bottom:.35rem;line-height:1}
+.cat-chip-lg .label{font-size:.92rem;font-weight:600}
+.cat-chip-lg .sub{font-size:.75rem;color:var(--muted);margin-top:.15rem}
+
+/* ── Category modules (MedVi rhythm) ──────────── */
+section{padding:96px 0}
+.cat-module{border-top:1px solid var(--line)}
+.cat-module:nth-of-type(even){background:var(--cream-2)}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:4.4rem;align-items:center}
+@media(max-width:960px){.cat-grid{grid-template-columns:1fr;gap:2.4rem}}
+.cat-module.reverse .cat-grid{grid-template-columns:1fr 1fr}
+.cat-module.reverse .cat-grid > *:first-child{order:2}
+@media(max-width:960px){.cat-module.reverse .cat-grid > *:first-child{order:initial}}
+.cat-copy .eyebrow{color:var(--sage-600)}
+.cat-copy h2{margin-bottom:.6rem}
+.cat-copy h2 em{font-style:italic;color:var(--terracotta-dark);font-weight:500}
+.cat-lede{font-size:1.08rem;color:#3D4F40;max-width:480px;margin-bottom:1.6rem;line-height:1.6}
+.cat-bullets{list-style:none;padding:0;margin:0 0 2rem}
+.cat-bullets li{display:flex;align-items:flex-start;gap:.65rem;margin:.65rem 0;font-size:.98rem;color:#3D4F40}
+.cat-bullets li::before{content:'';flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--sage-200) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232D4A30" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg>') center/13px no-repeat;margin-top:1px}
+.cat-photo{position:relative;aspect-ratio:4/5;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);background:var(--sage-100)}
+.cat-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.cat-photo .photo-badge{position:absolute;right:22px;bottom:22px;width:98px;height:98px;border-radius:50%;background:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:.72rem;font-weight:600;color:var(--sage-800);text-align:center;line-height:1.15;box-shadow:var(--shadow-sm);padding:.5rem}
+.cat-photo .photo-badge strong{font-size:1.5rem;font-weight:600;color:var(--terracotta-dark);display:block;margin-bottom:.1rem}
+
+/* ── Built around your pet ───────────────────── */
+.pet-memory{background:linear-gradient(180deg,var(--sage-50),var(--cream));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+@media(max-width:960px){.pm-grid{grid-template-columns:1fr;gap:2.4rem}}
+.pm-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:1.8rem;box-shadow:var(--shadow)}
+.pm-card-head{display:flex;align-items:center;gap:1rem;padding-bottom:1.2rem;border-bottom:1px solid var(--line);margin-bottom:1.2rem}
+.pm-avatar{width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--terracotta),var(--sage-400));flex-shrink:0;position:relative;overflow:hidden}
+.pm-avatar::after{content:'🐕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem}
+.pm-name{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;color:var(--sage-900);margin:0;line-height:1.2}
+.pm-meta{font-size:.88rem;color:var(--muted);margin-top:.15rem}
+.pm-rows{display:grid;gap:.7rem}
+.pm-row{display:flex;justify-content:space-between;align-items:center;padding:.6rem .85rem;background:var(--cream);border-radius:var(--radius-sm);font-size:.92rem}
+.pm-row .k{color:var(--muted);font-weight:500}
+.pm-row .v{color:var(--ink);font-weight:600}
+
+/* ── Reviews ─────────────────────────────────── */
+.reviews{background:var(--sage-800);color:#EEF3EC}
+.reviews h2{color:#fff}
+.reviews .eyebrow{color:var(--sage-300)}
+.reviews-intro{text-align:center;max-width:640px;margin:0 auto 3rem}
+.reviews-intro p{color:#C7DEC4}
+.r-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem}
+@media(max-width:820px){.r-grid{grid-template-columns:1fr}}
+.r-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:1.4rem;display:flex;flex-direction:column;gap:.9rem}
+.r-head{display:flex;align-items:center;gap:.75rem}
+.r-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--sage-300),var(--terracotta));flex-shrink:0;overflow:hidden}
+.r-avatar img{width:100%;height:100%;object-fit:cover}
+.r-name{font-weight:600;color:#fff;font-size:.98rem}
+.r-pet{font-size:.8rem;color:var(--sage-300);margin-top:1px}
+.r-stars{display:flex;gap:2px;color:#F5C96B;font-size:.95rem;margin-bottom:-.2rem}
+.r-quote{font-family:'Fraunces',serif;font-style:italic;font-size:1rem;color:#F6F8F5;line-height:1.55}
+
+/* ── Trust badges ───────────────────────────── */
+.badges{background:var(--cream);border-top:1px solid var(--line);padding:54px 0}
+.b-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.8rem}
+@media(max-width:820px){.b-grid{grid-template-columns:repeat(2,1fr)}}
+.b-item{text-align:center;display:flex;flex-direction:column;align-items:center;gap:.8rem}
+.b-icon{width:68px;height:68px;border-radius:50%;background:var(--sage-100);display:flex;align-items:center;justify-content:center;color:var(--sage-700)}
+.b-label{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;color:var(--sage-900)}
+.b-sub{font-size:.84rem;color:var(--muted);margin-top:-.4rem}
+
+/* ── Footer ───────────────────────────────── */
+footer{background:var(--sage-900);color:#D7E0D6;padding:72px 0 32px}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2.4rem;margin-bottom:3rem}
+@media(max-width:820px){.foot-grid{grid-template-columns:1fr 1fr}}
+footer h4{color:#fff;font-family:'Inter',sans-serif;font-size:.92rem;font-weight:600;margin:0 0 1rem;letter-spacing:.02em}
+footer p{color:#B2C3B2;font-size:.9rem;line-height:1.6;margin:0}
+footer ul{list-style:none;padding:0;margin:0}
+footer li{margin:.5rem 0}
+footer a{color:#B2C3B2;font-size:.9rem}
+footer a:hover{color:#fff}
+.foot-disclosure{font-size:.78rem;color:#89968A;line-height:1.6;max-width:860px;margin:0 auto 2rem;text-align:center;padding:1.6rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius)}
+.foot-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:1.5rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-size:.82rem;color:#89968A;text-align:center}
+
+/* ── Verdict card (ER NOW / VET TOMORROW / SAFE AT HOME) ── */
+.verdict-card{align-self:stretch;margin:.25rem 0;padding:.95rem 1.05rem;border-radius:14px;border:1px solid;font-family:inherit;animation:slideUp .3s var(--ease)}
+.verdict-card .vc-label{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:.2rem .55rem;border-radius:999px;margin-bottom:.55rem}
+.verdict-card .vc-head{font-family:'Fraunces',serif;font-size:1.18rem;font-weight:600;margin:.1rem 0 .45rem;line-height:1.25}
+.verdict-card .vc-why{font-size:.92rem;line-height:1.5;margin:0 0 .5rem;color:var(--ink)}
+.verdict-card .vc-next{font-size:.88rem;line-height:1.45;padding:.55rem .7rem;border-radius:8px;background:rgba(255,255,255,.6)}
+.verdict-card .vc-next strong{font-weight:600}
+.verdict-er{background:#FDF1EF;border-color:#E8A89A;color:#762A1E}
+.verdict-er .vc-label{background:#C23F27;color:#fff}
+.verdict-er .vc-head{color:#762A1E}
+.verdict-vet{background:#FCF6E8;border-color:#E0C47A;color:#6B4F12}
+.verdict-vet .vc-label{background:#C9941F;color:#fff}
+.verdict-vet .vc-head{color:#6B4F12}
+.verdict-safe{background:#EEF5EA;border-color:#A8C99A;color:#355B2C}
+.verdict-safe .vc-label{background:#5B8B4A;color:#fff}
+.verdict-safe .vc-head{color:#355B2C}
+
+/* Partner card (Vetster etc.) that appears beneath a VET TOMORROW verdict */
+.partner-card{align-self:stretch;margin-top:.3rem;padding:.9rem 1rem;border-radius:14px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;gap:.9rem;animation:slideUp .3s var(--ease)}
+.partner-card .pc-body{flex:1;min-width:0}
+.partner-card .pc-title{font-weight:600;color:var(--ink);font-size:.95rem}
+.partner-card .pc-meta{font-size:.8rem;color:#6D7A6F;margin-top:.18rem}
+.partner-card .pc-cta{background:var(--sage-700);color:#fff;text-decoration:none;padding:.55rem 1rem;border-radius:999px;font-size:.85rem;font-weight:500;white-space:nowrap;transition:all .2s var(--ease)}
+.partner-card .pc-cta:hover{background:var(--sage-800);transform:translateY(-1px)}
+
+/* Product picks grid (AI Top Picks) */
+.picks-card{align-self:stretch;margin:.25rem 0;padding:.3rem 0;animation:slideUp .3s var(--ease)}
+.picks-head{font-size:.78rem;text-transform:uppercase;letter-spacing:.14em;color:#6D7A6F;margin:0 .2rem .55rem;font-weight:600}
+.picks-grid{display:grid;grid-template-columns:1fr;gap:.55rem}
+.pick-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:.75rem .85rem;text-decoration:none;color:inherit;display:block;transition:all .2s var(--ease)}
+.pick-item:hover{border-color:var(--sage-500);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.pick-name{font-weight:600;color:var(--ink);font-size:.93rem}
+.pick-meta{display:flex;gap:.5rem;align-items:center;font-size:.76rem;color:#6D7A6F;margin-top:.2rem}
+.pick-price{color:var(--terracotta);font-weight:600}
+.pick-why{font-size:.83rem;color:#5B6A5D;line-height:1.4;margin-top:.35rem}
+
+/* Signup nudge card (after SAFE AT HOME / wellness replies) */
+.signup-nudge{align-self:stretch;margin:.25rem 0;padding:.8rem 1rem;border-radius:12px;background:linear-gradient(135deg,rgba(130,177,125,.1),rgba(212,149,106,.08));border:1px dashed var(--sage-500);font-size:.88rem;color:var(--ink);display:flex;align-items:center;gap:.75rem;animation:slideUp .3s var(--ease)}
+.signup-nudge .sn-text{flex:1}
+.signup-nudge .sn-cta{background:var(--sage-800);color:#fff;text-decoration:none;padding:.45rem .9rem;border-radius:999px;font-size:.82rem;font-weight:500;white-space:nowrap}
+.signup-nudge .sn-cta:hover{background:var(--sage-900,#1F3F1F)}
+
+/* Rate-limited banner */
+.rate-limit-note{font-size:.8rem;color:#8A6A2F;background:#FDF6E3;border:1px solid #E0C47A;padding:.5rem .75rem;border-radius:8px;margin-top:.4rem}
+
+/* Typing-dots thinking indicator */
+.thinking-dots{display:inline-flex;gap:.22rem;align-items:center;padding:.35rem 0}
+.thinking-dots span{width:7px;height:7px;border-radius:50%;background:var(--sage-500);opacity:.45;animation:dotPulse 1.2s infinite ease-in-out}
+.thinking-dots span:nth-child(2){animation-delay:.2s}
+.thinking-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotPulse{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:.95;transform:translateY(-3px)}}
+
+/* Mobile polish */
+@media(max-width:640px){
+  .hero-chat{min-height:440px;max-height:560px}
+  .chat-body{padding:1rem .9rem}
+  .chat-msg{max-width:90%;font-size:.94rem}
+  .chat-suggests{flex-wrap:wrap;gap:.35rem;padding:.6rem .7rem}
+  .chat-suggest{font-size:.78rem;padding:.35rem .65rem}
+  .verdict-card .vc-head{font-size:1.06rem}
+  .partner-card{flex-direction:column;align-items:flex-start;gap:.55rem}
+  .partner-card .pc-cta{align-self:stretch;text-align:center}
+}
+
+/* ── Animations ───────────────────────────── */
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg{animation:slideUp .3s var(--ease)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ Announce bar ═══════════════ -->
+<div class="announce">
+  <span class="dot"></span>
+  <strong>12,417 worried pet parents</strong> got a read on their animal in the last 24 hours — free, no account needed.
+</div>
+
+<!-- ═══════════════ Nav ═══════════════ -->
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/" class="logo"><span class="logo-dot"></span>crittr</a>
+    <ul class="nav-links">
+      <li><a href="#triage">Emergency Triage</a></li>
+      <li><a href="#wellness">Wellness</a></li>
+      <li><a href="#skin">Skin &amp; Allergies</a></li>
+      <li><a href="#senior">Senior Care</a></li>
+      <li><a href="#behavior">Behavior</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="/login" class="btn btn-secondary btn-sm">Sign in</a>
+      <a href="#hero-chat" class="btn btn-primary btn-sm">Ask crittr</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════ Hero ═══════════════ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">AI-triaged · vet-backed · built for 2am</span>
+        <h1>Pet healthcare, <em>redefined</em> for the moment it actually matters.</h1>
+        <p class="hero-sub">Your dog's limping. Your cat won't eat. It's 2am and the vet is closed. Before you panic-drive to the ER, ask crittr. Licensed vet partners when you need them, food &amp; supplements shipped when you don't.</p>
+        <div class="hero-ctas">
+          <a href="#hero-chat" class="btn btn-primary btn-lg">Ask crittr now →</a>
+          <a href="#how" class="btn btn-secondary btn-lg">How it works</a>
+        </div>
+        <ul class="hero-bullets">
+          <li>Licensed vet partners on tap</li>
+          <li>24/7 triage, free to try</li>
+          <li>No insurance hoops</li>
+          <li>Ships to your door</li>
+        </ul>
+      </div>
+
+      <div class="hero-chat" id="hero-chat">
+        <span class="chat-tag">Live · free · no account</span>
+        <div class="chat-head">
+          <div class="chat-avatar"></div>
+          <div>
+            <div class="chat-name">crittr</div>
+            <div class="chat-status">Triage ready · usually replies in seconds</div>
+          </div>
+        </div>
+        <div class="chat-body" id="chatBody">
+          <div class="chat-msg chat-msg-ai">
+            Hey — I'm here. Tell me what's going on with your pet and I'll give you a read on whether this needs the ER tonight, a vet tomorrow, or is safe to manage at home. What are you seeing?
+          </div>
+          <div class="chat-msg chat-msg-ai">
+            <strong>Quick tip:</strong> the more detail the better — species, age, what happened, and how long it's been. Photos welcome once we get chatting.
+          </div>
+        </div>
+        <div class="chat-suggests">
+          <button class="chat-suggest" data-q="My dog keeps shaking his head — is this serious?">Dog shaking head</button>
+          <button class="chat-suggest" data-q="My cat has been throwing up white foam all day.">Cat vomiting foam</button>
+          <button class="chat-suggest" data-q="My puppy just ate a grape — what should I do?">Puppy ate a grape</button>
+          <button class="chat-suggest" data-q="My senior dog isn't eating much today. Should I be worried?">Senior dog not eating</button>
+        </div>
+        <form class="chat-input-row" id="chatForm" action="/api/chat" method="post">
+          <input id="chatInput" type="text" name="message" placeholder="Describe what's happening…" autocomplete="off" />
+          <button type="submit" aria-label="Send">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ Trust strip ═══════════════ -->
+<div class="trust-strip">
+  <div class="container">
+    <div class="trust-grid">
+      <div class="trust-item">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Licensed vet partners
+      </div>
+      <div class="trust-item">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        24/7 AI triage
+      </div>
+      <div class="trust-item">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+        Transparent pricing
+      </div>
+      <div class="trust-item">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 7V5a4 4 0 0 0-8 0v2"/></svg>
+        Ships to your door
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ Category rail ═══════════════ -->
+<div class="cat-rail">
+  <div class="container">
+    <div class="cat-rail-head">
+      <span class="eyebrow">What can crittr help with?</span>
+      <h3>Whatever's going on with your animal — start here.</h3>
+    </div>
+    <div class="cat-rail-row">
+      <a href="#triage" class="cat-chip-lg"><span class="icon">🚨</span><span class="label">Emergency Triage</span><div class="sub">ER now? Or tomorrow?</div></a>
+      <a href="#wellness" class="cat-chip-lg"><span class="icon">🌿</span><span class="label">Daily Wellness</span><div class="sub">Food &amp; supplements</div></a>
+      <a href="#skin" class="cat-chip-lg"><span class="icon">🐾</span><span class="label">Skin &amp; Allergies</span><div class="sub">Stop the scratching</div></a>
+      <a href="#senior" class="cat-chip-lg"><span class="icon">💛</span><span class="label">Senior Care</span><div class="sub">Comfortable years</div></a>
+      <a href="#behavior" class="cat-chip-lg"><span class="icon">🧠</span><span class="label">Behavior &amp; Anxiety</span><div class="sub">Reactive, anxious, storm-phobic</div></a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ Module 1 · Emergency Triage ═══════════════ -->
+<section class="cat-module" id="triage">
+  <div class="container">
+    <div class="cat-grid">
+      <div class="cat-copy">
+        <span class="eyebrow">Emergency Triage · the 2am hook</span>
+        <h2>Your <em>2am answer</em>, before you panic-drive to the ER.</h2>
+        <p class="cat-lede">Three verdicts, every time: ER now, vet tomorrow, or safe to manage at home — with a clear reason why. If it's real, we route you to a licensed vet partner in minutes. If it's not, we save you $400 and a sleepless night.</p>
+        <ul class="cat-bullets">
+          <li>Three-verdict output: ER now / vet tomorrow / safe at home</li>
+          <li>Warm, Voss-trained voice — no algorithmic coldness</li>
+          <li>Partner teletriage handoff for real cases ($29 flat)</li>
+          <li>Remembers your pet so you don't re-explain history</li>
+          <li>Free to ask — we only charge when there's a real vet in the loop</li>
+        </ul>
+        <a href="#hero-chat" class="btn btn-primary btn-lg">Ask crittr →</a>
+      </div>
+      <div class="cat-photo">
+        <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&amp;q=80" alt="Worried dog with tilted head looking at camera" />
+        <div class="photo-badge"><strong>$400</strong>avg ER saved</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ Module 2 · Daily Wellness ═══════════════ -->
+<section class="cat-module reverse" id="wellness">
+  <div class="container">
+    <div class="cat-grid">
+      <div class="cat-photo">
+        <img src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=900&amp;q=80" alt="Golden retriever eating from a bowl in bright kitchen" />
+        <div class="photo-badge"><strong>6wk</strong>avg visible change</div>
+      </div>
+      <div class="cat-copy">
+        <span class="eyebrow">Daily Wellness</span>
+        <h2>The food, supplements, and routines that <em>actually</em> move the needle.</h2>
+        <p class="cat-lede">Most pet wellness is marketing theatre. We recommend what the research supports, personalised to your animal's species, weight, age, and any conditions crittr already knows about.</p>
+        <ul class="cat-bullets">
+          <li>Personalised to your specific pet's profile</li>
+          <li>Affiliate-transparent — we show you why we recommend it</li>
+          <li>Subscribe &amp; save shipping, cancel anytime</li>
+          <li>Vet-reviewed supplement formulas</li>
+          <li>Evidence over influencer hype</li>
+        </ul>
+        <a href="/wellness" class="btn btn-primary btn-lg">Browse wellness picks →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ Module 3 · Skin & Allergies ═══════════════ -->
+<section class="cat-module" id="skin">
+  <div class="container">
+    <div class="cat-grid">
+      <div class="cat-copy">
+        <span class="eyebrow">Skin &amp; Allergies</span>
+        <h2>Stop the scratching. <em>Find what's causing it.</em></h2>
+        <p class="cat-lede">Hot spots, head-shaking, yeasty paws, mystery rashes — most of it has a pattern. crittr helps you spot it, try the right fix, and escalate to a vet partner if it doesn't clear.</p>
+        <ul class="cat-bullets">
+          <li>Diagnostic flow: food, environmental, parasitic, or infection</li>
+          <li>Photo-based symptom tracking over time</li>
+          <li>OTC-first recommendations before prescription</li>
+          <li>Rx routing through Chewy Pharmacy partners</li>
+          <li>Follow-up check-ins so you know if it's working</li>
+        </ul>
+        <a href="/skin" class="btn btn-primary btn-lg">Start a skin check →</a>
+      </div>
+      <div class="cat-photo">
+        <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=900&amp;q=80" alt="Tabby cat resting with content expression" />
+        <div class="photo-badge"><strong>72%</strong>clear in 3 wks</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ Module 4 · Senior Care ═══════════════ -->
+<section class="cat-module reverse" id="senior">
+  <div class="container">
+    <div class="cat-grid">
+      <div class="cat-photo">
+        <img src="https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=900&amp;q=80" alt="Senior labrador resting peacefully on a couch" />
+        <div class="photo-badge"><strong>1000s</strong>of senior pets</div>
+      </div>
+      <div class="cat-copy">
+        <span class="eyebrow">Senior Care</span>
+        <h2>Give them <em>comfortable, dignified</em> years.</h2>
+        <p class="cat-lede">Joint stiffness. Slower mornings. Cognitive changes. We help you read the signs, separate normal aging from something that needs a vet, and build a routine that keeps them themselves for longer.</p>
+        <ul class="cat-bullets">
+          <li>Age-specific symptom interpretation</li>
+          <li>Mobility &amp; joint support protocols</li>
+          <li>Cognitive health check-ins</li>
+          <li>End-of-life conversations, handled with care</li>
+          <li>Vet partner escalation when it's time</li>
+        </ul>
+        <a href="/senior" class="btn btn-primary btn-lg">Build a senior plan →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ Module 5 · Behavior ═══════════════ -->
+<section class="cat-module" id="behavior">
+  <div class="container">
+    <div class="cat-grid">
+      <div class="cat-copy">
+        <span class="eyebrow">Behavior &amp; Anxiety</span>
+        <h2>For the reactive, the anxious, the <em>storm-phobic</em>.</h2>
+        <p class="cat-lede">Your dog melts down at the vacuum. Your cat has been overgrooming since the move. Behavior is health — we help you read what's going on and match you to the right support, from calming supplements to certified trainers.</p>
+        <ul class="cat-bullets">
+          <li>Behavior triage: medical vs. training vs. environmental</li>
+          <li>Calming supplement recommendations (vet-formulated)</li>
+          <li>Certified trainer directory referrals</li>
+          <li>Anxiety Rx routing when needed</li>
+          <li>Progress tracking so you know what's working</li>
+        </ul>
+        <a href="/behavior" class="btn btn-primary btn-lg">Read their behavior →</a>
+      </div>
+      <div class="cat-photo">
+        <img src="https://images.unsplash.com/photo-1558788353-f76d92427f16?w=900&amp;q=80" alt="Anxious dog hiding under a blanket" />
+        <div class="photo-badge"><strong>3x</strong>calmer outcomes</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ Built around your pet ═══════════════ -->
+<section class="pet-memory">
+  <div class="container">
+    <div class="pm-grid">
+      <div>
+        <span class="eyebrow">Built around your pet</span>
+        <h2>A memory of <em>your specific animal</em> — not generic pet advice.</h2>
+        <p class="cat-lede">Once crittr knows your pet, it doesn't forget. Breed, weight, age, allergies, meds, surgeries, the stuff that worked last time and the stuff that didn't. Every conversation builds on the last.</p>
+        <ul class="cat-bullets">
+          <li>Persistent profile across chats and sessions</li>
+          <li>Medication &amp; dosage history in one place</li>
+          <li>Symptom timeline with photos</li>
+          <li>Export a full summary for any new vet</li>
+          <li>Private by default — you own your pet's data</li>
+        </ul>
+        <a href="/pet" class="btn btn-primary btn-lg">Set up your pet →</a>
+      </div>
+      <div class="pm-card">
+        <div class="pm-card-head">
+          <div class="pm-avatar"></div>
+          <div>
+            <h3 class="pm-name">Rosie</h3>
+            <div class="pm-meta">Golden retriever · 7 yrs · 62 lb</div>
+          </div>
+        </div>
+        <div class="pm-rows">
+          <div class="pm-row"><span class="k">Current meds</span><span class="v">Galliprant 60mg · daily</span></div>
+          <div class="pm-row"><span class="k">Allergies</span><span class="v">Chicken, dust mites</span></div>
+          <div class="pm-row"><span class="k">Last vet visit</span><span class="v">Feb 14 · annual</span></div>
+          <div class="pm-row"><span class="k">Watching for</span><span class="v">Left hip stiffness</span></div>
+          <div class="pm-row"><span class="k">Next check-in</span><span class="v">Sat 10am · joint follow-up</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ Reviews ═══════════════ -->
+<section class="reviews">
+  <div class="container">
+    <div class="reviews-intro">
+      <span class="eyebrow">Those who trusted crittr</span>
+      <h2>The worried owner's <em>first call</em>.</h2>
+      <p>From panic at 2am to calm a few minutes later — here's what people say after they've used crittr once.</p>
+    </div>
+    <div class="r-grid">
+      <div class="r-card">
+        <div class="r-head">
+          <div class="r-avatar"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&amp;q=80" alt="Maria" /></div>
+          <div><div class="r-name">Maria · San Diego</div><div class="r-pet">Pug · 4yrs</div></div>
+        </div>
+        <div class="r-stars">★★★★★</div>
+        <div class="r-quote">"Coco was gagging and I was already putting on shoes to go to the ER. crittr walked me through it in two minutes — turned out she'd just swallowed a treat wrong. Saved me $600 and a sleepless night."</div>
+      </div>
+      <div class="r-card">
+        <div class="r-head">
+          <div class="r-avatar"><img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=200&amp;q=80" alt="Tom" /></div>
+          <div><div class="r-name">Tom · Brooklyn</div><div class="r-pet">Tabby · 11yrs</div></div>
+        </div>
+        <div class="r-stars">★★★★★</div>
+        <div class="r-quote">"I have three cats and about a thousand tabs open at any given moment. crittr actually remembers each of them. Felix's kidney stuff, Millie's dental history, Juno's anxiety meds. It's like a vet assistant that never sleeps."</div>
+      </div>
+      <div class="r-card">
+        <div class="r-head">
+          <div class="r-avatar"><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&amp;q=80" alt="Sasha" /></div>
+          <div><div class="r-name">Sasha · Austin</div><div class="r-pet">Rescue mix · 9yrs</div></div>
+        </div>
+        <div class="r-stars">★★★★★</div>
+        <div class="r-quote">"What I like is that it doesn't try to sell me anything first. It actually answers the question, then mentions what might help. That's the opposite of every other pet site I've used."</div>
+      </div>
+      <div class="r-card">
+        <div class="r-head">
+          <div class="r-avatar"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&amp;q=80" alt="Devon" /></div>
+          <div><div class="r-name">Devon · Portland</div><div class="r-pet">Border collie · 6yrs</div></div>
+        </div>
+        <div class="r-stars">★★★★★</div>
+        <div class="r-quote">"My dog had a weird rash for weeks and every Google search made me panic. crittr asked me five questions, suggested a specific shampoo, and it cleared up in 10 days. No drama."</div>
+      </div>
+      <div class="r-card">
+        <div class="r-head">
+          <div class="r-avatar"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&amp;q=80" alt="Priya" /></div>
+          <div><div class="r-name">Priya · Chicago</div><div class="r-pet">Dachshund · 12yrs</div></div>
+        </div>
+        <div class="r-stars">★★★★★</div>
+        <div class="r-quote">"Kept telling us Oscar's back looked fine but crittr flagged the way he was walking as worth getting checked. IVDD caught early. I don't want to think about what would have happened otherwise."</div>
+      </div>
+      <div class="r-card">
+        <div class="r-head">
+          <div class="r-avatar"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&amp;q=80" alt="Marcus" /></div>
+          <div><div class="r-name">Marcus · Denver</div><div class="r-pet">Great Dane · 5yrs</div></div>
+        </div>
+        <div class="r-stars">★★★★★</div>
+        <div class="r-quote">"Honestly the reason I keep coming back is the voice. It feels like texting a friend who happens to know a lot about dogs. Not a chatbot, not a vet trying to upsell."</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ Trust badges ═══════════════ -->
+<div class="badges">
+  <div class="container">
+    <div class="b-grid">
+      <div class="b-item">
+        <div class="b-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="b-label">No bad advice</div>
+        <div class="b-sub">Licensed vets review every flow</div>
+      </div>
+      <div class="b-item">
+        <div class="b-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 21l4-4 4 4"/></svg>
+        </div>
+        <div class="b-label">Ships free over $40</div>
+        <div class="b-sub">Discreet, fast, tracked</div>
+      </div>
+      <div class="b-item">
+        <div class="b-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <div class="b-label">Cancel any time</div>
+        <div class="b-sub">No lock-ins, no weird fees</div>
+      </div>
+      <div class="b-item">
+        <div class="b-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="b-label">Real vet pharmacy</div>
+        <div class="b-sub">Rx routed through Chewy Pharmacy</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ Footer ═══════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-col">
+        <div class="foot-head">crittr</div>
+        <div class="foot-sub">Calm, specific pet care — 24/7, from the people who already love your pet.</div>
+      </div>
+      <div class="foot-col">
+        <div class="foot-head">Care</div>
+        <a href="#triage">Ask the AI</a>
+        <a href="#wellness">Daily wellness</a>
+        <a href="#skin">Skin & allergies</a>
+        <a href="#senior">Senior care</a>
+        <a href="#behavior">Behavior</a>
+      </div>
+      <div class="foot-col">
+        <div class="foot-head">Partners</div>
+        <a href="#">Vetster · teletriage</a>
+        <a href="#">AirVet · teletriage</a>
+        <a href="#">Chewy Pharmacy</a>
+        <a href="#">Lemonade Pet</a>
+      </div>
+      <div class="foot-col">
+        <div class="foot-head">Company</div>
+        <a href="#">About</a>
+        <a href="#">Trust & safety</a>
+        <a href="mailto:hello@crittr.ai">hello@crittr.ai</a>
+      </div>
+    </div>
+    <div class="foot-disclosure">
+      crittr is a consumer information service, not a veterinary clinic. We are not your pet's licensed veterinarian and nothing we say is a substitute for in-person veterinary care. Teletriage, prescription, and pharmacy services are provided by independent licensed partners (Vetster, AirVet, Chewy Pharmacy) — crittr receives a referral fee when you use them. Product recommendations include affiliate links from Amazon, Chewy, and other retailers. In a real emergency, call your local vet or animal ER immediately.
+    </div>
+    <div class="foot-bottom">
+      <div>© 2026 crittr.ai — Made with care for the animals.</div>
+      <div><a href="mailto:hello@crittr.ai" style="color:#B2C3B2">hello@crittr.ai</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// crittr.ai hero chat — anonymous triage widget
+// POSTs to /api/chat/anon, parses verdict, renders colored verdict card,
+// partner CTA (VET TOMORROW), product picks (SAFE AT HOME / wellness),
+// and soft signup nudge.
+(function(){
+  const body = document.getElementById('chatBody');
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('chatInput');
+  const suggests = document.querySelectorAll('.chat-suggest');
+  const VERDICT_RE = /^\s*VERDICT\s*:\s*(ER NOW|VET TOMORROW|SAFE AT HOME)\s*$/im;
+
+  function escape(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function addMsg(text, role){
+    const el = document.createElement('div');
+    el.className = 'chat-msg chat-msg-' + role;
+    el.textContent = text;
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+    return el;
+  }
+
+  function addThinking(){
+    const el = document.createElement('div');
+    el.className = 'chat-msg chat-msg-ai';
+    el.innerHTML = '<span class="thinking-dots"><span></span><span></span><span></span></span>';
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+    return el;
+  }
+
+  function parseVerdict(text){
+    if (!text) return null;
+    const lines = text.split(/\r?\n/);
+    let verdict = null, why = '', next = '', idx = -1;
+    for (let i = 0; i < lines.length; i++){
+      const m = lines[i].match(VERDICT_RE);
+      if (m) { verdict = m[1].toUpperCase(); idx = i; break; }
+    }
+    if (!verdict) return null;
+    // Look for WHY/NEXT on the next two lines
+    for (let j = idx + 1; j < Math.min(idx + 4, lines.length); j++){
+      const l = lines[j].trim();
+      if (/^WHY\s*:/i.test(l)) why = l.replace(/^WHY\s*:\s*/i, '');
+      else if (/^NEXT\s*:/i.test(l)) next = l.replace(/^NEXT\s*:\s*/i, '');
+    }
+    // Everything else = the warm context around the verdict block
+    const cleaned = lines.filter((l, i) => i < idx || (i > idx && !/^\s*(WHY|NEXT)\s*:/i.test(l) && !VERDICT_RE.test(l))).join('\n').trim();
+    return { verdict, why, next, narrative: cleaned };
+  }
+
+  function verdictCard(v){
+    const classMap = { 'ER NOW': 'verdict-er', 'VET TOMORROW': 'verdict-vet', 'SAFE AT HOME': 'verdict-safe' };
+    const headMap = {
+      'ER NOW': 'Go to an emergency vet now.',
+      'VET TOMORROW': "Worth a vet's eyes — book today or tomorrow.",
+      'SAFE AT HOME': 'Looks manageable at home — keep an eye on things.'
+    };
+    const el = document.createElement('div');
+    el.className = 'verdict-card ' + (classMap[v.verdict] || '');
+    el.innerHTML =
+      '<span class="vc-label">' + escape(v.verdict) + '</span>' +
+      '<div class="vc-head">' + escape(headMap[v.verdict] || '') + '</div>' +
+      (v.why ? '<p class="vc-why">' + escape(v.why) + '</p>' : '') +
+      (v.next ? '<div class="vc-next"><strong>Next:</strong> ' + escape(v.next) + '</div>' : '');
+    return el;
+  }
+
+  function partnerCard(p){
+    const el = document.createElement('div');
+    el.className = 'partner-card';
+    const meta = [p.price_hint, p.hours].filter(Boolean).join(' · ');
+    el.innerHTML =
+      '<div class="pc-body">' +
+        '<div class="pc-title">' + escape(p.name) + '</div>' +
+        (meta ? '<div class="pc-meta">' + escape(meta) + '</div>' : '') +
+      '</div>' +
+      '<a class="pc-cta" href="' + escape(p.url) + '" target="_blank" rel="noopener">' +
+        escape(p.cta || 'Book now') +
+      '</a>';
+    return el;
+  }
+
+  function signupNudge(){
+    const el = document.createElement('div');
+    el.className = 'signup-nudge';
+    el.innerHTML =
+      '<div class="sn-text">Save your pet\'s profile and I\'ll remember next time — name, age, allergies, meds, all of it.</div>' +
+      '<a class="sn-cta" href="/signup">Save profile</a>';
+    return el;
+  }
+
+  function picksCard(picks){
+    const el = document.createElement('div');
+    el.className = 'picks-card';
+    let html = '<div class="picks-head">AI Top Picks for your pet</div><div class="picks-grid">';
+    picks.forEach(p => {
+      const meta = [p.brand, p.price_hint].filter(Boolean).join(' · ');
+      html += '<a class="pick-item" href="' + escape(p.url || '#') + '" target="_blank" rel="noopener">' +
+        '<div class="pick-name">' + escape(p.name) + '</div>' +
+        (meta ? '<div class="pick-meta"><span>' + escape(meta) + '</span></div>' : '') +
+        (p.reason ? '<div class="pick-why">' + escape(p.reason) + '</div>' : '') +
+      '</a>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+    return el;
+  }
+
+  function renderReply(data){
+    const parsed = parseVerdict(data.reply);
+    if (parsed) {
+      if (parsed.narrative) addMsg(parsed.narrative, 'ai');
+      const card = verdictCard(parsed);
+      body.appendChild(card);
+    } else {
+      addMsg(data.reply || "I'm having trouble right now — try again in a sec?", 'ai');
+    }
+    if (data.partner && data.partner.url) body.appendChild(partnerCard(data.partner));
+    if (Array.isArray(data.picks) && data.picks.length) body.appendChild(picksCard(data.picks));
+    if (data.suggest_signup) body.appendChild(signupNudge());
+    if (data.rate_limited){
+      const note = document.createElement('div');
+      note.className = 'rate-limit-note';
+      note.textContent = 'Slow down a second — you\'re hitting the anonymous limit. Log in or try again in a minute.';
+      body.appendChild(note);
+    }
+    body.scrollTop = body.scrollHeight;
+  }
+
+  suggests.forEach(b => b.addEventListener('click', () => {
+    input.value = b.getAttribute('data-q');
+    input.focus();
+  }));
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const q = input.value.trim();
+    if (!q) return;
+    addMsg(q, 'user');
+    input.value = '';
+    const thinking = addThinking();
+    try {
+      const r = await fetch('/api/chat/anon', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ message: q })
+      });
+      const data = await r.json();
+      thinking.remove();
+      renderReply(data);
+    } catch (err) {
+      thinking.remove();
+      addMsg("Hmm — couldn't reach the server. Try again?", 'ai');
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
