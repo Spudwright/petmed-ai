@@ -358,53 +358,173 @@ footer a:hover{color:#fff}
 .ref-banner.success{padding:1.25rem 1.4rem;max-width:520px;margin:2rem auto 0}
 .ref-banner.success h4{font-size:1.3rem}
 
+
+
+/* ═══════════════ Phase B — MEDVi-style UX ═══════════════ */
+
+/* Promo banner dismiss */
+.announce{position:relative}
+.announce-x{position:absolute;right:.9rem;top:50%;transform:translateY(-50%);background:transparent;border:0;color:#D2E3CF;font-size:1.4rem;line-height:1;cursor:pointer;padding:0 .35rem;opacity:.7}
+.announce-x:hover{opacity:1;color:#fff}
+.announce.is-hidden{display:none}
+
+/* Header CTA pill (dark like MEDVi GET STARTED) */
+.btn-dark{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn-dark:hover{background:var(--sage-900);border-color:var(--sage-900)}
+.btn-pill{padding:.7rem 1.25rem;font-size:.9rem;border-radius:999px}
+
+/* Hamburger */
+.burger{display:inline-flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:42px;height:42px;padding:0;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;margin-left:.35rem}
+.burger:hover{background:var(--sage-50);border-color:var(--sage-300)}
+.burger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:transform .2s var(--ease),opacity .2s var(--ease)}
+
+/* Hide the old nav-links on every width — we're MEDVi now */
+.nav-links{display:none !important}
+
+@media(max-width:520px){
+  .btn-pill{padding:.6rem 1rem;font-size:.82rem}
+  .cart-btn{padding:.5rem}
+}
+
+/* Green-highlighted word in hero */
+.hero-copy h1 .hl{color:var(--sage-600);font-style:normal;font-weight:600;position:relative}
+.hero-copy h1 .hl::after{content:'';position:absolute;left:-2px;right:-2px;bottom:.04em;height:.22em;background:var(--sage-200);opacity:.55;z-index:-1;border-radius:3px}
+
+/* Pet face row */
+.pet-row{display:flex;align-items:center;gap:.55rem;margin-top:1.9rem;flex-wrap:wrap}
+.pet-avatar{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:var(--sage-100);border:2px solid #fff;box-shadow:0 2px 8px -3px rgba(28,42,31,.22);font-size:1.35rem}
+.pet-avatar + .pet-avatar{margin-left:-12px}
+.pet-caption{margin-left:.6rem;font-size:.9rem;color:var(--muted);font-weight:500}
+
+/* ── Drawer (slide-in from right) ── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(28,42,31,.45);opacity:0;pointer-events:none;transition:opacity .25s var(--ease);z-index:80}
+.drawer-overlay.is-open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,92vw);background:var(--cream);transform:translateX(100%);transition:transform .32s var(--ease);z-index:90;display:flex;flex-direction:column;box-shadow:-24px 0 60px -24px rgba(28,42,31,.32)}
+.drawer.is-open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.25rem;border-bottom:1px solid var(--line)}
+.drawer-head .logo{font-size:1.4rem}
+.drawer-close{background:transparent;border:0;font-size:1.6rem;line-height:1;padding:.25rem .55rem;cursor:pointer;color:var(--ink);border-radius:8px}
+.drawer-close:hover{background:var(--sage-50)}
+.drawer-body{flex:1;overflow-y:auto;padding:.6rem 0 1rem}
+
+.drawer-link{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;color:var(--ink);font-size:1rem;font-weight:500;border-bottom:1px solid rgba(223,229,219,.55);text-decoration:none}
+.drawer-link:hover{background:var(--sage-50);color:var(--sage-700)}
+.drawer-link .chev{color:var(--muted);font-size:1rem;line-height:1}
+
+.drawer-section{padding:1.1rem 1.25rem .8rem;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+.drawer-featured{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;padding:0 1.25rem}
+.df-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:.9rem .85rem;display:flex;flex-direction:column;gap:.25rem;position:relative;text-decoration:none;color:var(--ink);transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
+.df-card:hover{border-color:var(--sage-300);box-shadow:0 8px 20px -12px rgba(28,42,31,.2)}
+.df-thumb{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,var(--sage-100),var(--sage-50));display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:.5rem}
+.df-title{font-weight:600;font-size:.88rem;line-height:1.25}
+.df-price{font-size:.78rem;color:var(--muted)}
+.df-badge{position:absolute;top:.55rem;left:.55rem;font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .5rem;border-radius:999px;background:var(--sage-200);color:var(--sage-800)}
+.df-badge.rx{background:#EADBCF;color:#8A5A3A}
+
+.drawer-foot{padding:1rem 1.25rem 1.3rem;border-top:1px solid var(--line);background:var(--cream-2)}
+.drawer-foot .btn{width:100%}
+.drawer-foot-mini{display:flex;justify-content:space-between;gap:.5rem;padding:.65rem 0 .85rem;font-size:.86rem}
+.drawer-foot-mini a{color:var(--muted);font-weight:500}
+.drawer-foot-mini a:hover{color:var(--sage-700)}
+
+/* Prevent body scroll while drawer open */
+body.drawer-lock{overflow:hidden}
+
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ Announce bar ═══════════════ -->
-<div class="announce">
+<!-- ═══════════════ Promo banner ═══════════════ -->
+<div class="announce" id="promoBanner">
   <span class="dot"></span>
-  <strong>12,417 worried pet parents</strong> got a read on their animal in the last 24 hours — free, no account needed.
+  <strong>Free 24/7 AI triage</strong> — ER, vet tomorrow, or safe at home, answered in 60 seconds.
+  <button class="announce-x" onclick="dismissPromo()" aria-label="Dismiss">×</button>
 </div>
 
-<!-- ═══════════════ Nav ═══════════════ -->
+<!-- ═══════════════ Nav (MEDVi-style: logo + CTA pill + hamburger) ═══════════════ -->
 <nav class="nav">
   <div class="container nav-inner">
     <a href="/" class="logo"><span class="logo-dot"></span>crittr</a>
-    <ul class="nav-links">
-      <li><a href="#triage">Triage</a></li>
-      <li><a href="/shop/dogs">Dogs</a></li>
-      <li><a href="/shop/cats">Cats</a></li>
-      <li><a href="/shop/supplements">Supplements</a></li>
-      <li><a href="/shop/rx">Prescriptions</a></li>
-    </ul>
     <div class="nav-right">
       <button class="cart-btn" onclick="openCart()" aria-label="Cart"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-2.3-8M7 13l-1.5 3h11M10 19a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM18 19a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg><span class="cart-count hidden" id="cartCount">0</span></button>
-      <button class="btn btn-secondary btn-sm" id="authBtn" onclick="openAuth()">Sign in</button>
-      <a href="#hero-chat" class="btn btn-primary btn-sm">Ask crittr</a>
+      <a href="#hero-chat" class="btn btn-dark btn-pill">Start triage</a>
+      <button class="burger" onclick="openDrawer()" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </nav>
+
+<!-- ═══════════════ Drawer (MEDVi-style slide-in from right) ═══════════════ -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-label="Menu" aria-hidden="true">
+  <div class="drawer-head">
+    <a href="/" class="logo"><span class="logo-dot"></span>crittr</a>
+    <button class="drawer-close" onclick="closeDrawer()" aria-label="Close menu">×</button>
+  </div>
+  <div class="drawer-body">
+    <a class="drawer-link" href="#hero-chat" onclick="closeDrawer()">Start triage <span class="chev">›</span></a>
+    <a class="drawer-link" href="#how">How it works <span class="chev">›</span></a>
+    <a class="drawer-link" href="/shop/dogs">Dogs <span class="chev">›</span></a>
+    <a class="drawer-link" href="/shop/cats">Cats <span class="chev">›</span></a>
+    <a class="drawer-link" href="/shop/supplements">Supplements <span class="chev">›</span></a>
+    <a class="drawer-link" href="/shop/rx">Prescriptions <span class="chev">›</span></a>
+    <a class="drawer-link" href="/find-vet">Find a vet <span class="chev">›</span></a>
+    <a class="drawer-link" href="/refer">Refer a friend <span class="chev">›</span></a>
+
+    <div class="drawer-section">Popular right now</div>
+    <div class="drawer-featured" id="drawerFeatured">
+      <a class="df-card" href="/shop/supplements">
+        <span class="df-badge">Popular</span>
+        <div class="df-thumb">🌿</div>
+        <div class="df-title">Daily joint chews</div>
+        <div class="df-price">From $28</div>
+      </a>
+      <a class="df-card" href="/shop/rx">
+        <span class="df-badge rx">Rx</span>
+        <div class="df-thumb">💊</div>
+        <div class="df-title">Prescription meds</div>
+        <div class="df-price">After consult</div>
+      </a>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <div class="drawer-foot-mini">
+      <a href="#" onclick="closeDrawer();openAuth();return false;">Sign in</a>
+      <a href="#faq" onclick="closeDrawer()">FAQ</a>
+    </div>
+    <a class="btn btn-dark btn-lg" href="#hero-chat" onclick="closeDrawer()">Start triage</a>
+  </div>
+</aside>
+
 
 <!-- ═══════════════ Hero ═══════════════ -->
 <section class="hero">
   <div class="container">
     <div class="hero-grid">
       <div class="hero-copy">
-        <span class="eyebrow">AI-triaged · vet-backed · built for 2am</span>
-        <h1>Pet healthcare, <em>redefined</em> for the moment it actually matters.</h1>
-        <p class="hero-sub">Your dog's limping. Your cat won't eat. It's 2am and the vet is closed. Before you panic-drive to the ER, ask crittr. Licensed vet partners when you need them, food &amp; supplements shipped when you don't.</p>
+        <span class="eyebrow">Built by vets · free to start</span>
+        <h1>It's 2am and the vet is closed. Is this an <span class="hl">ER</span>, or can it wait?</h1>
+        <p class="hero-sub">Tell crittr what's happening and get a clear read — ER now, vet tomorrow, or safe at home — with the reason why. Licensed vet partners on tap. Food, supplements and Rx shipped when you need them.</p>
         <div class="hero-ctas">
-          <a href="#hero-chat" class="btn btn-primary btn-lg">Ask crittr now →</a>
+          <a href="#hero-chat" class="btn btn-primary btn-lg">Start free triage →</a>
           <a href="#how" class="btn btn-secondary btn-lg">How it works</a>
         </div>
         <ul class="hero-bullets">
           <li>Licensed vet partners on tap</li>
-          <li>24/7 triage, free to try</li>
-          <li>No insurance hoops</li>
-          <li>Ships to your door</li>
+          <li>24/7 triage, free, no account</li>
+          <li>Three-verdict answer: ER / Vet / Home</li>
+          <li>Food, supplements &amp; Rx shipped</li>
         </ul>
+        <div class="pet-row" aria-hidden="true">
+          <span class="pet-avatar" data-emo="🐕">🐕</span>
+          <span class="pet-avatar" data-emo="🐈">🐈</span>
+          <span class="pet-avatar" data-emo="🐇">🐇</span>
+          <span class="pet-avatar" data-emo="🦜">🦜</span>
+          <span class="pet-avatar" data-emo="🐹">🐹</span>
+          <span class="pet-caption">For every critter in the house.</span>
+        </div>
       </div>
 
       <div class="hero-chat" id="hero-chat">
@@ -1034,5 +1154,47 @@ function crittrRoute(){const p=location.pathname;if(p==='/order/success'){docume
 document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();crittrRoute(); _resumePendingRxSeed();});
 </script>
 
+
+<!-- ═══════════════ Phase B — header/drawer/promo JS ═══════════════ -->
+<script>
+(function(){
+  var drawer = null, overlay = null;
+  window.openDrawer = function(){
+    drawer  = drawer  || document.getElementById('drawer');
+    overlay = overlay || document.getElementById('drawerOverlay');
+    if(!drawer) return;
+    drawer.classList.add('is-open');
+    overlay.classList.add('is-open');
+    drawer.setAttribute('aria-hidden','false');
+    document.body.classList.add('drawer-lock');
+  };
+  window.closeDrawer = function(){
+    drawer  = drawer  || document.getElementById('drawer');
+    overlay = overlay || document.getElementById('drawerOverlay');
+    if(!drawer) return;
+    drawer.classList.remove('is-open');
+    overlay.classList.remove('is-open');
+    drawer.setAttribute('aria-hidden','true');
+    document.body.classList.remove('drawer-lock');
+  };
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ window.closeDrawer(); }
+  });
+
+  // Promo banner dismiss — persists for 7 days via localStorage.
+  window.dismissPromo = function(){
+    var b = document.getElementById('promoBanner');
+    if(b) b.classList.add('is-hidden');
+    try { localStorage.setItem('crittr_promo_dismissed', String(Date.now())); } catch(e){}
+  };
+  try {
+    var prev = Number(localStorage.getItem('crittr_promo_dismissed') || 0);
+    if (prev && (Date.now() - prev) < 7 * 86400 * 1000) {
+      var b = document.getElementById('promoBanner');
+      if(b) b.classList.add('is-hidden');
+    }
+  } catch(e){}
+})();
+</script>
 </body>
 </html>
