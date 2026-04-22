@@ -981,10 +981,57 @@ async function loadMe(){try{const r=await api('/api/me');State.user=r.user||r;up
 function loadReferralBanner(targetId,context){const el=document.getElementById(targetId);if(!el)return;el.innerHTML='';if(!State.user){const pre=(context==='success')?`<div class="ref-banner success"><div class="rb-eyebrow">One more thing</div><h4>Want $5 off your next order?</h4><p>Create a free account to get your personal share link. Every friend who orders earns you $5 in crittr credit — they get $5 off their first order too.</p><a href="#" class="rb-cta" onclick="event.preventDefault();openAuth()">Create my account</a></div>`:`<div class="ref-banner"><div class="rb-eyebrow">Heads up</div><h4>Share crittr — get $5 off</h4><p style="margin-bottom:.2rem">Sign in and share your referral link. Every friend who orders earns you $5 in crittr credit automatically applied to your next checkout.</p><a href="#" class="rb-cta" onclick="event.preventDefault();openAuth()">Sign in</a></div>`;el.innerHTML=pre;return;}fetch('/api/referrals/me',{credentials:'include'}).then(r=>r.ok?r.json():null).then(d=>{if(!d||!d.share_url)return;const refAmt=Math.round((d.referrer_credit_cents||500)/100);const refeeAmt=Math.round((d.referee_credit_cents||500)/100);const classSuffix=(context==='success')?' success':'';const headline=(context==='success')?`Want $${refAmt} off your next order?`:`Share crittr — get $${refAmt} off`;const copy=(context==='success')?`Share your link. Every friend who orders earns you $${refAmt} in crittr credit — they get $${refeeAmt} off too. We apply it automatically at your next checkout.`:`Every friend who orders earns you $${refAmt} in credit — applied automatically at your next checkout. They get $${refeeAmt} off their first order too.`;el.innerHTML=`<div class="ref-banner${classSuffix}"><div class="rb-eyebrow">Your critter referral</div><h4>${headline}</h4><p>${copy}</p><div class="rb-row"><input type="text" class="rb-input" id="${targetId}_input" value="${d.share_url}" readonly onclick="this.select()"/><button type="button" class="rb-copy" onclick="copyReferral('${targetId}_input')">Copy</button></div></div>`;}).catch(()=>{});}
 function copyReferral(inputId){const inp=document.getElementById(inputId);if(!inp)return;inp.select();try{document.execCommand('copy');toastMsg('Link copied');}catch(e){navigator.clipboard&&navigator.clipboard.writeText(inp.value);toastMsg('Link copied');}}
 // Rx-gated add-to-cart: routes requires_rx items through the triage chat first.
-function addOrConsult(product){if(product&&product.requires_rx){const seed=`I want to talk about starting ${product.name} for my pet. Can you walk me through what I should know first?`;try{const input=document.getElementById('chatInput');if(input){input.value=seed;document.getElementById('chatSection')?.scrollIntoView({behavior:'smooth'});setTimeout(()=>input.focus(),500);if(typeof sendChat==='function')return;}}catch(e){}try{sessionStorage.setItem('crittr_pending_rx',JSON.stringify({id:product.id,name:product.name}));}catch(e){}location.href='/#hero-chat';return;}addToCart(product);}
+function addOrConsult(product){
+  if (product && product.requires_rx){
+    try { sessionStorage.setItem('crittr_pending_rx', JSON.stringify({
+      id: product.id, slug: product.slug, name: product.name,
+      price_cents: product.price_cents, requires_rx: true
+    })); } catch(e){}
+    const seed = `I'd like to talk about starting ${product.name} for my pet — can you walk me through what I should know first?`;
+    const hero = document.getElementById('hero-chat');
+    const input = document.getElementById('chatInput');
+    if (input && hero){
+      input.value = seed;
+      hero.scrollIntoView({behavior:'smooth', block:'start'});
+      setTimeout(()=>input.focus(), 450);
+      return;
+    }
+    // Not on homepage — jump there; boot code will seed from sessionStorage.
+    location.href = '/#hero-chat';
+    return;
+  }
+  addToCart(product);
+}
+
+// On homepage boot, if there's a pending Rx seed and the input is still empty,
+// fill it so the user can see what they were gated on.
+function _resumePendingRxSeed(){
+  try {
+    const raw = sessionStorage.getItem('crittr_pending_rx');
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    const input = document.getElementById('chatInput');
+    if (input && !input.value){
+      input.value = `I'd like to talk about starting ${p.name} for my pet — can you walk me through what I should know first?`;
+    }
+  } catch(e){}
+}
+
+// After a non-ER verdict comes back, if the pending Rx is still there, offer
+// an add-to-cart. (Left as an opt-in hook — renderVerdict can call window.crittrOfferPendingRx())
+window.crittrOfferPendingRx = function(){
+  try {
+    const raw = sessionStorage.getItem('crittr_pending_rx');
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    if (!confirm(`The vet can write the Rx from here. Add ${p.name} to your cart now?`)) return;
+    sessionStorage.removeItem('crittr_pending_rx');
+    addToCart(p);
+  } catch(e){}
+};
 // Route handling: if we arrive at /order/success, activate that view.
 function crittrRoute(){const p=location.pathname;if(p==='/order/success'){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));const sv=document.getElementById('view-success');if(sv){sv.classList.add('active');document.querySelectorAll('nav, main, section, footer').forEach(el=>{if(!sv.contains(el)&&!el.closest('#view-success')&&!el.matches('.overlay, .modal, .toast, #view-success'))el.style.display='none';});loadReferralBanner('refBannerSuccess','success');}}}
-document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();crittrRoute();});
+document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();crittrRoute(); _resumePendingRxSeed();});
 </script>
 
 </body>

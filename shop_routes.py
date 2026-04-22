@@ -228,7 +228,20 @@ const saveCart=()=>localStorage.setItem('crittr_cart',JSON.stringify(State.cart)
 function updateCartCount(){const n=State.cart.reduce((s,c)=>s+c.quantity,0);const el=$('#cartCount');if(!el)return;el.textContent=n;el.classList.toggle('hidden',n===0);}
 function toast(msg){alert(msg);}
 function addToCart(product){if(!product||!product.id)return;const existing=State.cart.find(c=>c.product_id===product.id);if(existing)existing.quantity++;else State.cart.push({product_id:product.id,quantity:1,name:product.name,price_cents:product.price_cents,image_url:product.image_url,species:product.species});saveCart();updateCartCount();toast(`Added ${product.name} to cart`);}
-function addOrConsult(product){if(product&&product.requires_rx){try{sessionStorage.setItem('crittr_pending_rx',JSON.stringify({id:product.id,name:product.name}));}catch(e){}location.href='/#hero-chat';return;}addToCart(product);}
+function addOrConsult(product){
+  if (product && product.requires_rx){
+    try {
+      sessionStorage.setItem('crittr_pending_rx', JSON.stringify({
+        id: product.id, slug: product.slug, name: product.name,
+        price_cents: product.price_cents, requires_rx: true
+      }));
+    } catch(e){}
+    // Send the user to the homepage triage chat with pending Rx seed in storage.
+    location.href = '/#hero-chat';
+    return;
+  }
+  addToCart(product);
+}
 function openCart(){location.href='/#cart';/* homepage has the real drawer */}
 function openAuth(){location.href='/login';}
 document.addEventListener('DOMContentLoaded',updateCartCount);
