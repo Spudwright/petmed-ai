@@ -43,6 +43,7 @@ def ensure_stripe_schema():
     _q("ALTER TABLE products ADD COLUMN IF NOT EXISTS stripe_price_quarterly_id TEXT;", fetch=False)
     _q("ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_session_id TEXT;", fetch=False)
     _q("ALTER TABLE orders ADD COLUMN IF NOT EXISTS credit_applied_cents INT DEFAULT 0;", fetch=False)
+    _q("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recovery_email_sent_at TIMESTAMPTZ;", fetch=False)
     _q(
         """
         CREATE TABLE IF NOT EXISTS subscriptions (
@@ -472,10 +473,53 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                         try:
                             from referrals import record_credit_reversal
                             record_credit_reversal(q, uid, applied, f"checkout_reversed:{order_id}")
-                            q("UPDATE orders SET status = 'expired' WHERE id = %s AND status = 'pending';", (order_id,), fetch=False)
                         except Exception as _re:
                             import logging
                             logging.getLogger(__name__).warning(f"[webhook] credit reversal failed: {_re}")
+                    if order_id:
+                        try:
+                            q("UPDATE orders SET status = 'expired' WHERE id = %s AND status = 'pending';", (order_id,), fetch=False)
+                        except Exception:
+                            pass
+                    if order_id and uid:
+                        try:
+                            row = _q1(
+                                "SELECT o.items, o.subtotal_cents, u.email, u.name "
+                                "FROM orders o JOIN users u ON u.id = o.user_id "
+                                "WHERE o.id = %s AND o.user_id = %s "
+                                "AND (o.recovery_email_sent_at IS NULL);",
+                                (order_id, uid),
+                            )
+                            if row:
+                                _ritems = row.get("items")
+                                if isinstance(_ritems, str):
+                                    import json as _json
+                                    try:
+                                        _ritems = _json.loads(_ritems)
+                                    except Exception:
+                                        _ritems = []
+                                _sub = int(row.get("subtotal_cents") or 0)
+                                _email = row.get("email")
+                                _name = row.get("name")
+                                _balance = 0
+                                try:
+                                    from referrals import get_credit_balance
+                                    _balance = int(get_credit_balance(q, uid) or 0)
+                                except Exception:
+                                    pass
+                                app_url = os.environ.get("APP_URL", "https://crittr.ai").rstrip("/")
+                                _resume_url = f"{app_url}/#/cart"
+                                if _email:
+                                    from emails import send_abandoned_cart_email
+                                    send_abandoned_cart_email(
+                                        to_email=_email, name=_name, items=_ritems or [],
+                                        subtotal_cents=_sub, credit_balance_cents=_balance,
+                                        checkout_url=_resume_url,
+                                    )
+                                    q("UPDATE orders SET recovery_email_sent_at = NOW() WHERE id = %s;", (order_id,), fetch=False)
+                        except Exception as _ae:
+                            import logging
+                            logging.getLogger(__name__).warning(f"[webhook] abandoned cart send failed: {_ae}")
 
             elif etype in ("customer.subscription.created",
                            "customer.subscription.updated"):
