@@ -626,7 +626,9 @@ def health():
 # ---------------------------------------------------------------------------
 # Serve SPA
 # ---------------------------------------------------------------------------
-FRONTEND_PATH = Path(__file__).parent / "static" / "index.html"
+_FRONTEND_V2 = Path(__file__).parent / "static" / "index-v2.html"
+_FRONTEND_V1 = Path(__file__).parent / "static" / "index.html"
+FRONTEND_PATH = _FRONTEND_V2 if _FRONTEND_V2.exists() else _FRONTEND_V1
 FRONTEND_HTML = ""
 if FRONTEND_PATH.exists():
     FRONTEND_HTML = FRONTEND_PATH.read_text()
