@@ -715,3 +715,10 @@ except Exception as _e:
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
+# --- Phase 6+7 periodic jobs (APScheduler, in-process) ---
+try:
+    from scheduler import start_scheduler
+    start_scheduler()
+except Exception as _sched_e:
+    print(f"Warning: scheduler failed to start: {_sched_e}")
