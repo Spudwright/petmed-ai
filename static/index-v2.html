@@ -1208,12 +1208,21 @@ document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();cri
         if (hero && (location.pathname === '/' || a.getAttribute('href').indexOf('#') === 0)){
           ev.preventDefault();
           if (typeof closeDrawer === 'function') closeDrawer();
-          hero.scrollIntoView({behavior:'smooth', block:'start'});
+          // Compute target Y explicitly (scrollIntoView was silently no-op here).
+          var navEl = document.querySelector('.nav');
+          var navH = (navEl && navEl.offsetHeight) || 72;
+          var rect = hero.getBoundingClientRect();
+          var targetY = Math.max(0, window.pageYOffset + rect.top - navH - 12);
+          try {
+            window.scrollTo({top: targetY, behavior: 'smooth'});
+          } catch(_e) {
+            window.scrollTo(0, targetY);
+          }
           hero.classList.add('is-flash');
           setTimeout(function(){
             hero.classList.remove('is-flash');
             if (input) input.focus({preventScroll:true});
-          }, 520);
+          }, 620);
           if (history && history.replaceState) history.replaceState(null, '', '#hero-chat');
         }
       });
