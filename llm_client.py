@@ -5,38 +5,78 @@ Anthropic-first (preferred), OpenAI fallback if only OPENAI_API_KEY is set.
 Env vars:
     ANTHROPIC_API_KEY      — preferred provider
     OPENAI_API_KEY         — fallback provider
-    ANTHROPIC_MODEL        — override default model (default: claude-haiku-4-5-20251001)
-    OPENAI_MODEL           — override default model (default: gpt-4o-mini)
-    LLM_MAX_TOKENS         — cap assistant reply length (default: 1024)
+    ANTHROPIC_MODEL        — default: claude-haiku-4-5-20251001
+    OPENAI_MODEL           — default: gpt-4o-mini
+    LLM_MAX_TOKENS         — default: 1024
+    LLM_RETRIES            — default: 1
+    LLM_RETRY_BASE_MS      — default: 250
 
 Public functions:
     generate_chat_reply(system_prompt, history, user_message) -> str
     generate_summary(system_prompt, user_content) -> str
     has_provider() -> bool
-
-Neither function raises on provider errors of the "no API key" kind — it
-raises RuntimeError so the caller (pets_routes) can degrade gracefully and
-return a friendly message instead of crashing the request.
+    set_fallback_observer(fn) -> None
 """
 import os
+import time
 import logging
 
 log = logging.getLogger("crittr.llm")
 
-# Model defaults (overrideable via env)
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 try:
     MAX_TOKENS = int(os.environ.get("LLM_MAX_TOKENS", "1024"))
 except ValueError:
     MAX_TOKENS = 1024
+try:
+    LLM_RETRIES = int(os.environ.get("LLM_RETRIES", "1"))
+except ValueError:
+    LLM_RETRIES = 1
+try:
+    LLM_RETRY_BASE_MS = int(os.environ.get("LLM_RETRY_BASE_MS", "250"))
+except ValueError:
+    LLM_RETRY_BASE_MS = 250
 
 _anthropic_client = None
 _openai_client = None
+_fallback_observer = None
+
+
+def set_fallback_observer(fn):
+    """Register fn(provider_failed, stage, err_str) invoked on fallback events."""
+    global _fallback_observer
+    _fallback_observer = fn
+
+
+def _notify_fallback(provider_failed, stage, err):
+    if _fallback_observer is None:
+        return
+    try:
+        _fallback_observer(provider_failed, stage, str(err)[:300])
+    except Exception as e:
+        log.warning("fallback observer raised: %s", e)
+
+
+def _call_with_retry(fn, label="llm"):
+    """Call fn() with LLM_RETRIES extra retries. Empty replies treated as retryable."""
+    last = None
+    for attempt in range(LLM_RETRIES + 1):
+        try:
+            out = fn()
+            if out and out.strip():
+                return out
+            last = ValueError("empty reply from provider")
+        except Exception as e:
+            last = e
+            log.warning("%s attempt %d failed: %s", label, attempt, e)
+        if attempt < LLM_RETRIES:
+            delay = (LLM_RETRY_BASE_MS / 1000.0) * (2 ** attempt)
+            time.sleep(delay)
+    raise last if last else RuntimeError("unknown llm failure")
 
 
 def _get_anthropic():
-    """Lazy-init Anthropic client. Returns None if unavailable."""
     global _anthropic_client
     if _anthropic_client is not None:
         return _anthropic_client
@@ -56,7 +96,6 @@ def _get_anthropic():
 
 
 def _get_openai():
-    """Lazy-init OpenAI client. Returns None if unavailable."""
     global _openai_client
     if _openai_client is not None:
         return _openai_client
@@ -76,7 +115,6 @@ def _get_openai():
 
 
 def has_provider():
-    """True iff at least one provider is configured and importable."""
     return bool(_get_anthropic() or _get_openai())
 
 
@@ -89,43 +127,50 @@ def _extract_anthropic_text(resp):
 
 
 def generate_chat_reply(system_prompt, history, user_message):
-    """Generate an assistant reply to `user_message` given prior `history`.
-
-    Args:
-        system_prompt: str — full system instructions (template filled in).
-        history: list of {"role": "user"|"assistant", "content": str},
-                 oldest first, NOT including the new user message.
-        user_message: str — the user's new message.
-
-    Returns: str (never empty — returns a single "…" if the provider
-             gave an empty reply).
-
-    Raises: RuntimeError if no provider is configured.
-    """
+    """Generate an assistant reply. Anthropic-first; OpenAI on fallback."""
     history = history or []
     messages = list(history) + [{"role": "user", "content": user_message}]
 
-    c = _get_anthropic()
-    if c is not None:
+    def _anthropic_call():
+        c = _get_anthropic()
+        if c is None:
+            raise RuntimeError("anthropic unavailable")
         resp = c.messages.create(
             model=ANTHROPIC_MODEL,
             max_tokens=MAX_TOKENS,
             system=system_prompt,
             messages=messages,
         )
-        text = _extract_anthropic_text(resp)
-        return text or "…"
+        return _extract_anthropic_text(resp)
 
-    c = _get_openai()
-    if c is not None:
+    def _openai_call():
+        c = _get_openai()
+        if c is None:
+            raise RuntimeError("openai unavailable")
         all_msgs = [{"role": "system", "content": system_prompt}] + messages
         resp = c.chat.completions.create(
             model=OPENAI_MODEL,
             messages=all_msgs,
             max_tokens=MAX_TOKENS,
         )
-        text = (resp.choices[0].message.content or "").strip()
-        return text or "…"
+        return (resp.choices[0].message.content or "").strip()
+
+    if _get_anthropic() is not None:
+        try:
+            text = _call_with_retry(_anthropic_call, label="chat/anthropic")
+            return text or "…"
+        except Exception as e:
+            log.warning("anthropic chat failed after retries; falling over: %s", e)
+            _notify_fallback("anthropic", "chat", e)
+
+    if _get_openai() is not None:
+        try:
+            text = _call_with_retry(_openai_call, label="chat/openai")
+            return text or "…"
+        except Exception as e:
+            log.warning("openai chat failed after retries: %s", e)
+            _notify_fallback("openai", "chat", e)
+            raise
 
     raise RuntimeError(
         "No LLM provider configured — set ANTHROPIC_API_KEY or OPENAI_API_KEY."
@@ -133,12 +178,11 @@ def generate_chat_reply(system_prompt, history, user_message):
 
 
 def generate_summary(system_prompt, user_content):
-    """Single-turn summarization. Uses the same providers as generate_chat_reply.
-
-    Raises RuntimeError if no provider is configured.
-    """
-    c = _get_anthropic()
-    if c is not None:
+    """Single-turn summarization. Anthropic-first; OpenAI on fallback."""
+    def _anthropic_call():
+        c = _get_anthropic()
+        if c is None:
+            raise RuntimeError("anthropic unavailable")
         resp = c.messages.create(
             model=ANTHROPIC_MODEL,
             max_tokens=MAX_TOKENS,
@@ -147,8 +191,10 @@ def generate_summary(system_prompt, user_content):
         )
         return _extract_anthropic_text(resp)
 
-    c = _get_openai()
-    if c is not None:
+    def _openai_call():
+        c = _get_openai()
+        if c is None:
+            raise RuntimeError("openai unavailable")
         resp = c.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[
@@ -159,7 +205,21 @@ def generate_summary(system_prompt, user_content):
         )
         return (resp.choices[0].message.content or "").strip()
 
+    if _get_anthropic() is not None:
+        try:
+            return _call_with_retry(_anthropic_call, label="summary/anthropic")
+        except Exception as e:
+            log.warning("anthropic summary failed; falling over: %s", e)
+            _notify_fallback("anthropic", "summary", e)
+
+    if _get_openai() is not None:
+        try:
+            return _call_with_retry(_openai_call, label="summary/openai")
+        except Exception as e:
+            log.warning("openai summary failed: %s", e)
+            _notify_fallback("openai", "summary", e)
+            raise
+
     raise RuntimeError(
         "No LLM provider configured — set ANTHROPIC_API_KEY or OPENAI_API_KEY."
     )
-
