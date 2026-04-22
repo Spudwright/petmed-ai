@@ -27,6 +27,7 @@ from alerts import record_fallback
 from seo_landings import register_seo_landings
 from find_vet import register_find_vet_routes
 from referrals import register_referral_routes
+from shop_routes import register_shop_routes
 from regions import register_region_middleware
 try:
     from youtube import youtube_bp
@@ -710,6 +711,12 @@ try:
     register_referral_routes(app, q, require_login=login_required)
 except Exception as _e:
     print(f"Warning: register_referral_routes failed: {_e}")
+
+# Phase A.2 — MEDVi-style category pages (/shop/<slug>)
+try:
+    register_shop_routes(app, q=q)
+except Exception as _e:
+    print(f"Warning: register_shop_routes failed: {_e}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
