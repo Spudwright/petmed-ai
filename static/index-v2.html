@@ -402,7 +402,8 @@ footer a:hover{color:#fff}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,92vw);background:var(--cream);transform:translateX(100%);transition:transform .32s var(--ease);z-index:90;display:flex;flex-direction:column;box-shadow:-24px 0 60px -24px rgba(28,42,31,.32)}
 .drawer.is-open{transform:translateX(0)}
 .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.25rem;border-bottom:1px solid var(--line)}
-.drawer-head .logo{font-size:1.4rem}
+.drawer-head .logo{font-size:1.72rem;font-weight:700;letter-spacing:-.025em}
+.drawer-head .logo .logo-dot{width:15px;height:15px}
 .drawer-close{background:transparent;border:0;font-size:1.6rem;line-height:1;padding:.25rem .55rem;cursor:pointer;color:var(--ink);border-radius:8px}
 .drawer-close:hover{background:var(--sage-50)}
 .drawer-body{flex:1;overflow-y:auto;padding:.6rem 0 1rem}
@@ -422,6 +423,8 @@ footer a:hover{color:#fff}
 .df-badge{position:absolute;top:.55rem;left:.55rem;font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .5rem;border-radius:999px;background:var(--sage-200);color:var(--sage-800)}
 .df-badge.rx{background:#EADBCF;color:#8A5A3A}
 
+.df-thumb{overflow:hidden}
+.df-thumb img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
 .drawer-foot{padding:1rem 1.25rem 1.3rem;border-top:1px solid var(--line);background:var(--cream-2)}
 .drawer-foot .btn{width:100%}
 .drawer-foot-mini{display:flex;justify-content:space-between;gap:.5rem;padding:.65rem 0 .85rem;font-size:.86rem}
@@ -475,17 +478,17 @@ body.drawer-lock{overflow:hidden}
 
     <div class="drawer-section">Popular right now</div>
     <div class="drawer-featured" id="drawerFeatured">
-      <a class="df-card" href="/shop/supplements">
+      <a class="df-card" data-slot="otc" href="/shop/supplements">
         <span class="df-badge">Popular</span>
-        <div class="df-thumb">🌿</div>
-        <div class="df-title">Daily joint chews</div>
-        <div class="df-price">From $28</div>
+        <div class="df-thumb" data-thumb>🌿</div>
+        <div class="df-title" data-title>Daily joint chews</div>
+        <div class="df-price" data-price>From $28</div>
       </a>
-      <a class="df-card" href="/shop/rx">
+      <a class="df-card" data-slot="rx" href="/shop/rx">
         <span class="df-badge rx">Rx</span>
-        <div class="df-thumb">💊</div>
-        <div class="df-title">Prescription meds</div>
-        <div class="df-price">After consult</div>
+        <div class="df-thumb" data-thumb>💊</div>
+        <div class="df-title" data-title>Prescription meds</div>
+        <div class="df-price" data-price>After consult</div>
       </a>
     </div>
   </div>
@@ -1194,7 +1197,78 @@ document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();cri
       if(b) b.classList.add('is-hidden');
     }
   } catch(e){}
+
+  // --- Start-triage click: smooth scroll + focus, always give feedback. ---
+  function wireStartTriage(){
+    var pills = document.querySelectorAll('a[href="#hero-chat"], a[href="/#hero-chat"]');
+    pills.forEach(function(a){
+      a.addEventListener('click', function(ev){
+        var hero = document.getElementById('hero-chat');
+        var input = document.getElementById('chatInput');
+        if (hero && (location.pathname === '/' || a.getAttribute('href').indexOf('#') === 0)){
+          ev.preventDefault();
+          if (typeof closeDrawer === 'function') closeDrawer();
+          hero.scrollIntoView({behavior:'smooth', block:'start'});
+          hero.classList.add('is-flash');
+          setTimeout(function(){
+            hero.classList.remove('is-flash');
+            if (input) input.focus({preventScroll:true});
+          }, 520);
+          if (history && history.replaceState) history.replaceState(null, '', '#hero-chat');
+        }
+      });
+    });
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', wireStartTriage);
+  } else { wireStartTriage(); }
+
+  // --- Hydrate drawer featured cards with real products from /api/products. ---
+  function _fmtMoney(cents){ return '$' + Math.round((cents||0)/100); }
+  function _paintCard(slotEl, product){
+    if (!slotEl || !product) return;
+    slotEl.setAttribute('href', '/shop/' + product.slug);
+    var thumb = slotEl.querySelector('[data-thumb]');
+    var title = slotEl.querySelector('[data-title]');
+    var price = slotEl.querySelector('[data-price]');
+    if (title) title.textContent = product.name;
+    if (price) price.textContent = product.requires_rx ? 'After consult' : 'From ' + _fmtMoney(product.price_cents);
+    if (thumb && product.image_url){
+      thumb.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = product.image_url;
+      img.alt = product.name;
+      img.loading = 'lazy';
+      img.onerror = function(){ thumb.innerHTML = product.requires_rx ? '\u{1F48A}' : '\u{1F33F}'; };
+      thumb.appendChild(img);
+    }
+  }
+  function hydrateDrawerFeatured(){
+    try {
+      fetch('/api/products', {credentials:'include'})
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(j){
+          if (!j || !j.products) return;
+          var list = j.products;
+          var otc = list.find(function(p){ return !p.requires_rx && p.in_stock && p.image_url; })
+                 || list.find(function(p){ return !p.requires_rx && p.in_stock; });
+          var rx  = list.find(function(p){ return p.requires_rx && p.in_stock && p.image_url; })
+                 || list.find(function(p){ return p.requires_rx && p.in_stock; });
+          _paintCard(document.querySelector('.df-card[data-slot=\"otc\"]'), otc);
+          _paintCard(document.querySelector('.df-card[data-slot=\"rx\"]'),  rx);
+        })
+        .catch(function(){});
+    } catch(e){}
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', hydrateDrawerFeatured);
+  } else { hydrateDrawerFeatured(); }
 })();
 </script>
+
+<style>
+/* Start-triage click flash so the user sees something happen. */
+.hero-chat.is-flash{box-shadow:0 0 0 4px var(--sage-300),var(--shadow-lg);transition:box-shadow .45s var(--ease)}
+</style>
 </body>
 </html>
