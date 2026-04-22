@@ -62,6 +62,19 @@ def start_scheduler() -> "object | None":
         print("[scheduler] apscheduler not installed — skipping", flush=True)
         return None
 
+    # Fork-safe single-instance guard: only one worker holds the lock.
+    # If gunicorn runs multiple workers, the others silently skip.
+    import fcntl
+    lock_path = "/tmp/crittr-scheduler.lock"
+    try:
+        _lock_fd = open(lock_path, "w")
+        fcntl.flock(_lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except (BlockingIOError, OSError) as _lock_err:
+        print(f"[scheduler] another worker owns the lock, skipping: {_lock_err}", flush=True)
+        return None
+    # Keep the fd alive for the process lifetime
+    globals()["_SCHEDULER_LOCK_FD"] = _lock_fd
+
     sched = BackgroundScheduler(daemon=True, timezone="UTC")
 
     sched.add_job(_run_alerts,        CronTrigger(minute="*/15"),           id="alerts",        max_instances=1)
