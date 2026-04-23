@@ -139,10 +139,17 @@ def ensure_affiliate_urls(q) -> None:
     for slug, entry in _AFFILIATE_MAP.items():
         try:
             url = _build_amazon_url(entry)
+            # Seed when NULL/empty OR when URL still has the placeholder tag
+            # (so setting AMAZON_ASSOCIATES_TAG env var re-seeds all products).
+            placeholder_marker = "tag=crittrai-20"
+            current_tag = _tag()
             q(
                 "UPDATE products SET amazon_url=%s "
-                "WHERE slug=%s AND (amazon_url IS NULL OR amazon_url = '')",
-                (url, slug),
+                "WHERE slug=%s AND ("
+                "  amazon_url IS NULL OR amazon_url = '' "
+                "  OR (amazon_url LIKE %s AND %s <> 'crittrai-20')"
+                ")",
+                (url, slug, f"%{placeholder_marker}%", current_tag),
                 fetch=False,
             )
             if "public_name" in entry:
