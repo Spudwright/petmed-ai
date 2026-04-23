@@ -1,8 +1,9 @@
 """crittr.ai — idempotent seed for products.image_url.
 
-Maps each of the current catalog SKUs to a stylised SVG tile in
-/static/product-tiles/.  Runs once on startup; if a product already has a
-non-null image_url, we leave it alone so hand-set images take priority.
+Phase E.6: upgraded from static SVG tiles to Unsplash lifestyle photos.
+Each of 16 SKUs gets a thoughtfully-mapped real photo.  Re-seeds when
+image_url is NULL OR is an old /static/product-tiles/<x>.svg path, so
+deploys upgrade placeholder tiles but never clobber manually-set photos.
 
 Public API
 ----------
@@ -15,62 +16,66 @@ import logging
 log = logging.getLogger("crittr.product_images")
 
 
-# slug -> tile filename (under /static/product-tiles/)
-_TILE_MAP = {
-    # flea-tick
-    "frontline-gold":      "topical.svg",
-    "nexgard-plus":        "chew.svg",
-    "seresto-collar":      "collar.svg",
-    # heartworm
-    "heartgard-plus":      "chew.svg",
-    "revolution-plus":     "topical.svg",
-    # joint-mobility
-    "cosequin-ds-msm":     "jar.svg",
-    "dasuquin-advanced":   "jar.svg",
-    # anxiety-calming
-    "adaptil-calm":        "diffuser.svg",
-    "composure-pro":       "chew.svg",
-    # digestive
-    "fortiflora":          "sachet.svg",
-    "purina-en":           "food-bag.svg",
-    # skin-coat
-    "welactin-omega3":     "bottle.svg",
-    # dental
-    "greenies-original":   "chew.svg",
-    "oravet-chews":        "chew.svg",
-    # vitamins
-    "pet-tabs-plus":       "jar.svg",
-    "nucat-multivitamin":  "jar.svg",
+# slug -> Unsplash photo URL (all confirmed loading via cat-module usage)
+_IMAGE_URL_MAP = {
+    # Flea-tick / parasite
+    "frontline-gold":           "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=80",
+    "seresto-collar":           "https://images.unsplash.com/photo-1437957146754-f6377debe171?w=900&q=80",
+    # Rebranded Rx combo chews + topical
+    "crittr-combo-rx-chew":     "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=900&q=80",
+    "crittr-heartworm-chew":    "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
+    "crittr-cat-broad-topical": "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=900&q=80",
+    "crittr-rx-gastro-diet":    "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=900&q=80",
+    # Legacy slugs (in case rebrand didn't run)
+    "nexgard-plus":             "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=900&q=80",
+    "heartgard-plus":           "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
+    "revolution-plus":          "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=900&q=80",
+    "purina-en":                "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=900&q=80",
+    # Joint / mobility
+    "cosequin-ds-msm":          "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
+    "dasuquin-advanced":        "https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=900&q=80",
+    # Calming / behavior
+    "adaptil-calm":             "https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=900&q=80",
+    "composure-pro":            "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=900&q=80",
+    # Digestive / probiotic
+    "fortiflora":               "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
+    # Skin / coat
+    "welactin-omega3":          "https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=900&q=80",
+    # Dental
+    "greenies-original":        "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=80",
+    "oravet-chews":             "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=900&q=80",
+    # Multivitamins
+    "pet-tabs-plus":            "https://images.unsplash.com/photo-1437957146754-f6377debe171?w=900&q=80",
+    "nucat-multivitamin":       "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=900&q=80",
 }
 
-# Category-level fallback: if a product isn't in _TILE_MAP we guess by
-# category_slug + requires_rx so new SKUs automatically get *something*.
-_CAT_FALLBACK = {
-    "flea-tick":       "topical.svg",
-    "heartworm":       "chew.svg",
-    "joint-mobility":  "jar.svg",
-    "anxiety-calming": "chew.svg",
-    "digestive":       "sachet.svg",
-    "skin-coat":       "bottle.svg",
-    "dental":          "chew.svg",
-    "vitamins":        "jar.svg",
+# Fallback: category_slug -> photo URL, in case a new product is added
+_CATEGORY_FALLBACK = {
+    "flea-tick":       "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=80",
+    "heartworm":       "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=900&q=80",
+    "joint-mobility":  "https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=900&q=80",
+    "anxiety-calming": "https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=900&q=80",
+    "digestive":       "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
+    "skin-coat":       "https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=900&q=80",
+    "dental":          "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=80",
+    "vitamins":        "https://images.unsplash.com/photo-1437957146754-f6377debe171?w=900&q=80",
 }
 
 
-def _tile_for(row) -> str | None:
-    """Return the tile filename for a DB row, or None if we can't guess."""
+def _photo_for(row):
     slug = row.get("slug") if hasattr(row, "get") else row["slug"]
-    if slug in _TILE_MAP:
-        return _TILE_MAP[slug]
+    if slug in _IMAGE_URL_MAP:
+        return _IMAGE_URL_MAP[slug]
     cat = row.get("category_slug") if hasattr(row, "get") else row["category_slug"]
-    return _CAT_FALLBACK.get(cat)
+    return _CATEGORY_FALLBACK.get(cat)
 
 
 def ensure_product_images(q) -> None:
-    """Set products.image_url for every row where it is NULL or empty.
+    """Seed/upgrade products.image_url with lifestyle photos.
 
-    Idempotent: rows with an existing non-empty image_url are never touched,
-    so human-set images always win.
+    Writes when image_url is NULL/empty OR still points to an old
+    /static/product-tiles/ SVG path.  Hand-set URLs (anything else) are
+    preserved.
     """
     try:
         rows = q(
@@ -81,19 +86,19 @@ def ensure_product_images(q) -> None:
         log.warning("ensure_product_images: could not read products: %s", e)
         return
 
-    updated = 0
-    skipped_present = 0
-    skipped_unmapped = 0
+    updated = skipped_present = skipped_unmapped = 0
     for r in rows:
         existing = r.get("image_url") if hasattr(r, "get") else r["image_url"]
-        if existing:
+        # Only overwrite if blank OR an old tile path
+        is_blank = not existing
+        is_tile = bool(existing) and "/static/product-tiles/" in existing
+        if not (is_blank or is_tile):
             skipped_present += 1
             continue
-        tile = _tile_for(r)
-        if not tile:
+        url = _photo_for(r)
+        if not url:
             skipped_unmapped += 1
             continue
-        url = f"/static/product-tiles/{tile}"
         try:
             q("UPDATE products SET image_url=%s WHERE id=%s", (url, r["id"]), fetch=False)
             updated += 1
@@ -103,6 +108,6 @@ def ensure_product_images(q) -> None:
 
     if updated:
         log.info(
-            "ensure_product_images: seeded %d tiles (%d already set, %d unmapped)",
+            "ensure_product_images: seeded %d photos (%d preserved, %d unmapped)",
             updated, skipped_present, skipped_unmapped,
         )
