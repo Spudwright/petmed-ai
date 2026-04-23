@@ -1032,7 +1032,7 @@ def _build_faqs(topic):
     # 4) crittr pharmacy hook
     faqs.append((
         "Can crittr fill a prescription for this?",
-        "If a licensed vet prescribes meds during or after triage, yes \u2014 Rx orders are routed through our licensed pharmacy partner (Chewy Pharmacy). "
+        "If a licensed vet prescribes meds during or after triage, yes \u2014 Rx orders are routed through our licensed pharmacy partner. "
         "You can also browse our OTC picks directly; we only stock items our vet advisors actually recommend.",
     ))
     return faqs
