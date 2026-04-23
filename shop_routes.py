@@ -137,6 +137,7 @@ nav ul li a.active{color:var(--sage-700);border-bottom:2px solid var(--sage-600)
 .shop-grid{display:grid;grid-template-columns:1fr 280px;gap:2.5rem;padding:2rem 0 5rem}
 @media(max-width:880px){.shop-grid{grid-template-columns:1fr}}
 .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem}
+.product-blurb{font-size:.82rem;color:var(--muted);line-height:1.45;margin-top:.4rem}
 .product-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s var(--ease),transform .2s var(--ease)}
 .product-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
 .product-img{aspect-ratio:1/1;background:var(--sage-50);background-size:cover;background-position:center;position:relative}
@@ -186,8 +187,9 @@ footer a{color:#B2C3B2}
             {% if p.compare_price_cents and p.price_cents < p.compare_price_cents %}<span class="product-badge">Sale</span>{% endif %}
           </div>
           <div class="product-body">
-            <h3>{{ p.name }}</h3>
+            <h3>{{ p.public_name or p.name }}</h3>
             <div class="product-species">{{ p.species or 'All pets' }}</div>
+            {% if p.public_blurb %}<div class="product-blurb">{{ p.public_blurb }}</div>{% endif %}
             <div class="product-price">${{ '{:.2f}'.format(p.price_cents/100) }}{% if p.compare_price_cents and p.price_cents < p.compare_price_cents %}<span class="compare">${{ '{:.2f}'.format(p.compare_price_cents/100) }}</span>{% endif %}</div>
             <div class="product-actions">
               {% if p.requires_rx %}
@@ -266,6 +268,7 @@ def register_shop_routes(app, q):
                 SELECT p.id, p.name, p.slug, p.description, p.price_cents,
                        p.compare_price_cents, p.image_url, p.species,
                        p.requires_rx, p.tags, p.amazon_url, p.chewy_url,
+                       p.public_name, p.public_blurb,
                        c.slug AS category_slug
                   FROM products p
              LEFT JOIN categories c ON c.id = p.category_id

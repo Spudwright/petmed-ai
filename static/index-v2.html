@@ -1363,12 +1363,13 @@ document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();cri
     var thumb = slotEl.querySelector('[data-thumb]');
     var title = slotEl.querySelector('[data-title]');
     var price = slotEl.querySelector('[data-price]');
-    if (title) title.textContent = product.name;
+    var publicName = product.public_name || product.name;
+    if (title) title.textContent = publicName;
     if (price) price.textContent = product.requires_rx ? 'After consult' : 'From ' + _fmtMoney(product.price_cents);
     if (thumb && product.image_url){
       thumb.innerHTML = '';
       var img = document.createElement('img');
-      img.alt = product.name;
+      img.alt = publicName;
       img.loading = 'eager';   // drawer is off-screen transformed; lazy never fires
       img.decoding = 'async';
       img.onerror = function(){ thumb.innerHTML = product.requires_rx ? '\u{1F48A}' : '\u{1F33F}'; };

@@ -32,22 +32,72 @@ import urllib.parse
 log = logging.getLogger("crittr.affiliate")
 
 
-# slug -> {"amazon_search": "<query>"} or {"amazon_asin": "BXXXXXXXXX"}
-# Prefer ASIN when you know it (deep-link to specific product) — falls back
-# to search URL which always works.
+# slug -> { amazon_search | amazon_asin, public_name, public_blurb }
+#   public_name: customer-facing generic label (no manufacturer brand)
+#   public_blurb: one-line "why crittr recommends this" description
+# The underlying retail product is surfaced only on Amazon, which is
+# where brand transparency correctly happens per Associates program rules.
 _AFFILIATE_MAP = {
-    "frontline-gold":      {"amazon_search": "Frontline Gold dog flea tick"},
-    "seresto-collar":      {"amazon_search": "Seresto flea tick collar dog"},
-    "cosequin-ds-msm":     {"amazon_search": "Cosequin DS Plus MSM joint"},
-    "dasuquin-advanced":   {"amazon_search": "Dasuquin Advanced joint dog"},
-    "adaptil-calm":        {"amazon_search": "Adaptil Calm Diffuser dog"},
-    "composure-pro":       {"amazon_search": "VetriScience Composure Pro dog"},
-    "fortiflora":          {"amazon_search": "Purina FortiFlora Probiotic"},
-    "welactin-omega3":     {"amazon_search": "Welactin Omega-3 dog cat"},
-    "greenies-original":   {"amazon_search": "Greenies Original dental treats dog"},
-    "oravet-chews":        {"amazon_search": "Oravet Dental Hygiene Chews dog"},
-    "pet-tabs-plus":       {"amazon_search": "Pet-Tabs Plus multivitamin dog"},
-    "nucat-multivitamin":  {"amazon_search": "VetriScience Nu Cat multivitamin"},
+    "frontline-gold": {
+        "amazon_search": "Frontline Gold dog flea tick",
+        "public_name":  "Monthly flea & tick topical",
+        "public_blurb": "Topical drops behind the shoulder blades, once a month. Good first-line choice for dogs and cats with active flea or tick exposure.",
+    },
+    "seresto-collar": {
+        "amazon_search": "Seresto flea tick collar dog",
+        "public_name":  "8-month flea & tick collar",
+        "public_blurb": "Slow-release collar that keeps working for up to 8 months — set it and forget it. Our vet advisors' pick for low-maintenance prevention.",
+    },
+    "cosequin-ds-msm": {
+        "amazon_search": "Cosequin DS Plus MSM joint",
+        "public_name":  "Daily joint & mobility chew",
+        "public_blurb": "Glucosamine + chondroitin + MSM chew for dogs slowing down on walks or stairs. The supplement most orthopedic vets start with.",
+    },
+    "dasuquin-advanced": {
+        "amazon_search": "Dasuquin Advanced joint dog",
+        "public_name":  "Advanced joint support chew",
+        "public_blurb": "Stepped-up joint formula for dogs already on a basic supplement — adds avocado/soy unsaponifiables and boswellia.",
+    },
+    "adaptil-calm": {
+        "amazon_search": "Adaptil Calm Diffuser dog",
+        "public_name":  "Calming pheromone diffuser",
+        "public_blurb": "Plug-in that releases a dog-appeasing pheromone. Helps with separation, storms, and new-home anxiety. Drug-free.",
+    },
+    "composure-pro": {
+        "amazon_search": "VetriScience Composure Pro dog",
+        "public_name":  "Clinical-strength calming chew",
+        "public_blurb": "L-theanine + colostrum chew for fast-acting situational calm — thunderstorms, vet visits, fireworks. For dogs and cats.",
+    },
+    "fortiflora": {
+        "amazon_search": "Purina FortiFlora Probiotic",
+        "public_name":  "Daily probiotic powder",
+        "public_blurb": "Sprinkle-on-food probiotic for GI upset or post-antibiotic recovery. Safe for dogs and cats of any age.",
+    },
+    "welactin-omega3": {
+        "amazon_search": "Welactin Omega-3 dog cat",
+        "public_name":  "Omega-3 skin & coat liquid",
+        "public_blurb": "Cold-water-fish omega-3 oil for itchy skin, dull coat, and inflammation. Pump onto food daily.",
+    },
+    "greenies-original": {
+        "amazon_search": "Greenies Original dental treats dog",
+        "public_name":  "Daily dental chew",
+        "public_blurb": "Once-a-day dental treat that mechanically cleans teeth and freshens breath. Good for dogs that won't tolerate brushing.",
+    },
+    "oravet-chews": {
+        "amazon_search": "Oravet Dental Hygiene Chews dog",
+        "public_name":  "Prescription-strength dental chew",
+        "public_blurb": "Clinical-grade dental chew that coats the teeth to block plaque formation. A step up from standard dental treats.",
+    },
+    "pet-tabs-plus": {
+        "amazon_search": "Pet-Tabs Plus multivitamin dog",
+        "public_name":  "Daily multivitamin for dogs",
+        "public_blurb": "Complete daily multivitamin — safety net for home-cooked diets, seniors, or picky eaters.",
+    },
+    "nucat-multivitamin": {
+        "amazon_search": "VetriScience Nu Cat multivitamin",
+        "public_name":  "Daily multivitamin chew for cats",
+        "public_blurb": "Soft chew multivitamin for cats — covers the usual gaps in commercial feline diets (taurine, B-vitamins, antioxidants).",
+    },
 }
 
 
@@ -65,25 +115,25 @@ def _build_amazon_url(entry: dict) -> str:
 
 
 def ensure_affiliate_schema(q) -> None:
-    """Add amazon_url + chewy_url cols if they don't exist."""
-    try:
-        q(
-            "ALTER TABLE products ADD COLUMN IF NOT EXISTS amazon_url TEXT",
-            fetch=False,
-        )
-        q(
-            "ALTER TABLE products ADD COLUMN IF NOT EXISTS chewy_url TEXT",
-            fetch=False,
-        )
-    except Exception as e:
-        log.warning("ensure_affiliate_schema failed: %s", e)
+    """Add amazon_url / chewy_url / public_name / public_blurb cols."""
+    cols = (
+        "amazon_url TEXT",
+        "chewy_url TEXT",
+        "public_name TEXT",
+        "public_blurb TEXT",
+    )
+    for col in cols:
+        try:
+            q(f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {col}", fetch=False)
+        except Exception as e:
+            log.warning("ensure_affiliate_schema %s failed: %s", col, e)
 
 
 def ensure_affiliate_urls(q) -> None:
-    """Seed amazon_url for the 12 OTC products (only where NULL/empty).
+    """Seed amazon_url + public_name + public_blurb for the 12 OTC products.
 
-    Runs on every startup; the NULL guard means manually-set URLs are
-    never overwritten.
+    Runs on every startup.  Each column has its own NULL guard so
+    manually-set values are never overwritten.
     """
     ensure_affiliate_schema(q)
     for slug, entry in _AFFILIATE_MAP.items():
@@ -95,5 +145,19 @@ def ensure_affiliate_urls(q) -> None:
                 (url, slug),
                 fetch=False,
             )
+            if "public_name" in entry:
+                q(
+                    "UPDATE products SET public_name=%s "
+                    "WHERE slug=%s AND (public_name IS NULL OR public_name = '')",
+                    (entry["public_name"], slug),
+                    fetch=False,
+                )
+            if "public_blurb" in entry:
+                q(
+                    "UPDATE products SET public_blurb=%s "
+                    "WHERE slug=%s AND (public_blurb IS NULL OR public_blurb = '')",
+                    (entry["public_blurb"], slug),
+                    fetch=False,
+                )
         except Exception as e:
             log.warning("ensure_affiliate_urls %s: %s", slug, e)
