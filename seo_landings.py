@@ -842,7 +842,19 @@ _HTML = r"""<!doctype html>
       h1 { font-size:30px; }
       .related { grid-template-columns:1fr; }
     }
-  </style>
+  
+    .card.picks { background: #FDFBF5; }
+    .picks-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 6px; }
+    @media (max-width: 640px) { .picks-grid { grid-template-columns: 1fr; } }
+    .pick { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line);
+             border-radius: 12px; padding: 14px; text-decoration: none; color: var(--ink);
+             transition: border-color .2s ease, transform .15s ease; }
+    .pick:hover { border-color: #A6C9A2; transform: translateY(-1px); }
+    .pick-name { font-weight: 600; font-size: 14.5px; line-height: 1.3; color: #1F3221;
+                 font-family: 'Fraunces', serif; }
+    .pick-blurb { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin-top: 6px; flex: 1; }
+    .pick-cta { font-size: 13px; font-weight: 600; color: #3E6340; margin-top: 10px; }
+</style>
 </head>
 <body>
   <header>
@@ -868,6 +880,29 @@ _HTML = r"""<!doctype html>
         {% for w in topic.watch_for %}<li>{{ w }}</li>{% endfor %}
       </ul>
     </div>
+
+    {% if picks %}
+    <div class="card picks">
+      <h3 style="margin:0 0 4px 0; font-family:'Fraunces',serif; font-weight:500;">
+        What our vet advisors recommend
+      </h3>
+      <p style="margin:0 0 14px 0; font-size:14px; color:var(--muted); line-height:1.5;">
+        Over-the-counter picks that commonly help with this. Not a substitute for a vet visit — if symptoms escalate, book one.
+      </p>
+      <div class="picks-grid">
+        {% for p in picks %}
+          <a class="pick" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">
+            <div class="pick-name">{{ p.public_name or p.slug }}</div>
+            {% if p.public_blurb %}<div class="pick-blurb">{{ p.public_blurb }}</div>{% endif %}
+            <div class="pick-cta">Buy on Amazon →</div>
+          </a>
+        {% endfor %}
+      </div>
+      <div style="font-size:11.5px; color:var(--muted); margin-top:12px; line-height:1.5;">
+        As an Amazon Associate, crittr.ai earns from qualifying purchases — at no extra cost to you.
+      </div>
+    </div>
+    {% endif %}
 
     {% if faqs %}
     <div class="card faq">
@@ -1002,22 +1037,124 @@ def _build_faqs(topic):
     ))
     return faqs
 
+
+
+# ---------------------------------------------------------------
+# AI rec box — pick 3 OTC products relevant to each SEO topic
+# ---------------------------------------------------------------
+# Category-keyword map: (topic-keyword triggers) -> (product-text needles).
+# Same pattern as anon_chat._picks_for_safe but tuned for SEO topics where
+# we match against slug + title + watch_for strings.
+_TOPIC_KEYWORD_MAP = [
+    # Fleas, ticks, external parasites
+    (("tick", "flea", "parasite", "mite", "scabies"),
+     ("flea", "tick", "collar", "topical")),
+    # Itch, skin, coat
+    (("itch", "scratch", "allergy", "hot spot", "hot-spot", "coat", "shed",
+      "rash", "dry skin", "dandruff", "ear-infection", "paws"),
+     ("omega", "skin", "coat", "allergy")),
+    # Joint, mobility, senior
+    (("limp", "joint", "arthritis", "hip", "stair", "stiff", "senior",
+      "walk", "mobility", "slow"),
+     ("joint", "mobility")),
+    # Anxiety, behavior
+    (("anxiety", "scared", "storm", "firework", "separation", "bark",
+      "nervous", "fear", "calm", "stress"),
+     ("calm", "pheromone", "behavior", "anxiety")),
+    # GI / digestive
+    (("vomit", "diarrhea", "stool", "tummy", "gut", "eating", "appetite",
+      "throwing-up", "throwing up", "grass", "stomach", "probiotic"),
+     ("probiotic", "gut", "digestive")),
+    # Dental
+    (("breath", "tooth", "teeth", "dental", "plaque", "tartar", "gum",
+      "drool", "mouth"),
+     ("dental",)),
+    # Multi / general wellness
+    (("vitamin", "nutrient", "picky", "nutrition", "multivitamin"),
+     ("multivitamin", "vitamin")),
+]
+
+
+def _picks_for_topic(q, topic) -> list:
+    """Return up to 3 OTC products relevant to the given SEO topic.
+
+    Pulls from products where requires_rx=FALSE AND amazon_url is set,
+    keyword-scores each row against the topic's slug + title + watch_for,
+    returns the top 3.  Falls back to 2 generic popular SKUs if nothing
+    scores.
+    """
+    try:
+        rows = q(
+            "SELECT slug, public_name, public_blurb, price_cents, amazon_url, "
+            "       species, tags, description, image_url "
+            "FROM products "
+            "WHERE in_stock = TRUE AND requires_rx = FALSE "
+            "      AND amazon_url IS NOT NULL AND amazon_url <> ''"
+        ) or []
+    except Exception:
+        return []
+    if not rows:
+        return []
+
+    topic_text = " ".join([
+        (topic.slug or ""),
+        (topic.title or ""),
+        (topic.question or ""),
+        " ".join(topic.watch_for or []),
+    ]).lower()
+
+    def _score(row):
+        score = 0
+        text = " ".join(
+            str(row.get(k) or "").lower()
+            for k in ("public_name", "public_blurb", "description", "tags")
+        )
+        for triggers, needles in _TOPIC_KEYWORD_MAP:
+            if any(t in topic_text for t in triggers):
+                for n in needles:
+                    if n in text:
+                        score += 2
+        # Species match small bonus
+        species = str(row.get("species") or "").lower()
+        if topic.species and topic.species in species:
+            score += 1
+        return score
+
+    scored = [(_score(r), r) for r in rows]
+    scored.sort(key=lambda t: -t[0])
+    picks = [r for (s, r) in scored if s > 0][:3]
+    if not picks:
+        # Fallback: first 2 products so the panel never renders empty
+        picks = rows[:2]
+    return picks
+
 # ---------------------------------------------------------------
 # Route registration
 # ---------------------------------------------------------------
-def register_seo_landings(app):
-    """Wire GET /c/<slug>, GET /sitemap.xml."""
+def register_seo_landings(app, q=None):
+    """Wire GET /c/<slug>, GET /sitemap.xml.
+
+    q: optional query helper; when provided, each SEO page renders an AI
+    rec panel with 3 affiliate-linked products relevant to the topic.
+    """
     @app.route("/c/<slug>")
     def seo_page(slug):
         topic = TOPICS.get(slug)
         if not topic:
             abort(404)
+        picks = []
+        if q is not None:
+            try:
+                picks = _picks_for_topic(q, topic)
+            except Exception:
+                picks = []
         return render_template_string(
             _HTML,
             topic=topic,
             all_topics=TOPICS,
             lean_class=_LEAN_CLASS.get(topic.lean, "safe"),
             faqs=_build_faqs(topic),
+            picks=picks,
         )
 
     @app.route("/sitemap.xml")

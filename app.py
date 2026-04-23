@@ -704,7 +704,7 @@ except Exception as _e:
     print(f"Warning: register_region_middleware failed: {_e}")
 
 try:
-    register_seo_landings(app)
+    register_seo_landings(app, q=q)
 except Exception as _e:
     print(f"Warning: register_seo_landings failed: {_e}")
 
