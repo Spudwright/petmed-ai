@@ -490,6 +490,40 @@ body.drawer-lock{overflow:hidden}
   .cat-photo.photo-pair.step-right .photo-a,
   .cat-photo.photo-pair.step-left .photo-b{margin-top:24px}
 }
+
+
+/* ═══════ Phase E.5 — Qualification quiz modal ═══════ */
+.quiz-overlay{position:fixed;inset:0;background:rgba(28,42,31,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:1.5rem;overflow-y:auto}
+.quiz-overlay.is-open{display:flex}
+.quiz-modal{background:var(--cream);border-radius:var(--radius-lg);max-width:560px;width:100%;padding:2.4rem 2rem 2.2rem;box-shadow:0 30px 80px -20px rgba(28,42,31,.5);position:relative;animation:slideUp .3s var(--ease)}
+@media(max-width:560px){.quiz-modal{padding:2rem 1.4rem 1.6rem;border-radius:var(--radius)}}
+.quiz-close{position:absolute;top:.9rem;right:1rem;background:transparent;border:0;font-size:1.6rem;line-height:1;padding:.3rem .6rem;cursor:pointer;color:var(--ink);border-radius:8px;z-index:2}
+.quiz-close:hover{background:var(--sage-50)}
+
+.quiz-progress{position:absolute;top:0;left:0;right:0;height:4px;background:var(--sage-100);border-radius:var(--radius-lg) var(--radius-lg) 0 0;overflow:hidden}
+.quiz-progress-bar{height:100%;background:linear-gradient(90deg,var(--sage-500),var(--sage-700));width:5%;transition:width .3s var(--ease)}
+
+.quiz-step{display:none;animation:fadeIn .25s var(--ease)}
+.quiz-step.is-active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.quiz-eyebrow{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sage-600);margin-bottom:.7rem}
+.quiz-head{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(1.55rem,3vw,1.95rem);line-height:1.15;color:var(--sage-900);margin:0 0 .5rem;font-variation-settings:'opsz' 144,'SOFT' 30,'WONK' 0}
+.quiz-sub{font-size:.96rem;color:var(--muted);line-height:1.55;margin:0 0 1.2rem}
+
+.quiz-modal textarea,.quiz-modal input[type="text"]{width:100%;padding:.9rem 1rem;border-radius:var(--radius);border:1.5px solid var(--line);background:#fff;font-family:inherit;font-size:1rem;line-height:1.5;color:var(--ink);resize:vertical;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
+.quiz-modal textarea:focus,.quiz-modal input[type="text"]:focus{outline:none;border-color:var(--sage-500);box-shadow:0 0 0 3px rgba(130,177,125,.18)}
+
+.quiz-options{display:grid;grid-template-columns:1fr;gap:.55rem;margin:.4rem 0 0}
+.quiz-opt{text-align:left;padding:.95rem 1.1rem;border-radius:var(--radius);border:1.5px solid var(--line);background:#fff;color:var(--ink);font-size:1rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .18s var(--ease);display:flex;align-items:center;gap:.7rem}
+.quiz-opt:hover{border-color:var(--sage-400);background:var(--sage-50);transform:translateX(2px)}
+.quiz-opt.is-selected{border-color:var(--sage-600);background:var(--sage-50);box-shadow:0 0 0 2px var(--sage-500) inset}
+
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;gap:.7rem;margin-top:1.4rem;flex-wrap:wrap}
+.quiz-nav .btn-ghost{background:transparent;color:var(--muted);border:0;cursor:pointer;font-size:.9rem;font-weight:500;padding:.55rem 0}
+.quiz-nav .btn-ghost:hover{color:var(--sage-700)}
+.quiz-nav .btn-primary:disabled{opacity:.45;cursor:not-allowed;background:var(--sage-400)}
+
 </style>
 </head>
 <body>
@@ -706,7 +740,7 @@ body.drawer-lock{overflow:hidden}
           <li>Food, environment, parasite, or infection</li>
           <li>OTC first — Rx if needed</li>
         </ul>
-        <a href="#hero-chat" class="btn btn-primary btn-lg">Start a skin check →</a>
+        <button type="button" onclick="openQuiz('skin')" class="btn btn-primary btn-lg">Start a skin check →</button>
       </div>
       <div class="cat-photo photo-pair step-right">
         <img class="photo-a" src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=640&amp;q=80" alt="Cat resting in natural light" />
@@ -734,7 +768,7 @@ body.drawer-lock{overflow:hidden}
           <li>Mobility &amp; joint support</li>
           <li>Cognitive check-ins</li>
         </ul>
-        <a href="#hero-chat" class="btn btn-primary btn-lg">Build a plan →</a>
+        <button type="button" onclick="openQuiz('senior')" class="btn btn-primary btn-lg">Build a plan →</button>
       </div>
     </div>
   </div>
@@ -752,7 +786,7 @@ body.drawer-lock{overflow:hidden}
           <li>Medical vs. training vs. environmental</li>
           <li>Vet-formulated calming supplements</li>
         </ul>
-        <a href="#hero-chat" class="btn btn-primary btn-lg">Read their behavior →</a>
+        <button type="button" onclick="openQuiz('behavior')" class="btn btn-primary btn-lg">Read their behavior →</button>
       </div>
       <div class="cat-photo photo-pair step-right">
         <img class="photo-a" src="https://images.unsplash.com/photo-1437957146754-f6377debe171?w=640&amp;q=80" alt="Dog looking alert at home" />
@@ -778,7 +812,7 @@ body.drawer-lock{overflow:hidden}
           <li>Export a full summary for any new vet</li>
           <li>Private by default — you own your pet's data</li>
         </ul>
-        <a href="/pet" class="btn btn-primary btn-lg">Set up your pet →</a>
+        <button type="button" onclick="openQuiz('general')" class="btn btn-primary btn-lg">Set up your pet →</button>
       </div>
       <div class="pm-card">
         <div class="pm-card-head">
@@ -1378,5 +1412,241 @@ document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();cri
 /* Start-triage click flash so the user sees something happen. */
 .hero-chat.is-flash{box-shadow:0 0 0 4px var(--sage-300),var(--shadow-lg);transition:box-shadow .45s var(--ease)}
 </style>
+
+<!-- ═══════════════ Qualification Quiz (MEDVi-style) ═══════════════ -->
+<div class="quiz-overlay" id="quizOverlay" onclick="if(event.target===this)closeQuiz()">
+  <div class="quiz-modal" role="dialog" aria-label="Tell crittr about your pet">
+    <button class="quiz-close" onclick="closeQuiz()" aria-label="Close">×</button>
+    <div class="quiz-progress"><div class="quiz-progress-bar" id="quizProgressBar"></div></div>
+
+    <!-- Step 1: Symptom / concern -->
+    <div class="quiz-step is-active" data-step="1">
+      <span class="quiz-eyebrow" id="quizEyebrow">Tell us what's going on</span>
+      <h3 class="quiz-head">What's happening with your pet?</h3>
+      <p class="quiz-sub">The more detail the better — how long, how severe, any changes you've noticed.</p>
+      <textarea id="q_symptom" rows="4" placeholder="e.g. my 8-year-old lab has been limping on her back-right leg for 3 days, worse after walks…"></textarea>
+      <div class="quiz-nav"><button type="button" class="btn btn-primary btn-lg" onclick="quizNext()" id="q1Next" disabled>Continue →</button></div>
+    </div>
+
+    <!-- Step 2: Animal type -->
+    <div class="quiz-step" data-step="2">
+      <span class="quiz-eyebrow">About your pet</span>
+      <h3 class="quiz-head">What kind of critter?</h3>
+      <div class="quiz-options" id="q_species">
+        <button type="button" class="quiz-opt" data-value="dog">🐕  Dog</button>
+        <button type="button" class="quiz-opt" data-value="cat">🐈  Cat</button>
+        <button type="button" class="quiz-opt" data-value="rabbit">🐇  Rabbit</button>
+        <button type="button" class="quiz-opt" data-value="bird">🦜  Bird</button>
+        <button type="button" class="quiz-opt" data-value="other">🐾  Other</button>
+      </div>
+      <div class="quiz-nav"><button type="button" class="btn btn-ghost" onclick="quizBack()">← Back</button></div>
+    </div>
+
+    <!-- Step 3: Breed -->
+    <div class="quiz-step" data-step="3">
+      <span class="quiz-eyebrow">About your pet</span>
+      <h3 class="quiz-head">Breed or mix?</h3>
+      <p class="quiz-sub">Best guess is fine. Breed matters for some conditions more than others.</p>
+      <input type="text" id="q_breed" placeholder="e.g. Labrador mix, Tabby, Maine Coon, French Bulldog…">
+      <div class="quiz-nav">
+        <button type="button" class="btn btn-ghost" onclick="quizBack()">← Back</button>
+        <button type="button" class="btn btn-primary btn-lg" onclick="quizNext()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Age -->
+    <div class="quiz-step" data-step="4">
+      <span class="quiz-eyebrow">About your pet</span>
+      <h3 class="quiz-head">How old?</h3>
+      <div class="quiz-options" id="q_age">
+        <button type="button" class="quiz-opt" data-value="puppy">Puppy / kitten (under 1 year)</button>
+        <button type="button" class="quiz-opt" data-value="young">Young (1–3 years)</button>
+        <button type="button" class="quiz-opt" data-value="adult">Adult (4–7 years)</button>
+        <button type="button" class="quiz-opt" data-value="senior">Senior (8–11 years)</button>
+        <button type="button" class="quiz-opt" data-value="geriatric">Geriatric (12+ years)</button>
+      </div>
+      <div class="quiz-nav"><button type="button" class="btn btn-ghost" onclick="quizBack()">← Back</button></div>
+    </div>
+
+    <!-- Step 5: Weight -->
+    <div class="quiz-step" data-step="5">
+      <span class="quiz-eyebrow">About your pet</span>
+      <h3 class="quiz-head">Rough weight?</h3>
+      <p class="quiz-sub">Ballpark is fine. Helps with dosing and breed context.</p>
+      <input type="text" id="q_weight" placeholder="e.g. 65 lbs, 8 kg, 4 lbs…">
+      <div class="quiz-nav">
+        <button type="button" class="btn btn-ghost" onclick="quizBack()">← Back</button>
+        <button type="button" class="btn btn-primary btn-lg" onclick="quizNext()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 6: Known meds / conditions -->
+    <div class="quiz-step" data-step="6">
+      <span class="quiz-eyebrow">Last question</span>
+      <h3 class="quiz-head">Any meds, conditions, or allergies?</h3>
+      <p class="quiz-sub">Skip if nothing to add. Anything you share helps me give a safer read.</p>
+      <textarea id="q_history" rows="3" placeholder="e.g. on Apoquel for allergies, had a hot spot last spring, sensitive to chicken…"></textarea>
+      <div class="quiz-nav">
+        <button type="button" class="btn btn-ghost" onclick="quizBack()">← Back</button>
+        <button type="button" class="btn btn-primary btn-lg" onclick="quizSubmit()">Get my read →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var TOTAL_STEPS = 6;
+  var state = { step: 1, context: 'general', data: {} };
+
+  var CONTEXT_SEEDS = {
+    general:  '',
+    skin:     "I'd like a read on skin or allergy symptoms. ",
+    senior:   "I'd like help building a senior care plan. ",
+    behavior: "I'd like a read on a behavioral concern. "
+  };
+
+  function byId(id){ return document.getElementById(id); }
+
+  function showStep(n){
+    [].forEach.call(document.querySelectorAll('.quiz-step'), function(el){
+      el.classList.toggle('is-active', Number(el.dataset.step) === n);
+    });
+    var pct = Math.max(5, Math.round((n - 1) / TOTAL_STEPS * 100));
+    var bar = byId('quizProgressBar'); if (bar) bar.style.width = pct + '%';
+    state.step = n;
+    // Focus the first input in the new step
+    setTimeout(function(){
+      var active = document.querySelector('.quiz-step.is-active input, .quiz-step.is-active textarea');
+      if (active) active.focus();
+    }, 180);
+  }
+
+  window.openQuiz = function(context){
+    state.step = 1;
+    state.context = context || 'general';
+    state.data = {};
+    // Reset fields
+    ['q_symptom','q_breed','q_weight','q_history'].forEach(function(id){ var el = byId(id); if (el) el.value = ''; });
+    [].forEach.call(document.querySelectorAll('.quiz-opt.is-selected'), function(b){ b.classList.remove('is-selected'); });
+    // Seed the symptom textarea with a category-specific hint
+    if (state.context && CONTEXT_SEEDS[state.context]) {
+      byId('q_symptom').value = CONTEXT_SEEDS[state.context];
+      byId('q1Next').disabled = CONTEXT_SEEDS[state.context].trim().length < 8;
+    } else {
+      byId('q1Next').disabled = true;
+    }
+    var eb = byId('quizEyebrow');
+    if (eb) {
+      eb.textContent = {
+        skin:     'Skin & allergies check',
+        senior:   'Senior care plan',
+        behavior: 'Behavior read'
+      }[state.context] || "Tell us what's going on";
+    }
+    showStep(1);
+    byId('quizOverlay').classList.add('is-open');
+    document.body.classList.add('drawer-lock');
+  };
+
+  window.closeQuiz = function(){
+    byId('quizOverlay').classList.remove('is-open');
+    document.body.classList.remove('drawer-lock');
+  };
+
+  window.quizNext = function(){
+    // Capture current step's value
+    if (state.step === 1) state.data.symptom = byId('q_symptom').value.trim();
+    if (state.step === 3) state.data.breed = byId('q_breed').value.trim();
+    if (state.step === 5) state.data.weight = byId('q_weight').value.trim();
+    if (state.step < TOTAL_STEPS) showStep(state.step + 1);
+  };
+  window.quizBack = function(){
+    if (state.step > 1) showStep(state.step - 1);
+  };
+
+  // Wire quiz-opt buttons to select + auto-advance
+  [].forEach.call(document.querySelectorAll('#q_species .quiz-opt'), function(b){
+    b.addEventListener('click', function(){
+      [].forEach.call(document.querySelectorAll('#q_species .quiz-opt'), function(x){ x.classList.remove('is-selected'); });
+      b.classList.add('is-selected');
+      state.data.species = b.dataset.value;
+      setTimeout(function(){ showStep(3); }, 140);
+    });
+  });
+  [].forEach.call(document.querySelectorAll('#q_age .quiz-opt'), function(b){
+    b.addEventListener('click', function(){
+      [].forEach.call(document.querySelectorAll('#q_age .quiz-opt'), function(x){ x.classList.remove('is-selected'); });
+      b.classList.add('is-selected');
+      state.data.age = b.dataset.value;
+      setTimeout(function(){ showStep(5); }, 140);
+    });
+  });
+
+  // Enable step-1 Next when symptom has substance
+  byId('q_symptom').addEventListener('input', function(){
+    byId('q1Next').disabled = byId('q_symptom').value.trim().length < 8;
+  });
+  // Enter-to-continue on text steps
+  ['q_breed','q_weight'].forEach(function(id){
+    byId(id).addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); quizNext(); } });
+  });
+  byId('q_symptom').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); if(!byId('q1Next').disabled) quizNext(); }
+  });
+
+  // Final submit: compose a structured summary, pipe into hero chat, auto-send
+  window.quizSubmit = function(){
+    state.data.history = byId('q_history').value.trim();
+
+    var d = state.data;
+    var age_map = {
+      puppy: 'puppy/kitten under 1 year',
+      young: '1–3-year-old',
+      adult: '4–7-year-old',
+      senior: '8–11-year-old',
+      geriatric: '12+-year-old'
+    };
+    var age = age_map[d.age] || d.age || '';
+    var species = d.species || 'pet';
+    var breed = d.breed ? ' ' + d.breed : '';
+    var weight = d.weight ? ' (' + d.weight + ')' : '';
+    var history = d.history ? ' Known history: ' + d.history + '.' : '';
+
+    var composed = 'My ' + age + breed + ' ' + species + weight + '. ' + (d.symptom || '') + history;
+    composed = composed.replace(/\s+/g, ' ').trim();
+
+    closeQuiz();
+
+    var input = byId('chatInput');
+    var hero = byId('hero-chat');
+    if (input && hero) {
+      input.value = composed;
+      // Scroll to chat with the same reliable pattern used by the header button
+      var nav = document.querySelector('.nav');
+      var navH = (nav && nav.offsetHeight) || 72;
+      var rect = hero.getBoundingClientRect();
+      var targetY = Math.max(0, window.pageYOffset + rect.top - navH - 12);
+      try { window.scrollTo({top: targetY, behavior: 'smooth'}); } catch(_){}
+      setTimeout(function(){
+        if (Math.abs(window.pageYOffset - targetY) > 20) window.scrollTo(0, targetY);
+        // Trigger the chat form submit (the page has its own handler already bound)
+        var form = byId('chatForm');
+        if (form) {
+          // Use requestSubmit if available, else dispatch submit event
+          if (typeof form.requestSubmit === 'function') form.requestSubmit();
+          else form.dispatchEvent(new Event('submit', {cancelable:true, bubbles:true}));
+        }
+      }, 420);
+    }
+  };
+
+  // Escape closes quiz
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && byId('quizOverlay').classList.contains('is-open')) window.closeQuiz();
+  });
+})();
+</script>
+
 </body>
 </html>
