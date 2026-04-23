@@ -26,25 +26,25 @@ _REBRAND = {
     "nexgard-plus": {
         "new_slug":       "crittr-combo-rx-chew",
         "new_name":       "crittr flea, tick & heartworm chew",
-        "new_blurb":      "Monthly soft chew that covers fleas, ticks and heartworm in one go. Compounded for crittr; available after a quick vet consult.",
+        "new_desc":      "Monthly soft chew that covers fleas, ticks and heartworm in one go. Compounded for crittr; available after a quick vet consult.",
         "new_image":      "/static/product-tiles/crittr-flea-tick-heartworm-chew.svg",
     },
     "heartgard-plus": {
         "new_slug":       "crittr-heartworm-chew",
         "new_name":       "crittr monthly heartworm chew",
-        "new_blurb":      "Monthly heartworm protection in a beef-flavored chew. Compounded for crittr; available after a quick vet consult.",
+        "new_desc":      "Monthly heartworm protection in a beef-flavored chew. Compounded for crittr; available after a quick vet consult.",
         "new_image":      "/static/product-tiles/crittr-heartworm-chew.svg",
     },
     "revolution-plus": {
         "new_slug":       "crittr-cat-broad-topical",
         "new_name":       "crittr broad-spectrum cat topical",
-        "new_blurb":      "Monthly topical for cats — fleas, ticks, heartworm, ear mites and worms. Compounded for crittr; available after a quick vet consult.",
+        "new_desc":      "Monthly topical for cats — fleas, ticks, heartworm, ear mites and worms. Compounded for crittr; available after a quick vet consult.",
         "new_image":      "/static/product-tiles/crittr-cat-broad-topical.svg",
     },
     "purina-en": {
         "new_slug":       "crittr-rx-gastro-diet",
         "new_name":       "crittr Rx gastro diet",
-        "new_blurb":      "Vet-prescribed therapeutic food for dogs with GI upset. Our private-label formulation, shipped after a quick vet consult.",
+        "new_desc":      "Vet-prescribed therapeutic food for dogs with GI upset. Our private-label formulation, shipped after a quick vet consult.",
         "new_image":      "/static/product-tiles/crittr-rx-gastro.svg",
     },
 }
@@ -110,12 +110,12 @@ def ensure_rx_rebrand(q) -> None:
 
         try:
             q(
-                "UPDATE products SET slug=%s, name=%s, short_blurb=%s, image_url=%s "
+                "UPDATE products SET slug=%s, name=%s, description=%s, image_url=%s "
                 "WHERE slug=%s",
                 (
                     spec["new_slug"],
                     spec["new_name"],
-                    spec["new_blurb"],
+                    spec["new_desc"],
                     spec["new_image"],
                     old_slug,
                 ),
@@ -207,9 +207,9 @@ def register_rebrand_admin(app, q):
                     report["updates"].append({"slug": old_slug, "result": "refused-otc"})
                     continue
                 q(
-                    "UPDATE products SET slug=%s, name=%s, short_blurb=%s, image_url=%s "
+                    "UPDATE products SET slug=%s, name=%s, description=%s, image_url=%s "
                     "WHERE slug=%s",
-                    (spec["new_slug"], spec["new_name"], spec["new_blurb"],
+                    (spec["new_slug"], spec["new_name"], spec["new_desc"],
                      spec["new_image"], old_slug),
                     fetch=False,
                 )
