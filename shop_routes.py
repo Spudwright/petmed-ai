@@ -90,6 +90,17 @@ _HTML = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ cat.title }} — crittr.ai">
+<meta property="og:description" content="{{ cat.hero_lede }}">
+<meta property="og:url" content="https://crittr.ai/shop/{{ slug }}">
+<meta property="og:image" content="https://crittr.ai/og/shop-{{ slug }}.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ cat.title }} — crittr.ai">
+<meta name="twitter:description" content="{{ cat.hero_lede }}">
+<meta name="twitter:image" content="https://crittr.ai/og/shop-{{ slug }}.png">
 <title>{{ cat.title }} — crittr.ai</title>
 <meta name="description" content="{{ cat.hero_lede[:160] }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -30,6 +30,7 @@ from referrals import register_referral_routes
 from shop_routes import register_shop_routes
 from product_images import ensure_product_images
 from crittr_rx_rebrand import ensure_rx_rebrand, register_rx_rebrand_redirects
+from og_images import register_og_routes
 from regions import register_region_middleware
 try:
     from youtube import youtube_bp
@@ -732,6 +733,12 @@ try:
     register_rx_rebrand_redirects(app)
 except Exception as _e:
     print(f"Warning: ensure_rx_rebrand failed: {_e}")
+
+# Phase B.10 — dynamic OG image generation at /og/<slug>.png
+try:
+    register_og_routes(app)
+except Exception as _e:
+    print(f"Warning: register_og_routes failed: {_e}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

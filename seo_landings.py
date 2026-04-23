@@ -749,7 +749,10 @@ _HTML = r"""<!doctype html>
   <meta property="og:title" content="{{ topic.title }} — crittr.ai">
   <meta property="og:description" content="{{ topic.meta_description }}">
   <meta property="og:url" content="https://crittr.ai/c/{{ topic.slug }}">
-  <meta property="og:image" content="https://crittr.ai/static/og/{{ topic.slug }}.png">
+  <meta property="og:image" content="https://crittr.ai/og/c-{{ topic.slug }}.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:image" content="https://crittr.ai/og/c-{{ topic.slug }}.png">
   <meta name="twitter:card" content="summary_large_image">
   <!-- JSON-LD -->
   <script type="application/ld+json">
