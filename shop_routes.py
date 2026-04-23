@@ -76,7 +76,7 @@ _CATEGORIES = {
         "hero_eyebrow": "Prescription",
         "hero_lede": (
             "Prescription items always start with a consult. Our licensed pharmacy "
-            "partner (Chewy Pharmacy) handles fulfillment — we handle the triage. "
+            "handles fulfillment — we handle the triage. "
             "Tap any item to start a consult; if it's the right fit, the vet writes "
             "the Rx and we ship."
         ),
