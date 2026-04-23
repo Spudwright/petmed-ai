@@ -260,10 +260,18 @@ def register_shop_routes(app, q):
             log.warning(f"shop query failed: {e}")
             rows = []
         products = [p for p in rows if cat["filter"](p)]
-        return render_template_string(
-            _HTML,
-            cat=cat, slug=slug, products=products, fmt_money=_fmt_money,
-            shared_nav_css=SHARED_NAV_CSS,
-            shared_nav_html=render_nav_html(slug),
-            shared_nav_js=SHARED_NAV_JS,
-        )
+        try:
+            return render_template_string(
+                _HTML,
+                cat=cat, slug=slug, products=products, fmt_money=_fmt_money,
+                shared_nav_css=SHARED_NAV_CSS,
+                shared_nav_html=render_nav_html(slug),
+                shared_nav_js=SHARED_NAV_JS,
+            )
+        except Exception as _e:
+            import traceback
+            return Response(
+                "RENDER FAIL:\n" + traceback.format_exc(),
+                status=500,
+                mimetype="text/plain",
+            )
