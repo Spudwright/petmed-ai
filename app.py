@@ -28,6 +28,7 @@ from seo_landings import register_seo_landings
 from find_vet import register_find_vet_routes
 from referrals import register_referral_routes
 from shop_routes import register_shop_routes
+from product_images import ensure_product_images
 from regions import register_region_middleware
 try:
     from youtube import youtube_bp
@@ -717,6 +718,12 @@ try:
     register_shop_routes(app, q=q)
 except Exception as _e:
     print(f"Warning: register_shop_routes failed: {_e}")
+
+# Phase B.6 — seed static SVG tiles into products.image_url (idempotent)
+try:
+    ensure_product_images(q)
+except Exception as _e:
+    print(f"Warning: ensure_product_images failed: {_e}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
