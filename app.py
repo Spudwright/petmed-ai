@@ -30,6 +30,7 @@ from referrals import register_referral_routes
 from shop_routes import register_shop_routes
 from product_images import ensure_product_images
 from crittr_rx_rebrand import ensure_rx_rebrand, register_rx_rebrand_redirects
+from affiliate_links import ensure_affiliate_urls
 from og_images import register_og_routes
 from legal_routes import register_legal_routes
 from regions import register_region_middleware
@@ -734,6 +735,12 @@ try:
     register_rx_rebrand_redirects(app)
 except Exception as _e:
     print(f"Warning: ensure_rx_rebrand failed: {_e}")
+
+# Phase D.1 — Lever 1: seed Amazon affiliate URLs for 12 OTC products
+try:
+    ensure_affiliate_urls(q)
+except Exception as _e:
+    print(f"Warning: ensure_affiliate_urls failed: {_e}")
 
 # Phase B.10 — dynamic OG image generation at /og/<slug>.png
 try:

@@ -192,6 +192,10 @@ footer a{color:#B2C3B2}
             <div class="product-actions">
               {% if p.requires_rx %}
                 <button class="btn btn-secondary" onclick='addOrConsult({{ p|tojson }})'>Start consult</button>
+              {% elif p.amazon_url %}
+                <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy on Amazon</a>
+              {% elif p.chewy_url %}
+                <a class="btn btn-primary" href="{{ p.chewy_url }}" target="_blank" rel="nofollow noopener sponsored">Buy on Chewy</a>
               {% else %}
                 <button class="btn btn-primary" onclick='addOrConsult({{ p|tojson }})'>Add to cart</button>
               {% endif %}
@@ -261,7 +265,8 @@ def register_shop_routes(app, q):
             rows = q("""
                 SELECT p.id, p.name, p.slug, p.description, p.price_cents,
                        p.compare_price_cents, p.image_url, p.species,
-                       p.requires_rx, p.tags, c.slug AS category_slug
+                       p.requires_rx, p.tags, p.amazon_url, p.chewy_url,
+                       c.slug AS category_slug
                   FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
                  WHERE p.in_stock = TRUE
