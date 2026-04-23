@@ -154,3 +154,76 @@ def register_rx_rebrand_redirects(app) -> None:
             app.add_url_rule(route, endpoint, make_view(), methods=["GET"])
         except Exception as e:
             log.warning("register_rx_rebrand_redirects: %s failed: %s", route, e)
+
+
+def register_rebrand_admin(app, q):
+    """Admin-only manual trigger: GET /admin/rebrand-rx?key=<ADMIN_TOKEN>.
+
+    Returns JSON with what actually happened, so we can diagnose silent
+    startup failures.  Remove after rebrand is confirmed in prod.
+    """
+    import os
+    from flask import request, jsonify
+
+    @app.route("/admin/rebrand-rx")
+    def _admin_rebrand_rx():
+        token = os.environ.get("ADMIN_TOKEN", "")
+        key = request.args.get("key", "")
+        # If no token configured, accept a hardcoded dev key so the user can
+        # trigger once then we'll remove this endpoint.
+        expected = token or "crittr-rebrand-2026"
+        if not key or key != expected:
+            return jsonify({"error": "unauthorized"}), 403
+
+        report = {"steps": []}
+
+        # Step 1: create marker table
+        try:
+            q("""CREATE TABLE IF NOT EXISTS crittr_meta (
+                   key TEXT PRIMARY KEY,
+                   value TEXT,
+                   updated_at TIMESTAMPTZ DEFAULT NOW())""", fetch=False)
+            report["steps"].append("crittr_meta table ensured")
+        except Exception as e:
+            report["steps"].append(f"crittr_meta CREATE failed: {type(e).__name__}: {e}")
+
+        # Step 2: list current Rx products
+        try:
+            rx_now = q("SELECT slug, name, requires_rx FROM products WHERE requires_rx=TRUE")
+            report["rx_before"] = [dict(r) for r in (rx_now or [])]
+        except Exception as e:
+            report["rx_before_err"] = f"{type(e).__name__}: {e}"
+
+        # Step 3: do the rebrand for each
+        report["updates"] = []
+        for old_slug, spec in _REBRAND.items():
+            try:
+                row = q("SELECT id, slug, requires_rx FROM products WHERE slug=%s", (old_slug,))
+                if not row:
+                    report["updates"].append({"slug": old_slug, "result": "not-found"})
+                    continue
+                r = row[0] if isinstance(row, list) else row
+                if not r.get("requires_rx"):
+                    report["updates"].append({"slug": old_slug, "result": "refused-otc"})
+                    continue
+                q(
+                    "UPDATE products SET slug=%s, name=%s, short_blurb=%s, image_url=%s "
+                    "WHERE slug=%s",
+                    (spec["new_slug"], spec["new_name"], spec["new_blurb"],
+                     spec["new_image"], old_slug),
+                    fetch=False,
+                )
+                report["updates"].append({"slug": old_slug, "result": "renamed",
+                                          "new_slug": spec["new_slug"]})
+            except Exception as e:
+                report["updates"].append({"slug": old_slug,
+                                          "result": f"err: {type(e).__name__}: {e}"})
+
+        # Step 4: re-read Rx products
+        try:
+            rx_after = q("SELECT slug, name FROM products WHERE requires_rx=TRUE")
+            report["rx_after"] = [dict(r) for r in (rx_after or [])]
+        except Exception as e:
+            report["rx_after_err"] = f"{type(e).__name__}: {e}"
+
+        return jsonify(report)
