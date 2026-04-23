@@ -894,12 +894,12 @@ _HTML = r"""<!doctype html>
           <a class="pick" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">
             <div class="pick-name">{{ p.public_name or p.slug }}</div>
             {% if p.public_blurb %}<div class="pick-blurb">{{ p.public_blurb }}</div>{% endif %}
-            <div class="pick-cta">Buy on Amazon →</div>
+            <div class="pick-cta">Buy now →</div>
           </a>
         {% endfor %}
       </div>
       <div style="font-size:11.5px; color:var(--muted); margin-top:12px; line-height:1.5;">
-        As an Amazon Associate, crittr.ai earns from qualifying purchases — at no extra cost to you.
+        As an Amazon Associate, crittr.ai earns from qualifying purchases at no extra cost to you.
       </div>
     </div>
     {% endif %}
@@ -1027,7 +1027,7 @@ def _build_faqs(topic):
     faqs.append((
         "Do I need to pay for a vet visit just to ask?",
         "No. Our triage chat is free \u2014 it\'ll tell you whether a vet visit is actually warranted before you spend anything. "
-        "If you do need a licensed vet, we connect you to one via Vetster or AirVet in minutes, from your phone.",
+        "If you do need a licensed vet, we connect you to one of our licensed partners in minutes, from your phone.",
     ))
     # 4) crittr pharmacy hook
     faqs.append((

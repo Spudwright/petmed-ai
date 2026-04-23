@@ -217,10 +217,10 @@ footer a{color:#B2C3B2}
               {% if p.requires_rx %}
                 <button class="btn btn-secondary" onclick='addOrConsult({{ p|tojson }})'>Start consult</button>
               {% elif p.amazon_url %}
-                <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy on Amazon</a>
+                <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
                 <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Save 15% with auto-ship →</button>
               {% elif p.chewy_url %}
-                <a class="btn btn-primary" href="{{ p.chewy_url }}" target="_blank" rel="nofollow noopener sponsored">Buy on Chewy</a>
+                <a class="btn btn-primary" href="{{ p.chewy_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
                 <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Save 15% with auto-ship →</button>
               {% else %}
                 <button class="btn btn-primary" onclick='addOrConsult({{ p|tojson }})'>Add to cart</button>
