@@ -159,6 +159,28 @@ footer a{color:#B2C3B2}
 .ch-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
 .ch-row a{font-size:.82rem;background:#fff;border:1px solid var(--line);padding:.35rem .75rem;border-radius:999px;color:var(--sage-800)}
 .ch-row a.active{background:var(--sage-700);color:#fff;border-color:var(--sage-700)}
+
+.btn-ghost{background:transparent;color:var(--sage-700);border:0;cursor:pointer;font-size:.82rem;font-weight:500;padding:.5rem 0 0;text-align:left;transition:color .15s var(--ease)}
+.btn-ghost:hover{color:var(--sage-800);text-decoration:underline}
+.btn-autoship::before{content:'\2B06\FE0F  ';letter-spacing:.05em}
+
+/* Auto-ship waitlist modal */
+.as-overlay{position:fixed;inset:0;background:rgba(28,42,31,.55);display:none;align-items:center;justify-content:center;z-index:95;padding:1.5rem}
+.as-overlay.is-open{display:flex}
+.as-modal{background:var(--cream);border-radius:var(--radius-lg);max-width:460px;width:100%;padding:2rem 1.8rem;box-shadow:0 30px 80px -20px rgba(28,42,31,.45);position:relative}
+.as-close{position:absolute;top:.7rem;right:.9rem;background:transparent;border:0;font-size:1.5rem;line-height:1;padding:.3rem .6rem;cursor:pointer;color:var(--ink);border-radius:6px}
+.as-close:hover{background:var(--sage-50)}
+.as-eyebrow{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sage-600);margin-bottom:.6rem}
+.as-head{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:600;line-height:1.22;color:var(--sage-900);margin:0 0 .5rem}
+.as-sub{font-size:.96rem;color:var(--muted);line-height:1.55;margin:0 0 1.1rem}
+.as-form{display:flex;flex-direction:column;gap:.6rem;margin-top:.4rem}
+.as-form input{padding:.8rem .9rem;border-radius:var(--radius);border:1px solid var(--line);font-size:1rem;font-family:inherit;background:#fff}
+.as-form input:focus{outline:none;border-color:var(--sage-500);box-shadow:0 0 0 3px rgba(130,177,125,.2)}
+.as-form button{padding:.8rem 1rem;border-radius:999px;border:0;background:var(--ink);color:#fff;font-weight:600;font-size:.94rem;cursor:pointer;font-family:inherit}
+.as-form button:hover{background:var(--sage-900)}
+.as-fine{font-size:.76rem;color:var(--muted);margin-top:.8rem;line-height:1.5}
+.as-success{background:var(--sage-100);border-radius:var(--radius);padding:1rem;color:var(--sage-800);font-size:.95rem;line-height:1.5;margin-top:.6rem}
+
 {{ shared_nav_css|safe }}
 </style>
 </head>
@@ -196,8 +218,10 @@ footer a{color:#B2C3B2}
                 <button class="btn btn-secondary" onclick='addOrConsult({{ p|tojson }})'>Start consult</button>
               {% elif p.amazon_url %}
                 <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy on Amazon</a>
+                <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Save 15% with auto-ship →</button>
               {% elif p.chewy_url %}
                 <a class="btn btn-primary" href="{{ p.chewy_url }}" target="_blank" rel="nofollow noopener sponsored">Buy on Chewy</a>
+                <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Save 15% with auto-ship →</button>
               {% else %}
                 <button class="btn btn-primary" onclick='addOrConsult({{ p|tojson }})'>Add to cart</button>
               {% endif %}
@@ -249,6 +273,72 @@ function addOrConsult(product){
 function openCart(){location.href='/#cart';/* homepage has the real drawer */}
 function openAuth(){location.href='/login';}
 document.addEventListener('DOMContentLoaded',updateCartCount);
+</script>
+<div class="as-overlay" id="asOverlay" onclick="if(event.target===this)closeAutoship()">
+  <div class="as-modal" role="dialog" aria-label="Auto-ship waitlist">
+    <button class="as-close" onclick="closeAutoship()" aria-label="Close">×</button>
+    <span class="as-eyebrow">Coming soon</span>
+    <h3 class="as-head" id="asHead">Save 15% with crittr auto-ship.</h3>
+    <p class="as-sub" id="asSub">Get <span id="asProductName">this item</span> delivered on your pet's schedule at 15% off. We'll email you the moment auto-ship opens up — and the first 500 signups get an extra 5% off first order.</p>
+    <form class="as-form" id="asForm" onsubmit="return submitAutoship(event)">
+      <input type="email" id="asEmail" placeholder="your@email.com" required autocomplete="email">
+      <button type="submit">Join the waitlist</button>
+    </form>
+    <div class="as-fine">No charge. No spam. Unsubscribe any time. You'll only hear from us when auto-ship opens for your pick.</div>
+    <div class="as-success" id="asSuccess" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var currentSlug = null, currentName = null;
+  window.openAutoship = function(slug, name){
+    currentSlug = slug; currentName = name;
+    var overlay = document.getElementById('asOverlay');
+    var nm = document.getElementById('asProductName');
+    if (nm) nm.textContent = name || 'this item';
+    document.getElementById('asSuccess').style.display = 'none';
+    document.getElementById('asForm').style.display = 'flex';
+    overlay.classList.add('is-open');
+    document.body.classList.add('drawer-lock');
+    setTimeout(function(){ document.getElementById('asEmail').focus(); }, 120);
+  };
+  window.closeAutoship = function(){
+    document.getElementById('asOverlay').classList.remove('is-open');
+    document.body.classList.remove('drawer-lock');
+  };
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') window.closeAutoship(); });
+  window.submitAutoship = function(ev){
+    ev.preventDefault();
+    var email = document.getElementById('asEmail').value.trim();
+    fetch('/api/subscribe-waitlist', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({
+        email: email,
+        product_slug: currentSlug,
+        product_name: currentName,
+        source: 'otc-shop'
+      })
+    }).then(function(r){ return r.json().then(function(j){ return {s:r.status, j:j}; }); })
+      .then(function(res){
+        var success = document.getElementById('asSuccess');
+        if (res.s === 200 && res.j.ok) {
+          document.getElementById('asForm').style.display = 'none';
+          success.textContent = res.j.message || "You're on the list.";
+          success.style.display = 'block';
+        } else {
+          success.textContent = (res.j && res.j.error) || "Hmm, that didn't go through. Try again?";
+          success.style.display = 'block';
+          success.style.background = '#FCE8E3';
+          success.style.color = '#8A3A26';
+        }
+      }).catch(function(){
+        alert("Network hiccup — please try again.");
+      });
+    return false;
+  };
+})();
 </script>
 {{ shared_nav_js|safe }}
 </body>
