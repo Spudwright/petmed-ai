@@ -55,7 +55,7 @@ def _ensure_meta_table(q):
         q("""CREATE TABLE IF NOT EXISTS crittr_meta (
               key TEXT PRIMARY KEY,
               value TEXT,
-              updated_at TIMESTAMPTZ DEFAULT NOW())""")
+              updated_at TIMESTAMPTZ DEFAULT NOW())""", fetch=False)
     except Exception as e:
         log.warning("ensure_rx_rebrand: could not ensure crittr_meta: %s", e)
 
@@ -95,6 +95,7 @@ def ensure_rx_rebrand(q) -> None:
                     "INSERT INTO crittr_meta(key, value) VALUES (%s, %s) "
                     "ON CONFLICT (key) DO NOTHING",
                     (marker_key, "skipped:not-found"),
+                    fetch=False,
                 )
             except Exception:
                 pass
@@ -118,11 +119,13 @@ def ensure_rx_rebrand(q) -> None:
                     spec["new_image"],
                     old_slug,
                 ),
+                fetch=False,
             )
             q(
                 "INSERT INTO crittr_meta(key, value) VALUES (%s, %s) "
                 "ON CONFLICT (key) DO NOTHING",
                 (marker_key, spec["new_slug"]),
+                fetch=False,
             )
             log.info(
                 "ensure_rx_rebrand: %s -> %s", old_slug, spec["new_slug"]

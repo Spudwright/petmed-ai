@@ -95,7 +95,7 @@ def ensure_product_images(q) -> None:
             continue
         url = f"/static/product-tiles/{tile}"
         try:
-            q("UPDATE products SET image_url=%s WHERE id=%s", (url, r["id"]))
+            q("UPDATE products SET image_url=%s WHERE id=%s", (url, r["id"]), fetch=False)
             updated += 1
         except Exception as e:
             log.warning("ensure_product_images: update failed for %s: %s",
