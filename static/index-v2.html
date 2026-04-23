@@ -107,16 +107,12 @@ a:hover{color:var(--sage-500)}
 .btn-lg{padding:1.05rem 1.9rem;font-size:1.05rem}
 
 /* ── Hero ─────────────────────────────────────── */
-.hero{position:relative;padding:72px 0 96px;background:radial-gradient(62% 48% at 88% 8%,rgba(130,177,125,.28),transparent 60%),radial-gradient(58% 54% at 6% 95%,rgba(212,149,106,.16),transparent 60%),linear-gradient(180deg,var(--sage-50),var(--cream));overflow:hidden}
-.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:3.2rem;align-items:center}
-@media(max-width:1020px){.hero-grid{grid-template-columns:1fr;gap:2.2rem}}
-.hero-copy h1{font-size:clamp(2.8rem,5.2vw,4.6rem);margin-bottom:1.1rem}
-.hero-copy h1 em{font-style:italic;color:var(--terracotta-dark);font-weight:500}
-.hero-sub{font-size:1.18rem;color:#3D4F40;max-width:540px;margin:0 0 2rem;line-height:1.55}
-.hero-ctas{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:2rem}
-.hero-bullets{list-style:none;padding:0;margin:1.6rem 0 0;display:grid;grid-template-columns:1fr 1fr;gap:.55rem 1.4rem;max-width:520px}
-.hero-bullets li{display:flex;align-items:flex-start;gap:.55rem;font-size:.92rem;color:#3D4F40;font-weight:500}
-.hero-bullets li::before{content:'';flex-shrink:0;width:18px;height:18px;border-radius:50%;background:var(--sage-200) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232D4A30" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg>') center/12px no-repeat;margin-top:2px}
+.hero{position:relative;padding:60px 0 80px;background:radial-gradient(62% 48% at 88% 8%,rgba(130,177,125,.22),transparent 60%),radial-gradient(58% 54% at 6% 95%,rgba(212,149,106,.12),transparent 60%),linear-gradient(180deg,var(--sage-50),var(--cream));overflow:hidden}
+.hero-center{max-width:760px;margin:0 auto;text-align:center;display:flex;flex-direction:column;align-items:center}
+.hero-center h1{font-size:clamp(2.4rem,5vw,4.1rem);margin:0 0 1rem;line-height:1.06;letter-spacing:-.02em}
+.hero-center .hero-sub{font-size:1.14rem;color:#3D4F40;margin:0 auto 2rem;max-width:540px;line-height:1.5}
+.hero-center .hero-chat{width:100%;max-width:720px;margin:0 auto;min-height:unset;max-height:unset}
+.hero-center .pet-row{justify-content:center;margin-top:1.6rem}
 
 /* Hero chat card */
 .hero-chat{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);border:1px solid var(--line);display:flex;flex-direction:column;min-height:520px;max-height:640px;overflow:hidden;position:relative}
@@ -465,6 +461,30 @@ body.drawer-lock{overflow:hidden}
 .faq-list .faq-body{padding:0 0 1.2rem;color:#3D4F40;line-height:1.6;font-size:.97rem}
 .faq-list .faq-body p{margin:0}
 
+
+
+/* ═══════ Phase E.1 — Asymmetric cat-module photos (MEDVi-inspired) ═══════ */
+.cat-photo.photo-duo{position:relative;display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:end}
+.cat-photo.photo-duo .photo-primary{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:20px;grid-row:1 / span 2}
+.cat-photo.photo-duo .photo-accent{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:16px;transform:translateY(-24px)}
+.cat-photo.photo-duo.reverse-duo{grid-template-columns:1fr 2fr}
+.cat-photo.photo-duo.reverse-duo .photo-primary{grid-column:2;grid-row:1 / span 2}
+.cat-photo.photo-duo.reverse-duo .photo-accent{grid-column:1;transform:translateY(24px)}
+
+.cat-photo.photo-stack{position:relative}
+.cat-photo.photo-stack .photo-primary{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:20px;display:block}
+.cat-photo.photo-stack .photo-tile{position:absolute;top:-18px;left:-18px;width:120px;height:120px;background:var(--sage-100);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 10px 30px -12px rgba(28,42,31,.22);border:4px solid #fff}
+.cat-photo.photo-stack .photo-tile small{font-size:.72rem;font-weight:600;color:var(--sage-800);margin-top:6px;letter-spacing:.04em;text-transform:uppercase}
+
+.cat-photo.photo-tall img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:20px;display:block}
+.cat-photo.photo-wide img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:20px;display:block}
+
+@media(max-width:820px){
+  .cat-photo.photo-duo{grid-template-columns:1fr;gap:12px}
+  .cat-photo.photo-duo .photo-primary,.cat-photo.photo-duo.reverse-duo .photo-primary{grid-row:1;grid-column:1;aspect-ratio:4/3}
+  .cat-photo.photo-duo .photo-accent,.cat-photo.photo-duo.reverse-duo .photo-accent{transform:none;grid-column:1;grid-row:2;max-width:220px}
+  .cat-photo.photo-stack .photo-tile{width:88px;height:88px;font-size:1.5rem;top:-12px;left:-12px}
+}
 </style>
 </head>
 <body>
@@ -472,7 +492,7 @@ body.drawer-lock{overflow:hidden}
 <!-- ═══════════════ Promo banner ═══════════════ -->
 <div class="announce" id="promoBanner">
   <span class="dot"></span>
-  <strong>Free 24/7 AI triage</strong> — ER, vet tomorrow, or safe at home, answered in 60 seconds.
+  <strong>Free 24/7 crittr support</strong>
   <button class="announce-x" onclick="dismissPromo()" aria-label="Dismiss">×</button>
 </div>
 
@@ -533,33 +553,13 @@ body.drawer-lock{overflow:hidden}
 </aside>
 
 
-<!-- ═══════════════ Hero ═══════════════ -->
-<section class="hero">
+<!-- ═══════════════ Hero (centered, chat-first) ═══════════════ -->
+<section class="hero hero-centered">
   <div class="container">
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <span class="eyebrow">Built by vets · free to start</span>
-        <h1>It's 2am and the vet is closed. Is this an <span class="hl">ER</span>, or can it wait?</h1>
-        <p class="hero-sub">Tell crittr what's happening and get a clear read — ER now, vet tomorrow, or safe at home — with the reason why. Licensed vet partners on tap. Food, supplements and Rx shipped when you need them.</p>
-        <div class="hero-ctas">
-          <a href="#hero-chat" class="btn btn-primary btn-lg">Start free triage →</a>
-          <a href="#how" class="btn btn-secondary btn-lg">How it works</a>
-        </div>
-        <ul class="hero-bullets">
-          <li>Licensed vet partners on tap</li>
-          <li>24/7 triage, free, no account</li>
-          <li>Three-verdict answer: ER / Vet / Home</li>
-          <li>Food, supplements &amp; Rx shipped</li>
-        </ul>
-        <div class="pet-row" aria-hidden="true">
-          <span class="pet-avatar" data-emo="🐕">🐕</span>
-          <span class="pet-avatar" data-emo="🐈">🐈</span>
-          <span class="pet-avatar" data-emo="🐇">🐇</span>
-          <span class="pet-avatar" data-emo="🦜">🦜</span>
-          <span class="pet-avatar" data-emo="🐹">🐹</span>
-          <span class="pet-caption">For every critter in the house.</span>
-        </div>
-      </div>
+    <div class="hero-center">
+      <span class="eyebrow">Built by vets · free to start</span>
+      <h1>Need help with your pet? <span class="hl">Just tell us.</span></h1>
+      <p class="hero-sub">Describe what's going on. We'll tell you what to do.</p>
 
       <div class="hero-chat" id="hero-chat">
         <span class="chat-tag">Live · free · no account</span>
@@ -567,15 +567,12 @@ body.drawer-lock{overflow:hidden}
           <div class="chat-avatar"></div>
           <div>
             <div class="chat-name">crittr</div>
-            <div class="chat-status">Triage ready · usually replies in seconds</div>
+            <div class="chat-status">Triage ready · answers instantly</div>
           </div>
         </div>
         <div class="chat-body" id="chatBody">
           <div class="chat-msg chat-msg-ai">
-            Hey — I'm here. Tell me what's going on with your pet and I'll give you a read on whether this needs the ER tonight, a vet tomorrow, or is safe to manage at home. What are you seeing?
-          </div>
-          <div class="chat-msg chat-msg-ai">
-            <strong>Quick tip:</strong> the more detail the better — species, age, what happened, and how long it's been. Photos welcome once we get chatting.
+            Hey — I'm here. Tell me what's going on and I'll give you a read. The more detail the better.
           </div>
         </div>
         <div class="chat-suggests">
@@ -590,6 +587,15 @@ body.drawer-lock{overflow:hidden}
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
           </button>
         </form>
+      </div>
+
+      <div class="pet-row" aria-hidden="true">
+        <span class="pet-avatar">🐕</span>
+        <span class="pet-avatar">🐈</span>
+        <span class="pet-avatar">🐇</span>
+        <span class="pet-avatar">🦜</span>
+        <span class="pet-avatar">🐹</span>
+        <span class="pet-caption">For every critter in the house.</span>
       </div>
     </div>
   </div>
@@ -641,148 +647,138 @@ body.drawer-lock{overflow:hidden}
   <div class="container">
     <div class="how-head">
       <span class="eyebrow">How it works</span>
-      <h2>From panic to plan in about a minute.</h2>
-      <p class="how-sub">No phone trees, no forms, no upsells first. Just tell us what's going on.</p>
+      <h2>Three steps. No phone tree.</h2>
     </div>
     <ol class="how-steps">
       <li class="how-step">
         <span class="how-num">1</span>
-        <h3>Describe what you're seeing</h3>
-        <p>Species, age, what happened, how long. Photos welcome. No account required for the first triage.</p>
+        <h3>Tell us</h3>
+        <p>Describe what's happening. No account needed.</p>
       </li>
       <li class="how-step">
         <span class="how-num">2</span>
-        <h3>Get a three-verdict answer</h3>
-        <p>ER now, vet tomorrow, or safe at home — each with the reason why. If it's urgent we route you to a licensed vet partner in minutes.</p>
+        <h3>Get a read</h3>
+        <p>Clear next step — home care, vet visit, or ER.</p>
       </li>
       <li class="how-step">
         <span class="how-num">3</span>
-        <h3>We ship what helps</h3>
-        <p>Food, supplements and prescriptions shipped to your door — from the same people who read your symptom.</p>
+        <h3>We help</h3>
+        <p>Vet partner or supplement, shipped fast.</p>
       </li>
     </ol>
   </div>
 </section>
 
-<!-- ═══════════════ Module 1 · Emergency Triage ═══════════════ -->
-<section class="cat-module" id="triage">
+<!-- ═══════════════ Triage ═══════════════ -->
+<section class="cat-module asym-right" id="triage">
   <div class="container">
     <div class="cat-grid">
       <div class="cat-copy">
-        <span class="eyebrow">Emergency Triage · the 2am hook</span>
-        <h2>Your <em>2am answer</em>, before you panic-drive to the ER.</h2>
-        <p class="cat-lede">Three verdicts, every time: ER now, vet tomorrow, or safe to manage at home — with a clear reason why. If it's real, we route you to a licensed vet partner in minutes. If it's not, we save you $400 and a sleepless night.</p>
+        <span class="eyebrow">Triage</span>
+        <h2>Before you panic-drive to the ER.</h2>
+        <p class="cat-lede">A clear read on what to do. Home, vet, or ER.</p>
         <ul class="cat-bullets">
-          <li>Three-verdict output: ER now / vet tomorrow / safe at home</li>
-          <li>Warm, Voss-trained voice — no algorithmic coldness</li>
-          <li>Partner teletriage handoff for real cases ($29 flat)</li>
-          <li>Remembers your pet so you don't re-explain history</li>
-          <li>Free to ask — we only charge when there's a real vet in the loop</li>
+          <li>Plain English, not a flowchart</li>
+          <li>Free. No account.</li>
         </ul>
         <a href="#hero-chat" class="btn btn-primary btn-lg">Ask crittr →</a>
       </div>
-      <div class="cat-photo">
-        <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&amp;q=80" alt="Worried dog with tilted head looking at camera" />
+      <div class="cat-photo photo-duo">
+        <img class="photo-primary" src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=720&amp;q=80" alt="Dog running in a park" />
+        <img class="photo-accent" src="https://images.unsplash.com/photo-1472491235688-bdc81a63246e?w=360&amp;q=80" alt="Close-up dog eyes" />
         <div class="photo-badge"><strong>$400</strong>avg ER saved</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════ Module 2 · Daily Wellness ═══════════════ -->
-<section class="cat-module reverse" id="wellness">
+<!-- ═══════════════ Wellness ═══════════════ -->
+<section class="cat-module reverse asym-left" id="wellness">
   <div class="container">
     <div class="cat-grid">
-      <div class="cat-photo">
-        <img src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=900&amp;q=80" alt="Golden retriever eating from a bowl in bright kitchen" />
+      <div class="cat-photo photo-stack">
+        <img class="photo-primary" src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=720&amp;q=80" alt="Dog relaxing on a couch at home" />
+        <div class="photo-tile">
+          <span>🌿</span>
+          <small>Daily support</small>
+        </div>
         <div class="photo-badge"><strong>6wk</strong>avg visible change</div>
       </div>
       <div class="cat-copy">
-        <span class="eyebrow">Daily Wellness</span>
-        <h2>The food, supplements, and routines that <em>actually</em> move the needle.</h2>
-        <p class="cat-lede">Most pet wellness is marketing theatre. We recommend what the research supports, personalised to your animal's species, weight, age, and any conditions crittr already knows about.</p>
+        <span class="eyebrow">Wellness</span>
+        <h2>Wellness that <em>actually</em> works.</h2>
+        <p class="cat-lede">Evidence over hype. Personalised to your pet.</p>
         <ul class="cat-bullets">
-          <li>Personalised to your specific pet's profile</li>
-          <li>Affiliate-transparent — we show you why we recommend it</li>
-          <li>Subscribe &amp; save shipping, cancel anytime</li>
-          <li>Vet-reviewed supplement formulas</li>
-          <li>Evidence over influencer hype</li>
+          <li>Vet-reviewed formulas</li>
+          <li>Subscribe &amp; save, cancel anytime</li>
         </ul>
-        <a href="/wellness" class="btn btn-primary btn-lg">Browse wellness picks →</a>
+        <a href="/shop/supplements" class="btn btn-primary btn-lg">Browse picks →</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════ Module 3 · Skin & Allergies ═══════════════ -->
-<section class="cat-module" id="skin">
+<!-- ═══════════════ Skin ═══════════════ -->
+<section class="cat-module asym-right" id="skin">
   <div class="container">
     <div class="cat-grid">
       <div class="cat-copy">
-        <span class="eyebrow">Skin &amp; Allergies</span>
-        <h2>Stop the scratching. <em>Find what's causing it.</em></h2>
-        <p class="cat-lede">Hot spots, head-shaking, yeasty paws, mystery rashes — most of it has a pattern. crittr helps you spot it, try the right fix, and escalate to a vet partner if it doesn't clear.</p>
+        <span class="eyebrow">Skin &amp; allergies</span>
+        <h2>Stop the scratching.</h2>
+        <p class="cat-lede">Find the cause. Try the fix. Escalate if it doesn't clear.</p>
         <ul class="cat-bullets">
-          <li>Diagnostic flow: food, environmental, parasitic, or infection</li>
-          <li>Photo-based symptom tracking over time</li>
-          <li>OTC-first recommendations before prescription</li>
-          <li>Rx routing through Chewy Pharmacy partners</li>
-          <li>Follow-up check-ins so you know if it's working</li>
+          <li>Food, environment, parasite, or infection</li>
+          <li>OTC first — Rx if needed</li>
         </ul>
-        <a href="/skin" class="btn btn-primary btn-lg">Start a skin check →</a>
+        <a href="#hero-chat" class="btn btn-primary btn-lg">Start a skin check →</a>
       </div>
-      <div class="cat-photo">
-        <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=900&amp;q=80" alt="Tabby cat resting with content expression" />
+      <div class="cat-photo photo-tall">
+        <img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=720&amp;q=80" alt="Cat resting in natural light" />
         <div class="photo-badge"><strong>72%</strong>clear in 3 wks</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════ Module 4 · Senior Care ═══════════════ -->
-<section class="cat-module reverse" id="senior">
+<!-- ═══════════════ Senior ═══════════════ -->
+<section class="cat-module reverse asym-left" id="senior">
   <div class="container">
     <div class="cat-grid">
-      <div class="cat-photo">
-        <img src="https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=900&amp;q=80" alt="Senior labrador resting peacefully on a couch" />
+      <div class="cat-photo photo-wide">
+        <img src="https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=720&amp;q=80" alt="Senior labrador on a couch" />
         <div class="photo-badge"><strong>1000s</strong>of senior pets</div>
       </div>
       <div class="cat-copy">
-        <span class="eyebrow">Senior Care</span>
-        <h2>Give them <em>comfortable, dignified</em> years.</h2>
-        <p class="cat-lede">Joint stiffness. Slower mornings. Cognitive changes. We help you read the signs, separate normal aging from something that needs a vet, and build a routine that keeps them themselves for longer.</p>
+        <span class="eyebrow">Senior care</span>
+        <h2>Comfortable, dignified years.</h2>
+        <p class="cat-lede">Read the signs. Build the routine. Know when to escalate.</p>
         <ul class="cat-bullets">
-          <li>Age-specific symptom interpretation</li>
-          <li>Mobility &amp; joint support protocols</li>
-          <li>Cognitive health check-ins</li>
-          <li>End-of-life conversations, handled with care</li>
-          <li>Vet partner escalation when it's time</li>
+          <li>Mobility &amp; joint support</li>
+          <li>Cognitive check-ins</li>
         </ul>
-        <a href="/senior" class="btn btn-primary btn-lg">Build a senior plan →</a>
+        <a href="#hero-chat" class="btn btn-primary btn-lg">Build a plan →</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════ Module 5 · Behavior ═══════════════ -->
-<section class="cat-module" id="behavior">
+<!-- ═══════════════ Behavior ═══════════════ -->
+<section class="cat-module asym-right" id="behavior">
   <div class="container">
     <div class="cat-grid">
       <div class="cat-copy">
-        <span class="eyebrow">Behavior &amp; Anxiety</span>
-        <h2>For the reactive, the anxious, the <em>storm-phobic</em>.</h2>
-        <p class="cat-lede">Your dog melts down at the vacuum. Your cat has been overgrooming since the move. Behavior is health — we help you read what's going on and match you to the right support, from calming supplements to certified trainers.</p>
+        <span class="eyebrow">Behavior &amp; anxiety</span>
+        <h2>Calm the chaos.</h2>
+        <p class="cat-lede">Behavior is health. We'll help you read it and match the right support.</p>
         <ul class="cat-bullets">
-          <li>Behavior triage: medical vs. training vs. environmental</li>
-          <li>Calming supplement recommendations (vet-formulated)</li>
-          <li>Certified trainer directory referrals</li>
-          <li>Anxiety Rx routing when needed</li>
-          <li>Progress tracking so you know what's working</li>
+          <li>Medical vs. training vs. environmental</li>
+          <li>Vet-formulated calming supplements</li>
         </ul>
-        <a href="/behavior" class="btn btn-primary btn-lg">Read their behavior →</a>
+        <a href="#hero-chat" class="btn btn-primary btn-lg">Read their behavior →</a>
       </div>
-      <div class="cat-photo">
-        <img src="https://images.unsplash.com/photo-1558788353-f76d92427f16?w=900&amp;q=80" alt="Anxious dog hiding under a blanket" />
+      <div class="cat-photo photo-duo reverse-duo">
+        <img class="photo-primary" src="https://images.unsplash.com/photo-1437957146754-f6377debe171?w=720&amp;q=80" alt="Dog looking alert in a home" />
+        <img class="photo-accent" src="https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=360&amp;q=80" alt="Close-up tabby cat" />
         <div class="photo-badge"><strong>3x</strong>calmer outcomes</div>
       </div>
     </div>
