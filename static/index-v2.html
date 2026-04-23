@@ -1249,10 +1249,11 @@ document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();cri
     if (thumb && product.image_url){
       thumb.innerHTML = '';
       var img = document.createElement('img');
-      img.src = product.image_url;
       img.alt = product.name;
-      img.loading = 'lazy';
+      img.loading = 'eager';   // drawer is off-screen transformed; lazy never fires
+      img.decoding = 'async';
       img.onerror = function(){ thumb.innerHTML = product.requires_rx ? '\u{1F48A}' : '\u{1F33F}'; };
+      img.src = product.image_url;
       thumb.appendChild(img);
     }
   }
