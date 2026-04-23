@@ -31,6 +31,7 @@ from shop_routes import register_shop_routes
 from product_images import ensure_product_images
 from crittr_rx_rebrand import ensure_rx_rebrand, register_rx_rebrand_redirects
 from affiliate_links import ensure_affiliate_urls
+from anon_chat import register_anon_chat_routes
 from og_images import register_og_routes
 from legal_routes import register_legal_routes
 from regions import register_region_middleware
@@ -741,6 +742,12 @@ try:
     ensure_affiliate_urls(q)
 except Exception as _e:
     print(f"Warning: ensure_affiliate_urls failed: {_e}")
+
+# Phase D.4 — anonymous hero-chat triage endpoint (+ Lever 2 partner URLs)
+try:
+    register_anon_chat_routes(app, q=q, ai_chat=ai_chat)
+except Exception as _e:
+    print(f"Warning: register_anon_chat_routes failed: {_e}")
 
 # Phase B.10 — dynamic OG image generation at /og/<slug>.png
 try:
