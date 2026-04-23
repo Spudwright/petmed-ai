@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#E4EFE2"/>
+  <circle cx="100" cy="100" r="78" fill="#F2F7F1"/>
+  <!-- heart-shape chew -->
+  <path d="M100 138 L66 108 Q52 94 62 80 Q74 66 88 76 L100 88 L112 76 Q126 66 138 80 Q148 94 134 108 Z" fill="#B37450" stroke="#2D4A30" stroke-width="3"/>
+  <circle cx="82" cy="92" r="2.5" fill="#2D4A30"/>
+  <circle cx="118" cy="92" r="2.5" fill="#2D4A30"/>
+  <circle cx="100" cy="108" r="2.5" fill="#2D4A30"/>
+  <!-- crittr label -->
+  <rect x="42" y="150" width="116" height="22" rx="11" fill="#2D4A30"/>
+  <text x="100" y="166" font-family="Georgia,serif" font-size="12" font-weight="700" text-anchor="middle" fill="#FDFBF5" letter-spacing="1">crittr · heartworm chew</text>
+</svg>

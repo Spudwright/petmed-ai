@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#E4EFE2"/>
+  <circle cx="100" cy="100" r="78" fill="#F2F7F1"/>
+  <g transform="rotate(-18 100 100)">
+    <!-- pipette with cat silhouette on body -->
+    <rect x="86" y="42" width="28" height="82" rx="6" fill="#527E54" stroke="#2D4A30" stroke-width="3"/>
+    <rect x="88" y="50" width="24" height="28" fill="#FDFBF5" opacity="0.75"/>
+    <!-- small cat silhouette -->
+    <path d="M96 88 L94 84 L98 86 L102 84 L104 88 Q108 92 102 96 L98 96 Q92 92 96 88 Z" fill="#2D4A30"/>
+    <path d="M90 124 L110 124 L106 148 Q100 152 94 148 Z" fill="#3E6340" stroke="#2D4A30" stroke-width="3"/>
+    <circle cx="100" cy="150" r="3" fill="#1C2A1F"/>
+  </g>
+  <rect x="32" y="152" width="136" height="22" rx="11" fill="#2D4A30"/>
+  <text x="100" y="168" font-family="Georgia,serif" font-size="11" font-weight="700" text-anchor="middle" fill="#FDFBF5" letter-spacing=".8">crittr · cat broad-spectrum</text>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#E4EFE2"/>
+  <circle cx="100" cy="100" r="78" fill="#F2F7F1"/>
+  <!-- main chew: beefy hexagon with ridges -->
+  <polygon points="60,96 80,62 120,62 140,96 120,130 80,130" fill="#B37450" stroke="#2D4A30" stroke-width="3"/>
+  <line x1="76" y1="96" x2="124" y2="96" stroke="#8A5234" stroke-width="2"/>
+  <line x1="82" y1="108" x2="118" y2="108" stroke="#8A5234" stroke-width="2"/>
+  <circle cx="82" cy="82" r="3" fill="#2D4A30"/>
+  <circle cx="110" cy="78" r="2.5" fill="#2D4A30"/>
+  <circle cx="98" cy="118" r="2.5" fill="#2D4A30"/>
+  <!-- crittr label pill -->
+  <rect x="46" y="148" width="108" height="22" rx="11" fill="#2D4A30"/>
+  <text x="100" y="164" font-family="Georgia,serif" font-size="12" font-weight="700" text-anchor="middle" fill="#FDFBF5" letter-spacing="1">crittr · combo Rx chew</text>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#E4EFE2"/>
+  <circle cx="100" cy="100" r="78" fill="#F2F7F1"/>
+  <!-- stand-up food bag -->
+  <path d="M58 68 L60 60 L140 60 L142 68 L146 158 L54 158 Z" fill="#527E54" stroke="#2D4A30" stroke-width="3"/>
+  <path d="M72 60 l-4 -14 h64 l-4 14" fill="#3E6340" stroke="#2D4A30" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="70" y="84" width="60" height="30" rx="3" fill="#FDFBF5"/>
+  <text x="100" y="106" font-family="Georgia,serif" font-size="20" font-weight="700" text-anchor="middle" fill="#2D4A30">Rx</text>
+  <rect x="42" y="150" width="116" height="22" rx="11" fill="#2D4A30"/>
+  <text x="100" y="166" font-family="Georgia,serif" font-size="12" font-weight="700" text-anchor="middle" fill="#FDFBF5" letter-spacing="1">crittr · Rx gastro diet</text>
+</svg>

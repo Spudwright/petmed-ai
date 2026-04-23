@@ -29,6 +29,7 @@ from find_vet import register_find_vet_routes
 from referrals import register_referral_routes
 from shop_routes import register_shop_routes
 from product_images import ensure_product_images
+from crittr_rx_rebrand import ensure_rx_rebrand, register_rx_rebrand_redirects
 from regions import register_region_middleware
 try:
     from youtube import youtube_bp
@@ -724,6 +725,13 @@ try:
     ensure_product_images(q)
 except Exception as _e:
     print(f"Warning: ensure_product_images failed: {_e}")
+
+# Phase B.7 — rebrand the 4 Rx products to crittr generics (idempotent)
+try:
+    ensure_rx_rebrand(q)
+    register_rx_rebrand_redirects(app)
+except Exception as _e:
+    print(f"Warning: ensure_rx_rebrand failed: {_e}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
