@@ -1208,16 +1208,20 @@ document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();cri
         if (hero && (location.pathname === '/' || a.getAttribute('href').indexOf('#') === 0)){
           ev.preventDefault();
           if (typeof closeDrawer === 'function') closeDrawer();
-          // Compute target Y explicitly (scrollIntoView was silently no-op here).
+          // Compute target Y explicitly.
           var navEl = document.querySelector('.nav');
           var navH = (navEl && navEl.offsetHeight) || 72;
           var rect = hero.getBoundingClientRect();
           var targetY = Math.max(0, window.pageYOffset + rect.top - navH - 12);
-          try {
-            window.scrollTo({top: targetY, behavior: 'smooth'});
-          } catch(_e) {
-            window.scrollTo(0, targetY);
-          }
+          var beforeY = window.pageYOffset;
+          // Try smooth scroll first; fall back to instant if it silently no-ops.
+          try { window.scrollTo({top: targetY, behavior: 'smooth'}); } catch(_e){}
+          setTimeout(function(){
+            if (Math.abs(window.pageYOffset - beforeY) < 4 && Math.abs(window.pageYOffset - targetY) > 20) {
+              // Smooth scroll did nothing — snap directly.
+              window.scrollTo(0, targetY);
+            }
+          }, 180);
           hero.classList.add('is-flash');
           setTimeout(function(){
             hero.classList.remove('is-flash');
