@@ -19,6 +19,7 @@ Public API
 """
 import logging
 from flask import render_template_string, abort, Response, url_for
+from shared_nav import SHARED_NAV_CSS, SHARED_NAV_JS, render_nav_html
 
 log = logging.getLogger("crittr.shop")
 
@@ -146,25 +147,11 @@ footer a{color:#B2C3B2}
 .ch-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
 .ch-row a{font-size:.82rem;background:#fff;border:1px solid var(--line);padding:.35rem .75rem;border-radius:999px;color:var(--sage-800)}
 .ch-row a.active{background:var(--sage-700);color:#fff;border-color:var(--sage-700)}
+{{ shared_nav_css|safe }}
 </style>
 </head>
 <body>
-<nav>
-  <div class="container row">
-    <a href="/" class="logo"><span class="dot"></span>crittr</a>
-    <ul>
-      <li><a href="/#triage">Triage</a></li>
-      <li><a href="/shop/dogs" {% if slug=='dogs' %}class="active"{% endif %}>Dogs</a></li>
-      <li><a href="/shop/cats" {% if slug=='cats' %}class="active"{% endif %}>Cats</a></li>
-      <li><a href="/shop/supplements" {% if slug=='supplements' %}class="active"{% endif %}>Supplements</a></li>
-      <li><a href="/shop/rx" {% if slug=='rx' %}class="active"{% endif %}>Prescriptions</a></li>
-    </ul>
-    <div style="display:flex;gap:.5rem;align-items:center">
-      <button class="cart-btn" onclick="openCart()" aria-label="Cart"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-2.3-8M7 13l-1.5 3h11M10 19a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM18 19a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg><span class="cart-count hidden" id="cartCount">0</span></button>
-      <button class="btn btn-secondary btn-sm" id="authBtn" onclick="openAuth()">Sign in</button>
-    </div>
-  </div>
-</nav>
+{{ shared_nav_html|safe }}
 <section class="hero">
   <div class="container">
     <div class="eyebrow">{{ cat.hero_eyebrow }}</div>
@@ -246,6 +233,7 @@ function openCart(){location.href='/#cart';/* homepage has the real drawer */}
 function openAuth(){location.href='/login';}
 document.addEventListener('DOMContentLoaded',updateCartCount);
 </script>
+{{ shared_nav_js|safe }}
 </body>
 </html>
 """
@@ -273,5 +261,9 @@ def register_shop_routes(app, q):
             rows = []
         products = [p for p in rows if cat["filter"](p)]
         return render_template_string(
-            _HTML, products=products, cat=cat, slug=slug,
+            _HTML,
+            cat=cat, slug=slug, products=products, fmt_money=_fmt_money,
+            shared_nav_css=SHARED_NAV_CSS,
+            shared_nav_html=render_nav_html(slug),
+            shared_nav_js=SHARED_NAV_JS,
         )
