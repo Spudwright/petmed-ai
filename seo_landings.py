@@ -793,9 +793,11 @@ _HTML = r"""<!doctype html>
     }
     body { margin:0; font-family:Inter,system-ui,sans-serif;
            background:var(--bg); color:var(--ink); line-height:1.55; }
-    header { padding:24px 32px; border-bottom:1px solid var(--line); }
-    header a { color:var(--ink); text-decoration:none; font-weight:500;
-               font-family:'Fraunces',serif; }
+    header { padding:20px 32px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; background:#FDFBF5; }
+    header a.logo { color:#2D4A30; text-decoration:none; font-weight:700; font-family:'Fraunces',serif; font-size:1.88rem; letter-spacing:-.028em; display:flex; align-items:center; gap:.55rem; }
+    header a.logo .logo-dot { width:16px; height:16px; border-radius:50%; background:#6B9E6B; box-shadow:0 0 0 4px #E4EFE2; display:inline-block; }
+    header .back { color:#6E7D70; font-size:.9rem; text-decoration:none; font-weight:500; }
+    header .back:hover { color:#3E6340; }
     main { max-width:780px; margin:0 auto; padding:40px 24px; }
     h1 { font-family:'Fraunces',serif; font-weight:500; font-size:40px;
          line-height:1.15; margin:0 0 16px 0; }
@@ -841,7 +843,8 @@ _HTML = r"""<!doctype html>
 </head>
 <body>
   <header>
-    <a href="/">crittr.ai</a>
+    <a href="/" class="logo"><span class="logo-dot"></span>crittr</a>
+    <a href="/#hero-chat" class="back">← Back to triage</a>
   </header>
   <main>
     <span class="lean {{ lean_class }}">Tends to be: {{ topic.lean }}</span>
