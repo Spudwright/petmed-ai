@@ -125,9 +125,46 @@ def _github_put_file(pat: str, repo_path: str, content_bytes: bytes, message: st
         return json.loads(r.read().decode("utf-8"))
 
 
+# In-memory status tracker so the /status endpoint can report progress
+_JOB_STATUS = {"running": False, "done": 0, "total": 0, "slugs": [], "errors": []}
+
+
+def _run_generation_job(openai_key: str, pat: str, slugs: list, quality: str):
+    """Background worker: generate + commit each image, track progress."""
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=openai_key)
+    except Exception as e:
+        _JOB_STATUS["running"] = False
+        _JOB_STATUS["errors"].append(f"client_init: {e}")
+        return
+
+    _JOB_STATUS.update({"running": True, "done": 0, "total": len(slugs), "slugs": slugs, "errors": []})
+    for i, slug in enumerate(slugs, 1):
+        try:
+            log.info(f"[gen] {i}/{len(slugs)} {slug}...")
+            png_bytes = _generate_one(client, slug, quality)
+            _github_put_file(
+                pat,
+                f"static/products/{slug}.png",
+                png_bytes,
+                f"Add AI-generated product photo for {slug}",
+            )
+        except Exception as e:
+            msg = f"{slug}: {str(e)[:200]}"
+            log.warning(f"[gen FAIL] {msg}")
+            _JOB_STATUS["errors"].append(msg)
+        _JOB_STATUS["done"] = i
+        if i < len(slugs):
+            time.sleep(1.2)
+    _JOB_STATUS["running"] = False
+    log.info(f"[gen DONE] {_JOB_STATUS['done']}/{_JOB_STATUS['total']}, errors={len(_JOB_STATUS['errors'])}")
+
+
 def register_admin_gen_images(app):
     @app.route("/admin/gen-product-images")
     def gen_product_images():
+        import threading
         admin_token = request.args.get("token", "")
         pat         = request.args.get("pat", "")
         slug_only   = request.args.get("slug", "").strip()
@@ -143,42 +180,32 @@ def register_admin_gen_images(app):
         if not openai_key:
             return jsonify({"error": "OPENAI_API_KEY not set on Railway"}), 500
 
-        try:
-            from openai import OpenAI
-        except ImportError:
-            return jsonify({"error": "openai package not installed"}), 500
-
-        client = OpenAI(api_key=openai_key)
+        if _JOB_STATUS.get("running"):
+            return jsonify({"error": "already running", "status": _JOB_STATUS}), 409
 
         slugs = [slug_only] if slug_only else list(PRODUCT_PROMPTS.keys())
         if slug_only and slug_only not in PRODUCT_PROMPTS:
             return jsonify({"error": f"unknown slug: {slug_only}"}), 400
 
-        report = []
-        for i, slug in enumerate(slugs, 1):
-            try:
-                log.info(f"[gen] {i}/{len(slugs)} {slug}...")
-                png_bytes = _generate_one(client, slug, quality)
-                gh_result = _github_put_file(
-                    pat,
-                    f"static/products/{slug}.png",
-                    png_bytes,
-                    f"Add AI-generated product photo for {slug}",
-                )
-                report.append({
-                    "slug": slug,
-                    "status": "ok",
-                    "bytes": len(png_bytes),
-                    "commit": gh_result.get("commit", {}).get("sha", "")[:12],
-                })
-            except Exception as e:
-                report.append({"slug": slug, "status": "err", "error": str(e)[:300]})
-            # Modest gap so we don't hammer the API
-            if i < len(slugs):
-                time.sleep(1.2)
+        # Fire-and-forget background thread
+        t = threading.Thread(
+            target=_run_generation_job,
+            args=(openai_key, pat, slugs, quality),
+            daemon=True,
+        )
+        t.start()
 
         return jsonify({
-            "ok": all(r["status"] == "ok" for r in report),
-            "count": len(report),
-            "report": report,
+            "ok": True,
+            "message": "generation started in background",
+            "total": len(slugs),
+            "poll": "/admin/gen-product-images/status?token=<token>",
         })
+
+    @app.route("/admin/gen-product-images/status")
+    def gen_status():
+        admin_token = request.args.get("token", "")
+        expected_token = os.environ.get("ADMIN_TOKEN") or "crittr-gen-2026"
+        if admin_token != expected_token:
+            return jsonify({"error": "unauthorized"}), 403
+        return jsonify(_JOB_STATUS)
