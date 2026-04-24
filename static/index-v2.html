@@ -537,6 +537,11 @@ body.drawer-lock{overflow:hidden}
 .picks-card .picks-sub{font-size:.82rem;color:var(--muted);margin:-.2rem 0 .7rem;line-height:1.4}
 .picks-card .pick-best-price{font-size:.74rem;font-weight:600;color:var(--sage-700);margin-top:.35rem}
 .df-subnote{font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-700);margin-top:.3rem}
+
+/* Hero headline — "Just tell us." / "Or show us." stack on their own lines */
+.hero-center h1 .hl-block{display:block;margin-top:.08em;line-height:1.04}
+.hero-center h1 .hl-alt{color:var(--terracotta-dark);font-style:italic;font-size:.92em}
+.hero-center h1 .hl-alt::after{background:rgba(212,149,106,.28)}
 </style>
 </head>
 <body>
@@ -611,14 +616,18 @@ body.drawer-lock{overflow:hidden}
   <div class="container">
     <div class="hero-center">
       <span class="eyebrow">Built by vets</span>
-      <h1>Need help with your pet? <span class="hl">Just tell us.</span></h1>
+      <h1>
+        Need help with your Pet?
+        <span class="hl hl-block">Just tell us.</span>
+        <span class="hl hl-block hl-alt">Or show us.</span>
+      </h1>
       <p class="hero-sub">Describe what's going on. We'll tell you what to do.</p>
 
       <div class="hero-chat" id="hero-chat">
         <div class="vet-ai-badge"><span class="vet-ai-dot"></span>VET AI · trained on vet flows · reads your photos</div>
         <div class="chat-body" id="chatBody">
           <div class="chat-msg chat-msg-ai">
-            Hi there. I'm VET AI. Tell me what's going on with your pet — or attach a photo of the problem and I'll take a look.
+            Hi there. I'm VET AI. Tell me what's going on with your pet — or attach a photo of the problem or the critter's medical history and I'll take a look.
           </div>
         </div>
         <div class="chat-suggests">
