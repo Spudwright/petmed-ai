@@ -1,11 +1,8 @@
-"""crittr.ai — admin endpoint that generates AI product images via a
-detached subprocess so work continues after the HTTP request returns.
+"""crittr.ai — admin endpoint that generates one product image per request.
 
-Design:
-  /admin/gen-product-images?token=...&pat=...&slug=<all|specific>
-  -> validates, spawns a detached Python process (start_new_session=True),
-     returns 202 immediately. Child process generates images and commits
-     them to GitHub independently of gunicorn's worker lifecycle.
+Pure synchronous — no threads, no subprocess. Client fetch may time out
+at 45s (Chrome CDP) or 60s (browser default) but the WSGI worker keeps
+running until it returns. Caller polls GitHub for commit landing.
 """
 from __future__ import annotations
 
@@ -13,9 +10,6 @@ import base64
 import json
 import logging
 import os
-import subprocess
-import sys
-import time
 from typing import Dict
 
 from flask import jsonify, request
@@ -59,15 +53,10 @@ def _generate_one(openai_client, slug: str, quality: str = "standard") -> bytes:
     import urllib.request
     prompt = STYLE_PRELUDE + PRODUCT_PROMPTS[slug]
     resp = openai_client.images.generate(
-        model="dall-e-3",
-        prompt=prompt,
-        size="1024x1024",
-        quality=quality,
-        n=1,
-        response_format="url",
+        model="dall-e-3", prompt=prompt, size="1024x1024",
+        quality=quality, n=1, response_format="url",
     )
-    img_url = resp.data[0].url
-    with urllib.request.urlopen(img_url, timeout=60) as r:
+    with urllib.request.urlopen(resp.data[0].url, timeout=60) as r:
         return r.read()
 
 
@@ -81,64 +70,21 @@ def _github_put_file(pat: str, repo_path: str, content_bytes: bytes, message: st
         "Content-Type": "application/json",
     }
     url = f"{GITHUB_API}/repos/{GITHUB_REPO}/contents/{repo_path}"
-
     sha = None
     try:
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=15) as r:
-            data = json.loads(r.read().decode("utf-8"))
-            sha = data.get("sha")
+            sha = json.loads(r.read().decode("utf-8")).get("sha")
     except urllib.error.HTTPError as e:
         if e.code != 404:
             raise
-
-    body = {
-        "message": message,
-        "content": base64.b64encode(content_bytes).decode("ascii"),
-    }
+    body = {"message": message, "content": base64.b64encode(content_bytes).decode("ascii")}
     if sha:
         body["sha"] = sha
-
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(body).encode("utf-8"),
-        headers=headers,
-        method="PUT",
-    )
+    req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"),
+                                 headers=headers, method="PUT")
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.loads(r.read().decode("utf-8"))
-
-
-def _run_batch_in_child(pat: str, slug_filter: str, quality: str) -> None:
-    """Entrypoint used by the detached child process."""
-    from openai import OpenAI
-    openai_key = os.environ.get("OPENAI_API_KEY", "")
-    if not openai_key:
-        print("ERR no OPENAI_API_KEY in env", flush=True)
-        return
-    client = OpenAI(api_key=openai_key)
-
-    if slug_filter and slug_filter != "all":
-        slugs = [slug_filter]
-    else:
-        slugs = list(PRODUCT_PROMPTS.keys())
-
-    for i, slug in enumerate(slugs, 1):
-        print(f"[child] {i}/{len(slugs)} {slug}", flush=True)
-        try:
-            png = _generate_one(client, slug, quality)
-            _github_put_file(
-                pat,
-                f"static/products/{slug}.png",
-                png,
-                f"Add AI-generated product photo for {slug}",
-            )
-            print(f"[child] OK {slug} ({len(png)} bytes)", flush=True)
-        except Exception as e:
-            print(f"[child] ERR {slug}: {e}", flush=True)
-        if i < len(slugs):
-            time.sleep(2)
-    print("[child] done", flush=True)
 
 
 def register_admin_gen_images(app):
@@ -146,44 +92,36 @@ def register_admin_gen_images(app):
     def gen_product_images():
         admin_token = request.args.get("token", "")
         pat         = request.args.get("pat", "")
-        slug        = request.args.get("slug", "all").strip() or "all"
+        slug        = request.args.get("slug", "").strip()
         quality     = request.args.get("quality", "standard")
 
-        expected_token = os.environ.get("ADMIN_TOKEN") or "crittr-gen-2026"
-        if admin_token != expected_token:
+        if admin_token != (os.environ.get("ADMIN_TOKEN") or "crittr-gen-2026"):
             return jsonify({"error": "unauthorized"}), 403
         if not pat or not pat.startswith("github_pat_"):
             return jsonify({"error": "missing ?pat=github_pat_..."}), 400
-        if slug != "all" and slug not in PRODUCT_PROMPTS:
-            return jsonify({"error": f"unknown slug: {slug}"}), 400
-        if not os.environ.get("OPENAI_API_KEY"):
+        if not slug or slug not in PRODUCT_PROMPTS:
+            return jsonify({"error": f"?slug=<one of {list(PRODUCT_PROMPTS.keys())}>"}), 400
+
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        if not openai_key:
             return jsonify({"error": "OPENAI_API_KEY not set"}), 500
 
-        # Spawn a detached child process that will survive gunicorn worker
-        # recycling and HTTP request termination.
-        script = (
-            "import sys, os; "
-            "sys.path.insert(0, os.getcwd()); "
-            "from admin_gen_images import _run_batch_in_child; "
-            f"_run_batch_in_child({pat!r}, {slug!r}, {quality!r})"
-        )
         try:
-            subprocess.Popen(
-                [sys.executable, "-c", script],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-                start_new_session=True,
-                close_fds=True,
+            from openai import OpenAI
+        except ImportError:
+            return jsonify({"error": "openai SDK missing"}), 500
+
+        client = OpenAI(api_key=openai_key)
+        try:
+            png = _generate_one(client, slug, quality)
+            result = _github_put_file(
+                pat, f"static/products/{slug}.png", png,
+                f"Add AI-generated product photo for {slug}",
             )
         except Exception as e:
-            return jsonify({"error": f"spawn: {type(e).__name__}: {str(e)[:300]}"}), 500
+            return jsonify({"error": f"{type(e).__name__}: {str(e)[:300]}"}), 500
 
-        slugs = [slug] if slug != "all" else list(PRODUCT_PROMPTS.keys())
         return jsonify({
-            "ok": True,
-            "message": "spawned detached child process",
-            "pid_approx": "unknown",
-            "total": len(slugs),
-            "check": "watch GitHub commits land on main over ~10 minutes",
-        }), 202
+            "ok": True, "slug": slug, "bytes": len(png),
+            "commit": result.get("commit", {}).get("sha", "")[:12],
+        })
