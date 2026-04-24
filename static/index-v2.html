@@ -524,6 +524,15 @@ body.drawer-lock{overflow:hidden}
 .quiz-nav .btn-ghost:hover{color:var(--sage-700)}
 .quiz-nav .btn-primary:disabled{opacity:.45;cursor:not-allowed;background:var(--sage-400)}
 
+
+
+/* ── Phase F.1 — photo upload on VET AI chat ── */
+.chat-attach{background:var(--sage-100);color:var(--sage-800);border:0;border-radius:50%;width:46px;height:46px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease)}
+.chat-attach:hover{background:var(--sage-200);transform:scale(1.04)}
+.chat-photo-preview{position:relative;display:inline-flex;margin:.5rem .85rem 0;max-width:140px}
+.chat-photo-preview img{width:100%;max-width:140px;height:auto;border-radius:12px;border:2px solid var(--sage-300);object-fit:cover;aspect-ratio:1}
+.chat-photo-remove{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid var(--line);color:var(--ink);font-size:1rem;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px -2px rgba(28,42,31,.22)}
+.chat-photo-remove:hover{background:var(--sage-50)}
 </style>
 </head>
 <body>
@@ -600,9 +609,10 @@ body.drawer-lock{overflow:hidden}
       <p class="hero-sub">Describe what's going on. We'll tell you what to do.</p>
 
       <div class="hero-chat" id="hero-chat">
+        <div class="vet-ai-badge"><span class="vet-ai-dot"></span>VET AI · trained on vet flows · reads your photos</div>
         <div class="chat-body" id="chatBody">
           <div class="chat-msg chat-msg-ai">
-            So, how can I help you and your beautiful pet?
+            Hi there. I'm VET AI. Tell me what's going on with your pet — or attach a photo of the problem and I'll take a look.
           </div>
         </div>
         <div class="chat-suggests">
@@ -611,7 +621,15 @@ body.drawer-lock{overflow:hidden}
           <button class="chat-suggest" data-q="My puppy just ate a grape — what should I do?">Puppy ate a grape</button>
           <button class="chat-suggest" data-q="My senior dog isn't eating much today. Should I be worried?">Senior dog not eating</button>
         </div>
+        <div class="chat-photo-preview" id="chatPhotoPreview" style="display:none">
+          <img id="chatPhotoImg" alt="Attached pet photo">
+          <button type="button" class="chat-photo-remove" onclick="removeChatPhoto()" aria-label="Remove photo">×</button>
+        </div>
         <form class="chat-input-row" id="chatForm" action="/api/chat" method="post">
+          <button type="button" class="chat-attach" onclick="document.getElementById('chatPhoto').click()" aria-label="Attach photo" title="Add a photo of your pet or their symptoms">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.93 8.83l-8.58 8.57a2 2 0 1 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <input id="chatPhoto" type="file" accept="image/*" style="display:none" onchange="onChatPhotoPick(this.files[0])">
           <input id="chatInput" type="text" name="message" placeholder="Describe what's happening…" autocomplete="off" />
           <button type="submit" aria-label="Send">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
@@ -1167,18 +1185,74 @@ body.drawer-lock{overflow:hidden}
     input.focus();
   }));
 
+  // Photo attachment state
+  let attachedImageDataUrl = null;
+  const previewEl = document.getElementById('chatPhotoPreview');
+  const previewImg = document.getElementById('chatPhotoImg');
+
+  window.removeChatPhoto = function(){
+    attachedImageDataUrl = null;
+    previewEl.style.display = 'none';
+    previewImg.src = '';
+    document.getElementById('chatPhoto').value = '';
+  };
+
+  // Resize client-side to 1024px max so uploads stay small and fast
+  window.onChatPhotoPick = async function(file){
+    if (!file) return;
+    if (!file.type.startsWith('image/')){
+      alert('Please choose an image file.');
+      return;
+    }
+    try {
+      const bmp = await createImageBitmap(file);
+      const MAX = 1024;
+      let w = bmp.width, h = bmp.height;
+      if (w > MAX || h > MAX){
+        const scale = MAX / Math.max(w, h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(bmp, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      attachedImageDataUrl = dataUrl;
+      previewImg.src = dataUrl;
+      previewEl.style.display = 'inline-flex';
+      input.focus();
+    } catch(err){
+      alert("Couldn't load that image — try another?");
+      console.error(err);
+    }
+  };
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const q = input.value.trim();
-    if (!q) return;
-    addMsg(q, 'user');
+    if (!q && !attachedImageDataUrl) return;
+    // Render user turn — message + thumbnail if attached
+    if (q) addMsg(q, 'user');
+    if (attachedImageDataUrl){
+      const thumb = document.createElement('div');
+      thumb.className = 'chat-msg chat-msg-user';
+      thumb.style.padding = '.3rem';
+      thumb.innerHTML = `<img src="${attachedImageDataUrl}" style="max-width:180px;border-radius:10px;display:block" alt="Your photo" />`;
+      body.appendChild(thumb);
+      body.scrollTop = body.scrollHeight;
+    }
     input.value = '';
+    const savedImage = attachedImageDataUrl;
+    removeChatPhoto();
     const thinking = addThinking();
     try {
       const r = await fetch('/api/chat/anon', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ message: q })
+        body: JSON.stringify({
+          message: q,
+          image_base64: savedImage || undefined,
+        })
       });
       const data = await r.json();
       thinking.remove();

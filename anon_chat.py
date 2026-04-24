@@ -75,6 +75,12 @@ SAFE AT HOME:
 - For cats specifically, lower the bar for ER NOW — cats hide illness; any breathing difficulty or urinary obstruction is emergency.
 - Do not list products, dosages, or treatment protocols. Triage only.
 - Do not ask clarifying questions in the same reply as the verdict. If the owner's description is too vague for a verdict, ask ONE question and stop — don't emit a VERDICT line at all yet.
+
+# If the owner attaches a photo
+- You are VET AI, a triage-trained visual-capable veterinary assistant.
+- Describe only clinically-relevant features you can actually see (redness, swelling, discharge, posture, eye appearance, skin lesions, wounds, etc.). Do NOT invent details.
+- Map visual findings to the same three-verdict output. A photo of an obvious serious wound, pale gums, labored breathing posture, or clear ER-tier finding should push the verdict toward ER NOW.
+- If the image is unclear or doesn't show the concern well, say so in one sentence and ask for a better angle — do not emit a VERDICT line in that case.
 """
 
 
@@ -237,8 +243,17 @@ def register_anon_chat_routes(app, q, ai_chat):
         history = d.get("history") or []
         sid = (d.get("session_id") or secrets.token_hex(8))[:32]
 
-        if not message:
-            return jsonify({"error": "Message required"}), 400
+        image_data_url = (d.get("image_base64") or "").strip()
+        if not message and not image_data_url:
+            return jsonify({"error": "Message or image required"}), 400
+
+        # Basic image validation — must be data: URL with an image mime type.
+        # Limit: ~6MB base64 (roughly 4.5MB raw) to avoid model token explosions.
+        if image_data_url:
+            if not image_data_url.startswith("data:image/"):
+                return jsonify({"error": "image_base64 must be a data:image/... URL"}), 400
+            if len(image_data_url) > 7_500_000:
+                return jsonify({"error": "image too large; please resize to under 4MB"}), 413
 
         # Build the conversation, capping history to avoid runaway context.
         messages = []
@@ -247,9 +262,20 @@ def register_anon_chat_routes(app, q, ai_chat):
             content = (h.get("content") or "")[:2000]
             if content:
                 messages.append({"role": role, "content": content})
-        messages.append({"role": "user", "content": message[:2000]})
 
-        # Call the AI with the triage-specific system prompt
+        # Compose the final user turn — text + optional image for gpt-4o-mini vision.
+        text_for_model = message[:2000] if message else "Here's a photo of my pet. Please tell me what you see."
+        if image_data_url:
+            user_content = [
+                {"type": "text", "text": text_for_model},
+                {"type": "image_url", "image_url": {"url": image_data_url, "detail": "low"}},
+            ]
+        else:
+            user_content = text_for_model
+        messages.append({"role": "user", "content": user_content})
+
+        # Call the AI with the triage-specific system prompt (gpt-4o-mini default
+        # accepts multi-modal content out of the box).
         reply = ai_chat(messages, system_prompt=_TRIAGE_PROMPT, tier="default")
         verdict = _parse_verdict(reply)
 
@@ -265,7 +291,7 @@ def register_anon_chat_routes(app, q, ai_chat):
             q(
                 "INSERT INTO anon_chats (session_id, owner_message, assistant_reply, verdict) "
                 "VALUES (%s, %s, %s, %s)",
-                (sid, message[:4000], (reply or "")[:8000], verdict),
+                (sid, (message or "(image)")[:4000], (reply or "")[:8000], verdict),
                 fetch=False,
             )
         except Exception as e:
