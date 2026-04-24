@@ -181,6 +181,8 @@ footer a{color:#B2C3B2}
 .as-fine{font-size:.76rem;color:var(--muted);margin-top:.8rem;line-height:1.5}
 .as-success{background:var(--sage-100);border-radius:var(--radius);padding:1rem;color:var(--sage-800);font-size:.95rem;line-height:1.5;margin-top:.6rem}
 
+.best-price-line{font-size:.78rem;color:var(--muted);margin-bottom:.5rem;line-height:1.4}
+.best-price-line strong{color:var(--sage-700);font-weight:600}
 {{ shared_nav_css|safe }}
 </style>
 </head>
@@ -217,9 +219,11 @@ footer a{color:#B2C3B2}
               {% if p.requires_rx %}
                 <button class="btn btn-secondary" onclick='addOrConsult({{ p|tojson }})'>Start consult</button>
               {% elif p.amazon_url %}
+                <div class="best-price-line">Our pick · <strong>best price found at Amazon</strong></div>
                 <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
                 <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Save 15% with auto-ship →</button>
               {% elif p.chewy_url %}
+                <div class="best-price-line">Our pick · <strong>best price found online</strong></div>
                 <a class="btn btn-primary" href="{{ p.chewy_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
                 <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Save 15% with auto-ship →</button>
               {% else %}

@@ -853,7 +853,8 @@ _HTML = r"""<!doctype html>
     .pick-name { font-weight: 600; font-size: 14.5px; line-height: 1.3; color: #1F3221;
                  font-family: 'Fraunces', serif; }
     .pick-blurb { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin-top: 6px; flex: 1; }
-    .pick-cta { font-size: 13px; font-weight: 600; color: #3E6340; margin-top: 10px; }
+    .pick-cta { font-size: 13px; font-weight: 600; color: #3E6340; margin-top: 6px; }
+    .pick-price { font-size: 11.5px; color: #3E6340; font-weight: 600; margin-top: 6px; letter-spacing: .01em; }
 </style>
 </head>
 <body>
@@ -894,6 +895,7 @@ _HTML = r"""<!doctype html>
           <a class="pick" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">
             <div class="pick-name">{{ p.public_name or p.slug }}</div>
             {% if p.public_blurb %}<div class="pick-blurb">{{ p.public_blurb }}</div>{% endif %}
+            <div class="pick-price">Best price found at Amazon</div>
             <div class="pick-cta">Buy now →</div>
           </a>
         {% endfor %}

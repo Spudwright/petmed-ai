@@ -533,6 +533,10 @@ body.drawer-lock{overflow:hidden}
 .chat-photo-preview img{width:100%;max-width:140px;height:auto;border-radius:12px;border:2px solid var(--sage-300);object-fit:cover;aspect-ratio:1}
 .chat-photo-remove{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid var(--line);color:var(--ink);font-size:1rem;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px -2px rgba(28,42,31,.22)}
 .chat-photo-remove:hover{background:var(--sage-50)}
+
+.picks-card .picks-sub{font-size:.82rem;color:var(--muted);margin:-.2rem 0 .7rem;line-height:1.4}
+.picks-card .pick-best-price{font-size:.74rem;font-weight:600;color:var(--sage-700);margin-top:.35rem}
+.df-subnote{font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-700);margin-top:.3rem}
 </style>
 </head>
 <body>
@@ -581,12 +585,14 @@ body.drawer-lock{overflow:hidden}
         <div class="df-thumb" data-thumb>🌿</div>
         <div class="df-title" data-title>Daily joint chews</div>
         <div class="df-price" data-price>From $28</div>
+        <div class="df-subnote">Best price · Amazon</div>
       </a>
       <a class="df-card" data-slot="rx" href="/shop/rx">
         <span class="df-badge rx">Rx</span>
         <div class="df-thumb" data-thumb>💊</div>
         <div class="df-title" data-title>Prescription meds</div>
         <div class="df-price" data-price>After consult</div>
+        <div class="df-subnote">Rx only</div>
       </a>
     </div>
   </div>
@@ -1145,13 +1151,16 @@ body.drawer-lock{overflow:hidden}
   function picksCard(picks){
     const el = document.createElement('div');
     el.className = 'picks-card';
-    let html = '<div class="picks-head">AI Top Picks for your pet</div><div class="picks-grid">';
+    let html = '<div class="picks-head">VET AI\u2019s picks for your pet</div>' +
+               '<div class="picks-sub">Hand-curated. We searched the web — linked where it\u2019s cheapest.</div>' +
+               '<div class="picks-grid">';
     picks.forEach(p => {
-      const meta = [p.brand, p.price_hint].filter(Boolean).join(' · ');
-      html += '<a class="pick-item" href="' + escape(p.url || '#') + '" target="_blank" rel="noopener">' +
+      const meta = [p.price_hint].filter(Boolean).join(' · ');
+      html += '<a class="pick-item" href="' + escape(p.url || '#') + '" target="_blank" rel="nofollow noopener sponsored">' +
         '<div class="pick-name">' + escape(p.name) + '</div>' +
-        (meta ? '<div class="pick-meta"><span>' + escape(meta) + '</span></div>' : '') +
         (p.reason ? '<div class="pick-why">' + escape(p.reason) + '</div>' : '') +
+        (meta ? '<div class="pick-meta"><span>' + escape(meta) + '</span></div>' : '') +
+        '<div class="pick-best-price">Best price found at Amazon →</div>' +
       '</a>';
     });
     html += '</div>';

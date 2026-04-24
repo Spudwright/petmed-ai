@@ -45,6 +45,7 @@ except Exception:  # pragma: no cover
 load_dotenv()
 
 app = Flask(__name__, static_folder="static")
+app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB (VET AI image uploads)
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
 # ---------------------------------------------------------------------------
