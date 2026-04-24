@@ -393,7 +393,9 @@ footer a:hover{color:#fff}
 
 /* Pet face row */
 .pet-row{display:flex;align-items:center;gap:.55rem;margin-top:1.9rem;flex-wrap:wrap}
-.pet-avatar{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:var(--sage-100);border:2px solid #fff;box-shadow:0 2px 8px -3px rgba(28,42,31,.22);font-size:1.35rem}
+.pet-avatar{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:#fff;border:1.5px solid var(--sage-200);box-shadow:0 4px 14px -6px rgba(28,42,31,.18);color:var(--sage-700);transition:transform .25s var(--ease),border-color .25s var(--ease)}
+.pet-avatar svg{width:24px;height:24px}
+.pet-avatar:hover{transform:translateY(-2px) rotate(-4deg);border-color:var(--sage-400)}
 .pet-avatar + .pet-avatar{margin-left:-12px}
 .pet-caption{margin-left:.6rem;font-size:.9rem;color:var(--muted);font-weight:500}
 
@@ -653,11 +655,11 @@ body.drawer-lock{overflow:hidden}
       </div>
 
       <div class="pet-row" aria-hidden="true">
-        <span class="pet-avatar">🐕</span>
-        <span class="pet-avatar">🐈</span>
-        <span class="pet-avatar">🐇</span>
-        <span class="pet-avatar">🦜</span>
-        <span class="pet-avatar">🐹</span>
+        <span class="pet-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5"/><path d="M14.267 5.172c0-1.39 1.577-2.493 3.5-2.172 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/><path d="M4.5 13.5c0-2.96 2.5-5.5 7.5-5.5s7.5 2.54 7.5 5.5-2.5 5.5-7.5 5.5c-1.5 0-3-.5-4-1"/></svg></span>
+        <span class="pet-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .5 1.17.5 2.5 0 3-.6.6-1.4 1-2 1a7.5 7.5 0 0 1-11 0c-.67 0-1.4-.4-2-1-.5-.5-.5-1.83 0-3 0 0-1.82-6.42-.42-7 1.4-.58 4.65.26 6.42 2.26C10.65 5.09 11.33 5 12 5Z"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/></svg></span>
+        <span class="pet-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 16a3 3 0 0 1 2.24 5"/><path d="M18 12h.01"/><path d="M18 21h-8a4 4 0 0 1-4-4 7 7 0 0 1 7-7h.2L9.6 6.4a1 1 0 1 1 2.8-2.8L15.8 7h.2c3.3 0 6 2.7 6 6v1a2 2 0 0 1-2 2h-1a3 3 0 0 0-3 3"/><path d="M20 8.54V4a2 2 0 1 0-4 0v3"/><path d="M7.612 12.524a3 3 0 1 0-1.6 4.3"/></svg></span>
+        <span class="pet-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h.01"/><path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20"/><path d="m20 7 2 .5-2 .5"/><path d="M10 18v3"/><path d="M14 17.75V21"/><path d="M7 18a6 6 0 0 0 3.84-10.61"/></svg></span>
+        <span class="pet-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="7"/><circle cx="7" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="m9 17 3-1 3 1"/><circle cx="10.5" cy="13" r=".5" fill="currentColor"/><circle cx="13.5" cy="13" r=".5" fill="currentColor"/></svg></span>
         <span class="pet-caption">For every critter in the house.</span>
       </div>
     </div>
@@ -1287,7 +1289,7 @@ body.drawer-lock{overflow:hidden}
 <!-- ═══════════════ Cart + auth + success (SPA plumbing) ═══════════════ -->
 <div class="view" id="view-success"><section><div class="container success-page"><div class="success-check"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div><h1>Thank you!</h1><p class="muted" style="margin:1.5rem auto 2rem;max-width:520px;font-size:1.05rem">Your order is confirmed. We'll email you tracking as soon as it ships. Rx items are reviewed by our licensed pharmacy partner — usually within 24 hours.</p><a class="btn btn-primary" href="/">Keep browsing</a><a class="btn btn-ghost" href="/account" style="margin-left:.5rem">View orders</a><div id="refBannerSuccess"></div></div></section></div>
 
-<div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeCart()"><aside class="drawer"><div class="drawer-head"><h3>Your cart</h3><button class="drawer-close" onclick="closeCart()" aria-label="Close"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="drawer-body" id="cartBody"><p class="muted" style="text-align:center;padding:3rem 0">Your cart is empty.<br>Start with a triage chat — we'll surface what your critter actually needs.</p></div><div class="drawer-foot" id="cartFoot" style="display:none"><div class="cart-totals" id="cartTotals"></div><div id="refBannerCart"></div><button class="btn btn-primary" style="width:100%;margin-top:1rem" onclick="checkout()">Checkout</button><p class="muted" style="text-align:center;font-size:.78rem;margin-top:.6rem">Secure payment by Stripe</p></div></aside></div>
+<div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeCart()"><aside class="drawer"><div class="drawer-head"><h3>Your cart</h3><button class="drawer-close" onclick="closeCart()" aria-label="Close"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="drawer-body" id="cartBody"><p class="muted" style="text-align:center;padding:3rem 0">Your cart is empty.<br>Start with a triage chat — we'll surface what your critter actually needs.</p></div><div class="drawer-foot" id="cartFoot" style="display:none"><div class="cart-totals" id="cartTotals"></div><div id="refBannerCart"></div><input id="guestEmail" type="email" placeholder="Email for order confirmation" style="width:100%;padding:.75rem 1rem;margin-top:1rem;border:1px solid var(--line);border-radius:var(--radius);font-family:inherit;font-size:.95rem;background:var(--cream)"><button class="btn btn-primary" style="width:100%;margin-top:.6rem" onclick="checkout()">Checkout →</button><p class="muted" style="text-align:center;font-size:.78rem;margin-top:.6rem">Secure payment by Stripe · guest checkout OK</p></div></aside></div>
 
 <div class="modal" id="authModal" onclick="if(event.target===this)closeAuth()"><div class="modal-card"><h2 id="authTitle">Sign in</h2><p class="muted" id="authSub">Welcome back.</p><form id="authForm" onsubmit="event.preventDefault();submitAuth()"><div class="field" id="nameField" style="display:none"><label>Name</label><input type="text" id="authName" /></div><div class="field"><label>Email</label><input type="email" id="authEmail" required /></div><div class="field"><label>Password</label><input type="password" id="authPassword" minlength="6" required /></div><button type="submit" class="btn btn-primary" style="width:100%">Continue</button></form><p style="text-align:center;color:var(--muted);margin-top:1rem;font-size:.88rem"><span id="authSwitchText">New to crittr? </span><a href="#" onclick="event.preventDefault();toggleAuthMode()" id="authSwitchLink">Create an account</a></p></div></div>
 
@@ -1313,7 +1315,22 @@ function closeCart(){$('#cartOverlay').classList.remove('active');}
 function renderCart(){const body=$('#cartBody');const foot=$('#cartFoot');if(!State.cart.length){body.innerHTML='<p class="muted" style="text-align:center;padding:3rem 0">Your cart is empty.<br>Start with a triage chat — we\'ll surface what your critter actually needs.</p>';foot.style.display='none';return;}body.innerHTML=State.cart.map((c,i)=>`<div class="cart-item"><div class="cart-item-img" style="background-image:url('${c.image_url||photoFor(c.species)}')"></div><div><div class="cart-item-title">${c.name}</div><div class="cart-item-meta">${fmt(c.price_cents)} each</div><div class="qty-ctrl" style="margin-top:.5rem"><button onclick="updateQty(${i},-1)">−</button><span style="padding:0 .4rem;font-weight:500">${c.quantity}</span><button onclick="updateQty(${i},1)">+</button></div></div><button class="drawer-close" onclick="removeItem(${i})" aria-label="Remove"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`).join('');const subtotal=State.cart.reduce((s,c)=>s+c.price_cents*c.quantity,0);const tax=Math.round(subtotal*0.08);const shipping=subtotal>=5000?0:599;$('#cartTotals').innerHTML=`<div class="row"><span>Subtotal</span><span>${fmt(subtotal)}</span></div><div class="row"><span>Tax (est.)</span><span>${fmt(tax)}</span></div><div class="row"><span>Shipping</span><span>${shipping===0?'Free':fmt(shipping)}</span></div><div class="row grand"><span>Total</span><span>${fmt(subtotal+tax+shipping)}</span></div>`;foot.style.display='block';}
 function updateQty(i,delta){State.cart[i].quantity+=delta;if(State.cart[i].quantity<=0)State.cart.splice(i,1);saveCart();renderCart();updateCartCount();}
 function removeItem(i){State.cart.splice(i,1);saveCart();renderCart();updateCartCount();}
-async function checkout(){if(!State.cart.length)return toastMsg('Cart is empty',true);if(!State.user){closeCart();openAuth('Sign in to check out');return;}try{const r=await api('/api/checkout',{method:'POST',body:JSON.stringify({items:State.cart.map(c=>({product_id:c.product_id,quantity:c.quantity}))})});if(r.url){location.href=r.url;}else{toastMsg('Checkout failed',true);}}catch(e){toastMsg('Checkout error: '+e.message,true);}}
+async function checkout(){
+  if(!State.cart.length)return toastMsg('Cart is empty',true);
+  const body = {items: State.cart.map(c=>({product_id:c.product_id, quantity:c.quantity}))};
+  // Optional: prefill Stripe checkout with a guest email if they typed one
+  const guestEmailField = document.getElementById('guestEmail');
+  if (guestEmailField && guestEmailField.value.trim()) {
+    body.guest_email = guestEmailField.value.trim();
+  }
+  try {
+    const r = await api('/api/checkout', {method:'POST', body: JSON.stringify(body)});
+    if (r && r.url) { location.href = r.url; return; }
+    toastMsg((r && r.error) || 'Checkout failed', true);
+  } catch(e) {
+    toastMsg('Checkout error: ' + (e.message || e), true);
+  }
+}
 function openAuth(msg){State.authMode='login';$('#authTitle').textContent='Sign in';$('#authSub').textContent=msg||'Welcome back.';$('#nameField').style.display='none';$('#authSwitchText').textContent='New to crittr? ';$('#authSwitchLink').textContent='Create an account';$('#authModal').classList.add('active');setTimeout(()=>$('#authEmail')?.focus(),80);}
 function closeAuth(){$('#authModal').classList.remove('active');}
 function toggleAuthMode(){if(State.authMode==='login'){State.authMode='register';$('#authTitle').textContent='Create your account';$('#authSub').textContent='Start by telling us you\'re human.';$('#nameField').style.display='block';$('#authSwitchText').textContent='Already have an account? ';$('#authSwitchLink').textContent='Sign in';}else{openAuth();}}

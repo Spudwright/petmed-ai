@@ -137,7 +137,6 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
         app.logger.warning(f"[stripe_routes] migration skipped/failed: {e}")
 
     @app.route("/api/checkout", methods=["POST"])
-    @login_required
     def api_checkout():
         if not stripe.api_key:
             return jsonify({"error": "Stripe is not configured"}), 503
@@ -146,9 +145,15 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
         shipping_address = data.get("shipping_address") or {}
         if not items:
             return jsonify({"error": "Cart is empty"}), 400
-        user = q1("SELECT * FROM users WHERE id = %s;", (session["user_id"],))
-        if not user:
-            return jsonify({"error": "User not found"}), 404
+
+        # Guest-checkout friendly: user is optional. If logged in, we apply
+        # referral credits + stamp the order with user_id. If not, Stripe
+        # Checkout collects email on their page and we receive it via webhook.
+        user_id = session.get("user_id")
+        user = None
+        if user_id:
+            user = q1("SELECT * FROM users WHERE id = %s;", (user_id,))
+        is_guest = user is None
 
         line_items = []
         order_items = []
@@ -203,20 +208,19 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                 "quantity": 1,
             })
 
-        customer_id = _get_or_create_stripe_customer(user)
+        customer_id = None if is_guest else _get_or_create_stripe_customer(user)
 
-        # ---- Referral credit redemption (Phase 8) ----
-        # Apply whatever credit the user has (capped at pre-tax subtotal) as a
-        # one-time Stripe coupon. Debit the ledger now; a webhook on
-        # checkout.session.expired reverses the debit if they never pay.
+        # ---- Referral credit redemption (Phase 8) — logged-in users only ----
         credit_applied = 0
         coupon_id = None
-        try:
-            from referrals import get_credit_balance
-            credit_balance = get_credit_balance(q, user["id"])
-        except Exception as _ce:
-            app.logger.warning(f"[checkout] credit balance lookup failed: {_ce}")
-            credit_balance = 0
+        credit_balance = 0
+        if not is_guest:
+            try:
+                from referrals import get_credit_balance
+                credit_balance = get_credit_balance(q, user["id"])
+            except Exception as _ce:
+                app.logger.warning(f"[checkout] credit balance lookup failed: {_ce}")
+                credit_balance = 0
         if credit_balance > 0 and subtotal > 0:
             credit_applied = min(credit_balance, subtotal)
             try:
@@ -245,7 +249,7 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
             RETURNING id;
             """,
             (
-                user["id"],
+                user["id"] if user else None,
                 json.dumps(order_items),
                 subtotal, tax, shipping, total,
                 json.dumps(shipping_address),
@@ -255,7 +259,7 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
         order_id = pending["id"]
 
         # Debit the ledger now (idempotent on order_id via reason tag).
-        if credit_applied > 0:
+        if credit_applied > 0 and user:
             try:
                 from referrals import record_credit_debit
                 record_credit_debit(q, user["id"], credit_applied, f"checkout_pending:{order_id}")
@@ -264,13 +268,12 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
 
         session_kwargs = dict(
             mode="payment",
-            customer=customer_id,
             line_items=line_items,
             success_url=f"{app_url}/order/success?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{app_url}/cart?canceled=1",
             metadata={
                 "crittr_order_id": str(order_id),
-                "crittr_user_id": str(user["id"]),
+                "crittr_user_id": str(user["id"]) if user else "guest",
                 "flow": "one_time_order",
                 "credit_applied_cents": str(credit_applied),
             },
@@ -278,6 +281,15 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                 "metadata": {"crittr_order_id": str(order_id)},
             },
         )
+        if customer_id:
+            session_kwargs["customer"] = customer_id
+        else:
+            # Guest flow — let Stripe collect email + create a customer record
+            session_kwargs["customer_creation"] = "always"
+            # Optional: if cart drawer sent guest_email, prefill it
+            guest_email = (data.get("guest_email") or "").strip()
+            if guest_email:
+                session_kwargs["customer_email"] = guest_email[:200]
         if coupon_id:
             session_kwargs["discounts"] = [{"coupon": coupon_id}]
 
