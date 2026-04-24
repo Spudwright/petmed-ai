@@ -20,35 +20,28 @@ log = logging.getLogger("crittr.product_images")
 #   3 slugs have AI-generated product photos (Phase E.7) under /static/products/
 #   the remaining 13 use Unsplash lifestyle photos until we generate more
 _IMAGE_URL_MAP = {
-    # Flea-tick / parasite — AI-generated product shots
+    # All 16 products now use AI-generated product photos committed to
+    # /static/products/<slug>.png  (Phase E.7 completion)
     "frontline-gold":           "/static/products/frontline-gold.png",
     "seresto-collar":           "/static/products/seresto-collar.png",
-    # Rebranded Rx combo chews + topical
-    "crittr-combo-rx-chew":     "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=900&q=80",
-    "crittr-heartworm-chew":    "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
-    "crittr-cat-broad-topical": "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=900&q=80",
-    "crittr-rx-gastro-diet":    "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=900&q=80",
-    # Legacy slugs (in case rebrand didn't run)
-    "nexgard-plus":             "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=900&q=80",
-    "heartgard-plus":           "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
-    "revolution-plus":          "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=900&q=80",
-    "purina-en":                "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=900&q=80",
-    # Joint / mobility
+    "crittr-combo-rx-chew":     "/static/products/crittr-combo-rx-chew.png",
+    "crittr-heartworm-chew":    "/static/products/crittr-heartworm-chew.png",
+    "crittr-cat-broad-topical": "/static/products/crittr-cat-broad-topical.png",
+    "crittr-rx-gastro-diet":    "/static/products/crittr-rx-gastro-diet.png",
+    "nexgard-plus":             "/static/products/crittr-combo-rx-chew.png",
+    "heartgard-plus":           "/static/products/crittr-heartworm-chew.png",
+    "revolution-plus":          "/static/products/crittr-cat-broad-topical.png",
+    "purina-en":                "/static/products/crittr-rx-gastro-diet.png",
     "cosequin-ds-msm":          "/static/products/cosequin-ds-msm.png",
-    "dasuquin-advanced":        "https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=900&q=80",
-    # Calming / behavior
-    "adaptil-calm":             "https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=900&q=80",
-    "composure-pro":            "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=900&q=80",
-    # Digestive / probiotic
-    "fortiflora":               "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
-    # Skin / coat
-    "welactin-omega3":          "https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=900&q=80",
-    # Dental
-    "greenies-original":        "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=80",
-    "oravet-chews":             "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=900&q=80",
-    # Multivitamins
-    "pet-tabs-plus":            "https://images.unsplash.com/photo-1437957146754-f6377debe171?w=900&q=80",
-    "nucat-multivitamin":       "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=900&q=80",
+    "dasuquin-advanced":        "/static/products/dasuquin-advanced.png",
+    "adaptil-calm":             "/static/products/adaptil-calm.png",
+    "composure-pro":            "/static/products/composure-pro.png",
+    "fortiflora":               "/static/products/fortiflora.png",
+    "welactin-omega3":          "/static/products/welactin-omega3.png",
+    "greenies-original":        "/static/products/greenies-original.png",
+    "oravet-chews":             "/static/products/oravet-chews.png",
+    "pet-tabs-plus":            "/static/products/pet-tabs-plus.png",
+    "nucat-multivitamin":       "/static/products/nucat-multivitamin.png",
 }
 
 # Fallback: category_slug -> photo URL, in case a new product is added
