@@ -33,6 +33,7 @@ from crittr_rx_rebrand import ensure_rx_rebrand, register_rx_rebrand_redirects
 from affiliate_links import ensure_affiliate_urls
 from anon_chat import register_anon_chat_routes
 from subscriptions import register_subscription_routes
+from admin_gen_images import register_admin_gen_images
 from og_images import register_og_routes
 from legal_routes import register_legal_routes
 from regions import register_region_middleware
@@ -755,6 +756,12 @@ try:
     register_subscription_routes(app, q=q)
 except Exception as _e:
     print(f"Warning: register_subscription_routes failed: {_e}")
+
+# Phase E.7 — one-shot admin route that generates AI product images server-side
+try:
+    register_admin_gen_images(app)
+except Exception as _e:
+    print(f"Warning: register_admin_gen_images failed: {_e}")
 
 # Phase B.10 — dynamic OG image generation at /og/<slug>.png
 try:
