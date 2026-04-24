@@ -16,11 +16,13 @@ import logging
 log = logging.getLogger("crittr.product_images")
 
 
-# slug -> Unsplash photo URL (all confirmed loading via cat-module usage)
+# slug -> image URL
+#   3 slugs have AI-generated product photos (Phase E.7) under /static/products/
+#   the remaining 13 use Unsplash lifestyle photos until we generate more
 _IMAGE_URL_MAP = {
-    # Flea-tick / parasite
-    "frontline-gold":           "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=80",
-    "seresto-collar":           "https://images.unsplash.com/photo-1437957146754-f6377debe171?w=900&q=80",
+    # Flea-tick / parasite — AI-generated product shots
+    "frontline-gold":           "/static/products/frontline-gold.png",
+    "seresto-collar":           "/static/products/seresto-collar.png",
     # Rebranded Rx combo chews + topical
     "crittr-combo-rx-chew":     "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=900&q=80",
     "crittr-heartworm-chew":    "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
@@ -32,7 +34,7 @@ _IMAGE_URL_MAP = {
     "revolution-plus":          "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=900&q=80",
     "purina-en":                "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=900&q=80",
     # Joint / mobility
-    "cosequin-ds-msm":          "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
+    "cosequin-ds-msm":          "/static/products/cosequin-ds-msm.png",
     "dasuquin-advanced":        "https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=900&q=80",
     # Calming / behavior
     "adaptil-calm":             "https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=900&q=80",
@@ -89,15 +91,19 @@ def ensure_product_images(q) -> None:
     updated = skipped_present = skipped_unmapped = 0
     for r in rows:
         existing = r.get("image_url") if hasattr(r, "get") else r["image_url"]
-        # Only overwrite if blank OR an old tile path
-        is_blank = not existing
-        is_tile = bool(existing) and "/static/product-tiles/" in existing
-        if not (is_blank or is_tile):
-            skipped_present += 1
-            continue
+        # Overwrite if blank, old tile path, or the current map value is newer
+        # (e.g. swapping Unsplash placeholder for a new /static/products/*.png).
         url = _photo_for(r)
         if not url:
             skipped_unmapped += 1
+            continue
+        is_blank = not existing
+        is_tile = bool(existing) and "/static/product-tiles/" in existing
+        # Upgrade Unsplash -> local product photo automatically
+        is_stale_unsplash = (bool(existing) and "images.unsplash.com" in existing
+                             and url.startswith("/static/products/"))
+        if not (is_blank or is_tile or is_stale_unsplash):
+            skipped_present += 1
             continue
         try:
             q("UPDATE products SET image_url=%s WHERE id=%s", (url, r["id"]), fetch=False)
