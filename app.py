@@ -39,6 +39,7 @@ from admin_gen_images import register_admin_gen_images
 from og_images import register_og_routes
 from legal_routes import register_legal_routes
 from regions import register_region_middleware
+from rate_limiting import init_rate_limiter
 try:
     from youtube import youtube_bp
 except Exception:  # pragma: no cover
@@ -47,6 +48,14 @@ except Exception:  # pragma: no cover
 load_dotenv()
 
 app = Flask(__name__, static_folder="static")
+
+# Phase I.1 — rate limiter (per-IP throttling on public endpoints)
+try:
+    limiter = init_rate_limiter(app)
+except Exception as _e:
+    print(f"Warning: init_rate_limiter failed: {_e}")
+    limiter = None
+
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB (VET AI image uploads)
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
@@ -762,7 +771,7 @@ except Exception as _e:
 
 # Phase D.4 — anonymous hero-chat triage endpoint (+ Lever 2 partner URLs)
 try:
-    register_anon_chat_routes(app, q=q, ai_chat=ai_chat)
+    register_anon_chat_routes(app, q=q, ai_chat=ai_chat, limiter=limiter)
 except Exception as _e:
     print(f"Warning: register_anon_chat_routes failed: {_e}")
 

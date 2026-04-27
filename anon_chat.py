@@ -225,7 +225,7 @@ def _ensure_anon_chat_schema(q):
         log.warning("ensure_anon_chat_schema: %s", e)
 
 
-def register_anon_chat_routes(app, q, ai_chat):
+def register_anon_chat_routes(app, q, ai_chat, limiter=None):
     """Wire POST /api/chat/anon into the Flask app.
 
     Parameters
@@ -236,7 +236,16 @@ def register_anon_chat_routes(app, q, ai_chat):
     """
     _ensure_anon_chat_schema(q)
 
+    # Rate-limited if a limiter was provided. Applies chat-tier limits
+    # (10/min, 60/hour, 200/day per IP) to block bot abuse.
+    _limit = (
+        limiter.limit("10 per minute;60 per hour;200 per day", per_method=True)
+        if limiter is not None
+        else (lambda f: f)
+    )
+
     @app.route("/api/chat/anon", methods=["POST"])
+    @_limit
     def api_chat_anon():
         d = request.json or {}
         message = (d.get("message") or "").strip()
