@@ -28,6 +28,7 @@ _IMAGE_URL_MAP = {
     "crittr-heartworm-chew":    "/static/products/crittr-heartworm-chew.png",
     "crittr-cat-broad-topical": "/static/products/crittr-cat-broad-topical.png",
     "crittr-rx-gastro-diet":    "/static/products/crittr-rx-gastro-diet.png",
+    "crittr-calm":              "/static/products/crittr-calm.png",
     "nexgard-plus":             "/static/products/crittr-combo-rx-chew.png",
     "heartgard-plus":           "/static/products/crittr-heartworm-chew.png",
     "revolution-plus":          "/static/products/crittr-cat-broad-topical.png",

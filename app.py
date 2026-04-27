@@ -30,6 +30,7 @@ from referrals import register_referral_routes
 from shop_routes import register_shop_routes
 from product_images import ensure_product_images
 from crittr_rx_rebrand import ensure_rx_rebrand, register_rx_rebrand_redirects
+from crittr_calm_seed import ensure_crittr_calm
 from affiliate_links import ensure_affiliate_urls
 from anon_chat import register_anon_chat_routes
 from subscriptions import register_subscription_routes
@@ -739,6 +740,12 @@ try:
     register_rx_rebrand_redirects(app)
 except Exception as _e:
     print(f"Warning: ensure_rx_rebrand failed: {_e}")
+
+# Phase H.9 — seed CRITTR Calm OTC supplement (idempotent)
+try:
+    ensure_crittr_calm(q)
+except Exception as _e:
+    print(f"Warning: ensure_crittr_calm failed: {_e}")
 
 # Phase D.1 — Lever 1: seed Amazon affiliate URLs for 12 OTC products
 try:
