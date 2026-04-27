@@ -24,6 +24,8 @@ import secrets
 
 from flask import jsonify, request
 
+from bot_prevention import is_bot_request, verify_turnstile_token
+
 log = logging.getLogger("crittr.anon_chat")
 
 
@@ -248,6 +250,21 @@ def register_anon_chat_routes(app, q, ai_chat, limiter=None):
     @_limit
     def api_chat_anon():
         d = request.json or {}
+
+        # Bot prevention layer 1: honeypot (real users never fill this)
+        is_bot, _reason = is_bot_request(d)
+        if is_bot:
+            # Return a generic 200 with no useful info — don't tip bots off
+            return jsonify({"reply": "Thanks. Try again in a moment."}), 200
+
+        # Bot prevention layer 2: Cloudflare Turnstile (invisible CAPTCHA)
+        # Activates only if TURNSTILE_SECRET_KEY env var is present.
+        ts_token = (d.get("turnstile_token") or "").strip()
+        client_ip = (request.headers.get("X-Forwarded-For", request.remote_addr) or "").split(",")[0].strip()
+        ok, reason = verify_turnstile_token(ts_token, client_ip)
+        if not ok:
+            return jsonify({"error": "Verification required. Please refresh and try again."}), 403
+
         message = (d.get("message") or "").strip()
         history = d.get("history") or []
         sid = (d.get("session_id") or secrets.token_hex(8))[:32]

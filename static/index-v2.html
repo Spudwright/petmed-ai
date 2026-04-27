@@ -545,6 +545,35 @@ body.drawer-lock{overflow:hidden}
 .hero-center h1 .hl-alt{color:var(--terracotta-dark);font-style:italic;font-size:.92em}
 .hero-center h1 .hl-alt::after{background:rgba(212,149,106,.28)}
 </style>
+
+<!-- Cloudflare Turnstile (invisible CAPTCHA) -->
+<script>
+  // Read site key from a <meta> tag injected server-side. If absent, Turnstile is disabled.
+  window.__cfTurnstileToken = "";
+  window.__cfTurnstileSiteKey = (document.querySelector('meta[name="cf-turnstile-site-key"]') || {}).content || "";
+  window.onloadTurnstileCallback = function() {
+    if (!window.__cfTurnstileSiteKey) return;
+    var el = document.getElementById('cf-turnstile');
+    if (!el || !window.turnstile) return;
+    window.turnstile.render(el, {
+      sitekey: window.__cfTurnstileSiteKey,
+      size: 'invisible',
+      callback: function(token) { window.__cfTurnstileToken = token; },
+      'error-callback': function() { window.__cfTurnstileToken = ""; }
+    });
+  };
+</script>
+<script>
+  // Lazy-load Turnstile only when site key is configured
+  (function(){
+    var sk = (document.querySelector('meta[name="cf-turnstile-site-key"]') || {}).content || "";
+    if (!sk) return;
+    var s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit';
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  })();
+</script>
 </head>
 <body>
 
@@ -651,6 +680,10 @@ body.drawer-lock{overflow:hidden}
           <button type="submit" aria-label="Send">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
           </button>
+          <!-- Honeypot: real users never fill this. Bots autofill every input. -->
+          <input type="text" name="website" id="hp_website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+          <!-- Cloudflare Turnstile (invisible CAPTCHA) — only renders if site key is configured -->
+          <div id="cf-turnstile" data-cf-turnstile></div>
         </form>
       </div>
 
@@ -1272,6 +1305,8 @@ body.drawer-lock{overflow:hidden}
         body: JSON.stringify({
           message: q,
           image_base64: savedImage || undefined,
+          website: (document.getElementById('hp_website') || {}).value || "",
+          turnstile_token: window.__cfTurnstileToken || ""
         })
       });
       const data = await r.json();

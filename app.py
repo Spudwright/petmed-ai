@@ -653,6 +653,13 @@ FRONTEND_PATH = _FRONTEND_V2 if _FRONTEND_V2.exists() else _FRONTEND_V1
 FRONTEND_HTML = ""
 if FRONTEND_PATH.exists():
     FRONTEND_HTML = FRONTEND_PATH.read_text()
+    # Phase I.2 — inject Cloudflare Turnstile site key meta tag if configured.
+    # Frontend reads <meta name="cf-turnstile-site-key" content="..."> to know
+    # whether to render the invisible CAPTCHA. Without it, Turnstile stays off.
+    _ts_site_key = (os.environ.get("TURNSTILE_SITE_KEY") or "").strip()
+    if _ts_site_key and "cf-turnstile-site-key" not in FRONTEND_HTML:
+        _meta = f'<meta name="cf-turnstile-site-key" content="{_ts_site_key}">'
+        FRONTEND_HTML = FRONTEND_HTML.replace("</head>", _meta + "\n</head>", 1)
 
 @app.route("/")
 def index():
