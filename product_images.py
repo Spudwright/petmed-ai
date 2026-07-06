@@ -48,7 +48,7 @@ _IMAGE_URL_MAP = {
 # Fallback: category_slug -> photo URL, in case a new product is added
 _CATEGORY_FALLBACK = {
     "flea-tick":       "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=900&q=80",
-    "heartworm":       "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=900&q=80",
+    "heartworm":       "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=900&q=80",
     "joint-mobility":  "https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=900&q=80",
     "anxiety-calming": "https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=900&q=80",
     "digestive":       "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900&q=80",
