@@ -323,6 +323,35 @@ def register_anon_chat_routes(app, q, ai_chat, limiter=None):
         except Exception as e:
             log.debug("anon_chats insert failed: %s", e)
 
+        # ROUTE IT TO A PARTNER VET. This is the link that turns crittr from a referrer
+        # into the platform: a case that needs a vet arrives PRE-TRIAGED, with the owner's
+        # words, the photo and our reasoning already attached, rather than as a cold call.
+        #
+        # Safe by construction. enqueue_case() asks vet_compliance first, which DEFAULT
+        # DENIES every state until a named human has reviewed and activated it — so until
+        # New Mexico is switched on this does nothing at all, and the owner keeps the
+        # find-a-vet path they already had. Wrapped because a routing failure must never
+        # cost the owner their triage answer, which is the thing they actually came for.
+        try:
+            if verdict in ("ER NOW", "VET TOMORROW"):
+                from flask import session as _sess
+                import vet_portal as _vp
+                _state = (request.get_json(silent=True) or {}).get("state") or ""
+                if _state:
+                    _q1 = lambda sql, params=None: (q(sql, params) or [None])[0]
+                    _cid, _why = _vp.enqueue_case(
+                        q, _q1, state=_state, ai_verdict=verdict,
+                        owner_message=(message or "")[:4000],
+                        ai_reasoning=(reply or "")[:4000],
+                        owner_user_id=_sess.get("user_id"),
+                        source="triage", source_ref=sid)
+                    if _cid:
+                        log.info("[triage] case %s routed to vets in %s", _cid, _state)
+                    else:
+                        log.debug("[triage] not routed (%s)", _why)
+        except Exception as e:
+            log.debug("vet routing skipped: %s", e)
+
         return jsonify({
             "reply":        reply,
             "verdict":      verdict,

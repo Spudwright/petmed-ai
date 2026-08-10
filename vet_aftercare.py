@@ -421,12 +421,35 @@ def nightly_aftercare(q, q1, dry_run=False):
                         AND d.given_at IS NULL AND d.skipped = FALSE
                   GROUP BY i.id, i.title, p.vet_id, p.owner_user_id
                   HAVING COUNT(*) >= 3""") or []
+    sent = {"owner_dose_digests": 0, "followup_emails": 0, "vet_alerts": 0}
     if not dry_run:
+        import care_notify as cn
         for r in lapsed:
             vp.audit(q, "adherence_lapsed", actor="system", vet_id=r.get("vet_id"),
                      detail={"item_id": r["item_id"], "missed": int(r["missed"]),
                              "title": r.get("title")})
-    return {"followups_opened": len(opened), "adherence_alerts": len(lapsed)}
+        # ONE DIGEST PER OWNER PER DAY, never one email per dose. A twice-daily fortnight
+        # course would otherwise send 28 emails, the owner unsubscribes on day two, and
+        # then misses the message that mattered. The cap is the feature.
+        by_owner = {}
+        for r in lapsed:
+            by_owner.setdefault(r.get("owner_user_id"), []).append(r)
+        for owner_id, rows in by_owner.items():
+            if owner_id and cn.notify_owner_doses(q, q1, owner_id, rows):
+                sent["owner_dose_digests"] += 1
+        by_vet = {}
+        for r in lapsed:
+            if r.get("vet_id"):
+                by_vet.setdefault(r["vet_id"], []).append(r)
+        for vet_id, rows in by_vet.items():
+            if cn.notify_vet_lapsed(q, q1, vet_id, rows):
+                sent["vet_alerts"] += 1
+        # Follow-ups only notify on the day they open, so nobody is nagged twice.
+        for f in q("""SELECT * FROM followups WHERE status='open'
+                      AND due_on = CURRENT_DATE""") or []:
+            if cn.notify_owner_followup(q, q1, f):
+                sent["followup_emails"] += 1
+    return {"followups_opened": len(opened), "adherence_alerts": len(lapsed), "sent": sent}
 
 
 # ── HTTP surface ─────────────────────────────────────────────────────────────
@@ -448,6 +471,41 @@ def register_aftercare_routes(app, q, q1):
             return jsonify({"error": why}), 403
         return jsonify({"ok": True, "plan_id": plan_id,
                         "plan": _ser(get_plan(q, q1, plan_id))})
+
+    @app.route("/api/vet/cases/<int:case_id>/plan", methods=["POST"])
+    @vet_only
+    def vet_plan_from_case(vet, case_id):
+        """Write a plan straight off a case the vet just reviewed.
+
+        The composer used to demand an owner_user_id and pet_id, which a real vet has no
+        way of knowing and would have to look up — a form that only works for whoever
+        built it. The case already carries both, so the vet supplies clinical content and
+        nothing else.
+        """
+        case = q1("SELECT * FROM vet_cases WHERE id=%s", (case_id,))
+        if not case:
+            return jsonify({"error": "no such case"}), 404
+        if case.get("assigned_vet_id") != vet["id"]:
+            return jsonify({"error": "that case is not assigned to you"}), 403
+        d = request.get_json(silent=True) or {}
+        plan_id, why = create_plan(
+            q, q1, vet,
+            owner_user_id=case.get("owner_user_id"), pet_id=case.get("pet_id"),
+            state=case.get("state"), summary=d.get("summary"),
+            items=d.get("items") or [], case_id=case_id)
+        if not plan_id:
+            return jsonify({"error": why}), 403
+        return jsonify({"ok": True, "plan_id": plan_id,
+                        "plan": _ser(get_plan(q, q1, plan_id))})
+
+    @app.route("/api/vet/cases/mine", methods=["GET"])
+    @vet_only
+    def vet_my_cases(vet):
+        """Cases this vet has claimed or reviewed — what the composer picks from."""
+        rows = q("""SELECT * FROM vet_cases WHERE assigned_vet_id=%s
+                    AND status IN ('claimed','reviewed')
+                    ORDER BY claimed_at DESC NULLS LAST LIMIT 30""", (vet["id"],)) or []
+        return jsonify({"cases": [_ser(r) for r in rows]})
 
     @app.route("/api/vet/earnings", methods=["GET"])
     @vet_only
