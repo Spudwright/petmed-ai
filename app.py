@@ -817,6 +817,12 @@ try:
     register_vet_routes(app, q, q1, _vet_admin_required)
     from vet_pages import register_vet_pages
     register_vet_pages(app)
+    # AFTERCARE — the post-visit plan, medication adherence, follow-up check-ins, refill
+    # routing and crittr Care. This is where the recurring revenue lives: the in-person
+    # visit creates the VCPR, and everything after it is legal telemedicine with that vet.
+    from vet_aftercare import init_aftercare_tables, register_aftercare_routes
+    init_aftercare_tables(q)
+    register_aftercare_routes(app, q, q1)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 
