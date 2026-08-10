@@ -159,6 +159,16 @@ JOBS = {
 
 
 def run(q, only=None, dry_run=False):
+    # Aftercare: open today's scheduled follow-ups and flag medication courses the
+    # owner has fallen behind on, so the vet hears about it while it still matters.
+    try:
+        if only in (None, "aftercare"):
+            import vet_aftercare as _ac
+            _q1 = lambda sql, params=None: (q(sql, params) or [None])[0]
+            _res = _ac.nightly_aftercare(q, _q1, dry_run=dry_run)
+            print(f"[nightly] aftercare: {_res}")
+    except Exception as _e:
+        print(f"[nightly] aftercare failed (non-fatal): {_e}")
     results = {}
     for name, fn in JOBS.items():
         if only and name != only:
