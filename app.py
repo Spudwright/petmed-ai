@@ -823,6 +823,8 @@ try:
     from vet_aftercare import init_aftercare_tables, register_aftercare_routes
     init_aftercare_tables(q)
     register_aftercare_routes(app, q, q1)
+    from care_pages import register_care_pages
+    register_care_pages(app)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 
