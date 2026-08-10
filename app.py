@@ -806,6 +806,18 @@ try:
 except Exception as _e:
     print(f"Warning: register_legal_routes failed: {_e}")
 
+# Phase J — THE VETERINARIAN SIDE. Vet accounts, licence verification, a case queue,
+# VCPR records and an audit trail, all gated by per-state compliance rules that default to
+# DENY. Launching New Mexico is answering NM's questions and activating it; launching the
+# next state is the same again, with no code change either time.
+try:
+    from vet_portal import register_vet_routes, init_vet_tables
+    from admin_dashboard import _basic_auth_required as _vet_admin_required
+    init_vet_tables(q)
+    register_vet_routes(app, q, q1, _vet_admin_required)
+except Exception as _e:
+    print(f"Warning: register_vet_routes failed: {_e}")
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
