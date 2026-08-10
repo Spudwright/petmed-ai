@@ -815,6 +815,8 @@ try:
     from admin_dashboard import _basic_auth_required as _vet_admin_required
     init_vet_tables(q)
     register_vet_routes(app, q, q1, _vet_admin_required)
+    from vet_pages import register_vet_pages
+    register_vet_pages(app)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 
