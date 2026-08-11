@@ -336,7 +336,11 @@ def register_anon_chat_routes(app, q, ai_chat, limiter=None):
             if verdict in ("ER NOW", "VET TOMORROW"):
                 from flask import session as _sess
                 import vet_portal as _vp
-                _state = (request.get_json(silent=True) or {}).get("state") or ""
+                _body = request.get_json(silent=True) or {}
+                _state = (_body.get("state") or "").strip().upper()[:2]
+                if not _state and _body.get("zip"):
+                    import zip_state as _zs
+                    _state = _zs.state_for_zip(_body.get("zip"))[0] or ""
                 if _state:
                     _q1 = lambda sql, params=None: (q(sql, params) or [None])[0]
                     _cid, _why = _vp.enqueue_case(

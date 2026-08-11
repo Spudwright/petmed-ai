@@ -125,15 +125,66 @@ def find_nearby(lat, lng, radius_km=10, limit=5):
 # ---------------------------------------------------------------
 # Route registration
 # ---------------------------------------------------------------
+def geocode_zip(zip_code, api_key=None):
+    """(lat, lng) for a US ZIP, or (None, None). Best-effort and cached.
+
+    Only used for DISTANCE. The STATE comes from zip_state's offline table, because being
+    wrong about a distance is cosmetic and being wrong about a state means routing a case
+    to a vet who is not licensed for it.
+    """
+    key = api_key or os.environ.get("GOOGLE_PLACES_API_KEY", "")
+    if not key:
+        return None, None
+    hit = _ZIP_CACHE.get(zip_code)
+    if hit and hit[0] > time.time():
+        return hit[1]
+    try:
+        url = ("https://maps.googleapis.com/maps/api/geocode/json?"
+               + urllib_parse.urlencode({"address": zip_code, "components": "country:US",
+                                         "key": key}))
+        with urllib_request.urlopen(url, timeout=10) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        loc = (data.get("results") or [{}])[0].get("geometry", {}).get("location") or {}
+        if "lat" in loc and "lng" in loc:
+            out = (float(loc["lat"]), float(loc["lng"]))
+            _ZIP_CACHE[zip_code] = (time.time() + 86400, out)
+            return out
+    except Exception as e:
+        log.debug("zip geocode failed for %s: %s", zip_code, e)
+    return None, None
+
+
+_ZIP_CACHE = {}
+
+
 def register_find_vet_routes(app):
     @app.route("/api/vets/nearby", methods=["POST"])
     def api_vets_nearby():
         data = request.get_json(silent=True) or {}
-        try:
-            lat = float(data.get("lat"))
-            lng = float(data.get("lng"))
-        except (TypeError, ValueError):
-            return jsonify({"error": "lat/lng required as numbers"}), 400
+        # ZIP FIRST. Browser geolocation is the fallback, not the primary: a great many
+        # owners decline the permission prompt, and typing five digits at 2am is easier
+        # than finding it in settings. The ZIP also yields the STATE, which is what the
+        # compliance gate needs and what coordinates alone can never reliably give us.
+        zip_code = (data.get("zip") or data.get("zip_code") or "").strip()
+        state = None
+        if zip_code:
+            import zip_state as _zs
+            state, why = _zs.state_for_zip(zip_code)
+            if not state:
+                return jsonify({"error": why}), 400
+            lat, lng = geocode_zip(_zs.normalise(zip_code))
+            if lat is None:
+                # We know the state even when the geocoder fails, so routing still works —
+                # only the distance list is lost.
+                return jsonify({"vets": [], "count": 0, "state": state,
+                                "note": "we couldn't look up clinics near that ZIP just "
+                                        "now, but your area is recognised"}), 200
+        else:
+            try:
+                lat = float(data.get("lat"))
+                lng = float(data.get("lng"))
+            except (TypeError, ValueError):
+                return jsonify({"error": "send a 5-digit ZIP code, or lat/lng"}), 400
         try:
             radius_km = float(data.get("radius_km") or 10)
         except (TypeError, ValueError):
@@ -142,4 +193,4 @@ def register_find_vet_routes(app):
         if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
             return jsonify({"error": "invalid coordinates"}), 400
         vets = find_nearby(lat, lng, radius_km=radius_km, limit=5)
-        return jsonify({"vets": vets, "count": len(vets)})
+        return jsonify({"vets": vets, "count": len(vets), "state": state})
