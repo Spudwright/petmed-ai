@@ -416,6 +416,29 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                             (payment_intent, order_id),
                             fetch=False,
                         )
+                        # REVENUE SHARE. Credit the vet or the practice for this order.
+                        # Wrapped because a failure here must never look like a failed
+                        # payment to a customer who has already been charged — but it logs
+                        # at error level, because a silent zero would hide a broken partner
+                        # payout for a month and clinics leave over exactly that.
+                        try:
+                            from vet_practice import attribute_order
+                            _o = q1(
+                                "SELECT user_id, items FROM orders WHERE id = %s",
+                                (order_id,),
+                            )
+                            if _o and _o.get("user_id"):
+                                attribute_order(
+                                    q, q1,
+                                    order_id=order_id,
+                                    items=_o.get("items"),
+                                    owner_user_id=_o.get("user_id"),
+                                )
+                        except Exception as _ae:
+                            import logging
+                            logging.getLogger(__name__).error(
+                                f"[attribution] order {order_id} not credited: {_ae}")
+
                         try:
                             from emails import send_order_confirmation
                             cust = obj.get("customer_details") or {}

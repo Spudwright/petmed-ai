@@ -135,6 +135,13 @@ CONSOLE_HTML = _page("Case queue", """
 <h1>Your case queue</h1>
 <p class=sub id=sub>Loading…</p>
 <div id=out></div>
+
+<div class=note style="margin-top:26px">
+  <strong>Your own clients are the bigger number.</strong> The queue above is owners crittr
+  found. <a href="/vet/practice">Bring your practice's client book across</a> and you earn on
+  the food, supplements and preventatives they already buy every month — instead of that
+  going to Chewy.
+</div>
 <script>
 function pill(v){
   const c = v==='ER NOW' ? 'p-er' : (v==='VET TOMORROW' ? 'p-tom' : 'p-home');

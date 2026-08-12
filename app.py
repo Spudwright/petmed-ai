@@ -829,6 +829,15 @@ try:
     # it does not require curl and a copy of the admin password in your shell history.
     from vet_admin_pages import register_vet_admin_pages
     register_vet_admin_pages(app, _vet_admin_required)
+    # THE CLIENT BOOK. A clinic brings the owners it already sees face to face across, and
+    # earns on what they were going to buy anyway. Aftercare credits the vet for a product
+    # they wrote into a plan; this credits the practice for the relationship itself, which
+    # is the far larger number and the actual reason a clinic signs up.
+    from vet_practice import init_practice_tables, register_practice_routes
+    init_practice_tables(q)
+    register_practice_routes(app, q, q1)
+    from practice_pages import register_practice_pages
+    register_practice_pages(app, q1)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 
