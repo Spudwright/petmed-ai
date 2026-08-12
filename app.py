@@ -838,6 +838,12 @@ try:
     register_practice_routes(app, q, q1)
     from practice_pages import register_practice_pages
     register_practice_pages(app, q1)
+    # THE CHART ASSISTANT. The second reason a clinic logs in: crittr knows what happened
+    # at home between appointments — doses actually given, what the owner said at 2am, what
+    # was never re-ordered — and their PIMS does not. Gated so a vet can only ever read the
+    # record of a connected client of their own practice, or one they hold a live VCPR with.
+    from vet_ai import register_vet_ai_routes
+    register_vet_ai_routes(app, q, q1)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 

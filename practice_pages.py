@@ -139,6 +139,12 @@ comes back here.</p>
     <div class=stats id=earn></div>
     <p class=meta id=erate></p>
   </div>
+
+  <div class=note>
+    <strong>Your connected clients bring their record with them.</strong> Doses actually
+    given, what they told crittr at 2am, what they never re-ordered.
+    <a href="/vet/patients">Open patient records</a>.
+  </div>
 </div>
 
 <script>
@@ -344,12 +350,84 @@ load();
 """)
 
 
+CHART_HTML = _page("Patient records", r"""
+<h1>Your patients on crittr</h1>
+<p class=sub>What happened at home between appointments — doses actually given, what they
+said at 2am, what they re-ordered and what they didn't. Pick a patient and ask.</p>
+
+<div class=card>
+  <label>Patient</label>
+  <select id=who><option value="">Loading your connected clients…</option></select>
+  <button id=brief>What should I know before I see them?</button>
+  <div id=ans class=msg></div>
+</div>
+
+<div class=card>
+  <h2>Ask about this patient</h2>
+  <textarea id=qq rows=3 placeholder="Did he finish the otic drops?"></textarea>
+  <button id=ask>Ask</button>
+  <p class=meta>Answers come only from this patient's crittr record. It summarises — it
+  doesn't diagnose, dose or prescribe. That's yours.</p>
+</div>
+
+<script>
+let CLIENTS = [];
+function el(id){ return document.getElementById(id); }
+
+async function load(){
+  const r = await fetch('/api/vet/clients/connected');
+  if(!r.ok){ el('who').innerHTML='<option>Not signed in as a partner vet</option>'; return; }
+  CLIENTS = (await r.json()).clients || [];
+  if(!CLIENTS.length){
+    el('who').innerHTML = '<option value="">No connected clients yet</option>';
+    return;
+  }
+  el('who').innerHTML = CLIENTS.flatMap(function(c){
+    const pets = (c.pets && c.pets.length) ? c.pets : [{id:'',name:'(no pet on file)'}];
+    return pets.map(function(p){
+      return '<option value="'+c.user_id+'|'+(p.id||'')+'">'+
+        (p.name||'—')+' · '+(c.owner_name||c.user_id)+'</option>';
+    });
+  }).join('');
+}
+
+function target(){
+  const v = el('who').value.split('|');
+  return {owner_user_id: parseInt(v[0]), pet_id: v[1] ? parseInt(v[1]) : null};
+}
+
+async function post(url, body, into){
+  const m = el('ans'); m.style.display='block'; m.className='msg'; m.textContent='Reading the record…';
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)});
+  const j = await r.json();
+  m.className = 'msg ' + (r.ok?'ok':'bad');
+  m.textContent = r.ok ? (j.brief || j.answer) : (j.error || 'Could not read that record');
+}
+
+el('brief').addEventListener('click', function(){
+  if(!el('who').value) return;
+  post('/api/vet/chart/brief', target());
+});
+el('ask').addEventListener('click', function(){
+  if(!el('who').value) return;
+  post('/api/vet/chart/ask', Object.assign(target(), {question: el('qq').value}));
+});
+load();
+</script>
+""")
+
+
 def register_practice_pages(app, q1):
     import vet_practice as vpr
 
     @app.route("/vet/practice", methods=["GET"])
     def vet_practice_page():
         return PRACTICE_HTML
+
+    @app.route("/vet/patients", methods=["GET"])
+    def vet_patients_page():
+        return CHART_HTML
 
     @app.route("/vet/claim/<token>", methods=["GET"])
     def vet_claim_page(token):
