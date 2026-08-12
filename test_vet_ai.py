@@ -137,7 +137,7 @@ def main():
     none_given = vai.render_chart({"plan_items": [
         {"kind": "medication", "title": "X", "due": 14, "given": 0}]})
     check("a course never started is called out explicitly",
-          "NONE marked given" in none_given, "the single most useful line in the chart")
+          "NONE of 14 doses marked given" in none_given, "the single most useful line in the chart")
 
     print("\n== it summarises; it does not prescribe ==")
     check("the system prompt forbids diagnosing",

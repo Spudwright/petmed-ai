@@ -208,10 +208,13 @@ def render_chart(chart):
             if i.get("times_per_day") and i.get("days"):
                 line += f" — {i['times_per_day']}x/day for {i['days']} days"
             due, given = int(i.get("due") or 0), int(i.get("given") or 0)
-            if due:
-                line += f" — {given} of {due} doses marked given"
-                line += (f", last on {_fmt_date(i.get('last_given'))}"
-                         if i.get("last_given") else ", NONE marked given")
+            if due and not given:
+                # The single most useful line in the chart: a course that never started.
+                # Say it once, plainly, rather than burying it after a count of zero.
+                line += f" — NONE of {due} doses marked given"
+            elif due:
+                line += (f" — {given} of {due} doses marked given, last on "
+                         f"{_fmt_date(i.get('last_given'))}")
             L.append(line)
 
     if chart.get("followups"):
@@ -231,7 +234,7 @@ def render_chart(chart):
                      + (f" — {r.get('vet_note')}" if r.get("vet_note") else ""))
 
     if chart.get("orders"):
-        L.append("\nWHAT THEY ACTUALLY BOUGHT (re-orders are the real adherence signal):")
+        lines = []
         for o in chart["orders"]:
             its = o.get("items")
             if isinstance(its, str):
@@ -240,8 +243,15 @@ def render_chart(chart):
                 except Exception:
                     its = []
             names = ", ".join(f"{i.get('name')} x{i.get('quantity', 1)}"
-                              for i in (its or [])[:6]) or "—"
-            L.append(f"  {_fmt_date(o.get('created_at'))} — {names}")
+                              for i in (its or [])[:6] if i.get("name"))
+            # An order whose lines we cannot name tells a vet nothing, and a column of
+            # "12 Aug — —" is worse than nothing: it reads as a record we failed to load.
+            if names:
+                lines.append(f"  {_fmt_date(o.get('created_at'))} — {names}")
+        if lines:
+            L.append("\nWHAT THEY ACTUALLY BOUGHT "
+                     "(re-orders are the real adherence signal):")
+            L.extend(lines)
 
     return "\n".join(L) if L else "The record is empty for this client."
 
