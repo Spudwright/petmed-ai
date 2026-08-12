@@ -30,9 +30,19 @@ FIVE INVARIANTS. Each is a way this could hurt a real person if it were wrong.
   5. RATES ARE FROZEN AT SALE TIME. A clinic reconciles last month against the rate it was
      quoted then, not whatever it is today. Same rule vet_aftercare already follows.
 
-THE ORDER OF PRECEDENCE, when both could apply. Plan attribution outranks practice
-attribution: writing the product into a care plan is a clinical act and pays more than
-merely owning the relationship. A line item is credited once or not at all — never twice.
+ONE FLAT RATE, AND NET OF DISCOUNTS. Two rules that between them decide whether this is a
+business or a liability:
+
+  * The vet earns the SAME percentage whether or not they wrote the product into a care
+    plan. Paying more for the clinical act would mean a veterinarian is compensated for
+    deciding a particular product is indicated, which is the shape state fee-splitting
+    rules exist to catch. Flat removes the incentive, and removes the question.
+  * The percentage is of what the customer ACTUALLY PAID. Discounts come off first, and a
+    refund or a lost dispute claws the credit back. A share of list price on money that
+    never arrived is paid straight out of crittr's margin.
+
+A line item is credited once or not at all — never twice. Reversals are written as negative
+rows, never as edits, so a statement shows what happened rather than quietly changing.
 """
 import os
 import csv
@@ -50,13 +60,22 @@ import vet_aftercare as ac
 
 log = logging.getLogger("crittr.practice")
 
-# The practice's share of a sale to one of its claimed clients where no care plan named the
-# product. Lower than the plan rate on purpose: the plan rate pays for a clinical
-# recommendation, this pays for the relationship. Both are frozen onto the row at sale time.
-PRACTICE_REV_SHARE_PCT = int(os.environ.get("CRITTR_PRACTICE_REV_SHARE_PCT", "8"))
+# ONE RATE, whatever the vet did. This used to be two — more for a product the vet wrote
+# into a care plan, less for one their client simply bought. That gradient paid a
+# veterinarian MORE for a clinical decision about a specific product, which is the exact
+# shape state fee-splitting rules are written to catch, and it gave a clinic a reason to
+# wonder whether a recommendation was clinical or commercial. Flat removes the question:
+# the vet earns the same whether they named the product or not, so naming it is never worth
+# anything extra. `source` is still recorded, because knowing WHY a sale happened is useful
+# reporting — it just no longer changes what anyone is paid.
+REV_SHARE_PCT = int(os.environ.get("CRITTR_REV_SHARE_PCT",
+                                   os.environ.get("CRITTR_VET_REV_SHARE_PCT", "15")))
+# Retained so existing imports keep working; both now resolve to the same flat rate.
+PRACTICE_REV_SHARE_PCT = REV_SHARE_PCT
 
 SOURCE_PLAN = "plan"
 SOURCE_PRACTICE = "practice"
+SOURCE_REVERSAL = "reversal"
 
 CLIENT_IMPORTED = "imported"    # in the book, never contacted
 CLIENT_INVITED = "invited"      # invite sent, not yet accepted
@@ -131,14 +150,25 @@ def init_practice_tables(q):
       fetch=False)
     q("""ALTER TABLE plan_attributions
          ADD COLUMN IF NOT EXISTS owner_user_id INTEGER""", fetch=False)
+    # Attribution reads this to work out what was actually charged. It is normally created
+    # by ensure_stripe_schema(), but attribution must not depend on another module's
+    # migration having run first — a missing column here would raise inside the payment
+    # webhook, on an order the customer has already paid for.
+    q("ALTER TABLE orders ADD COLUMN IF NOT EXISTS credit_applied_cents INT DEFAULT 0",
+      fetch=False)
     # Invariant: a given order line is credited at most once, whatever the source. This is
     # the database enforcing "never pay two clinics for one purchase" rather than the
     # application remembering to. It can only fail if history already contains a duplicate,
     # which must be shouted about rather than swallowed: without the index, double payment
     # is possible again, and nobody would notice until a clinic queried its statement.
     try:
+        # Partial: a reversal row deliberately repeats (order_id, product_id) with a
+        # negative amount, so it must be exempt or a refund could never be recorded. The
+        # guarantee that matters is unchanged — one POSITIVE credit per line, ever.
+        q("DROP INDEX IF EXISTS idx_attr_order_line", fetch=False)
         q("""CREATE UNIQUE INDEX IF NOT EXISTS idx_attr_order_line
-             ON plan_attributions(order_id, product_id)""", fetch=False)
+             ON plan_attributions(order_id, product_id)
+             WHERE source IS DISTINCT FROM 'reversal'""", fetch=False)
     except Exception as e:                                  # noqa: BLE001
         dupes = q("""SELECT order_id, product_id, COUNT(*) AS n
                      FROM plan_attributions GROUP BY order_id, product_id
@@ -465,9 +495,10 @@ def practice_client_for_user(q1, user_id):
 def attribute_order(q, q1, *, order_id, items, owner_user_id):
     """Credit every line of a paid order. THE entry point from the Stripe webhook.
 
-    Per line, in order of precedence:
-      1. a care plan of this owner's names that product  -> plan rate, credited to that vet
-      2. this owner is a claimed client of a practice    -> practice rate, to that practice
+    Per line, at ONE flat rate either way — the only thing that differs is who is credited
+    and what `source` records:
+      1. a care plan of this owner's names that product  -> credited to that vet
+      2. this owner is a claimed client of a practice    -> credited to that practice
       3. neither                                         -> nobody is credited, which is the
                                                             normal case for a cold shop sale
 
@@ -475,7 +506,8 @@ def attribute_order(q, q1, *, order_id, items, owner_user_id):
     a payment the customer already made, so the CALLER wraps it — but a silent zero would
     hide a broken revenue share for months, so it logs loudly.
     """
-    out = {"order_id": order_id, "plan_cents": 0, "practice_cents": 0, "lines": 0}
+    out = {"order_id": order_id, "plan_cents": 0, "practice_cents": 0, "lines": 0,
+           "discount_cents": 0}
     # Stripe retries webhooks — the same checkout.session.completed can arrive several
     # times. Crediting an order twice would pay a clinic twice for one purchase, so the
     # first thing this does is ask whether it has already run for this order.
@@ -490,16 +522,49 @@ def attribute_order(q, q1, *, order_id, items, owner_user_id):
         except Exception:
             items = []
     link = practice_client_for_user(q1, owner_user_id)
+    pct = int((link or {}).get("rev_share_pct") or REV_SHARE_PCT)
+
+    # NET, NOT LIST. A referral credit is applied at checkout as a Stripe coupon, so the
+    # customer pays less than the line prices stored on the order. Paying a share of the
+    # list price would hand a clinic a percentage of money that never arrived, straight out
+    # of crittr's margin. The order-level discount is spread across the lines in proportion
+    # to their value, and the vet earns on what was actually charged.
+    lines = []
     for it in (items or []):
         pid = it.get("product_id")
-        if not pid:
-            continue
-        amount = int(it.get("price_cents") or 0) * int(it.get("quantity") or 1)
+        gross = int(it.get("price_cents") or 0) * int(it.get("quantity") or 1)
+        if pid and gross > 0:
+            lines.append((pid, gross))
+    gross_total = sum(g for _, g in lines)
+    discount = 0
+    if gross_total:
+        try:
+            o = q1("SELECT COALESCE(credit_applied_cents,0) AS d FROM orders WHERE id=%s",
+                   (order_id,))
+            discount = min(int((o or {}).get("d") or 0), gross_total)
+        except Exception as e:                              # noqa: BLE001
+            # Belt and braces: this runs inside the payment webhook, so it must degrade to
+            # "assume no discount" rather than raise on an order already paid for. Loud,
+            # because assuming no discount means overpaying the clinic.
+            log.error("[practice] could not read the discount on order %s (%s) — "
+                      "crediting on LIST price, which may overpay", order_id, e)
+            discount = 0
+    out["discount_cents"] = discount
+
+    for pid, gross in lines:
+        out["lines"] += 1
+        # Proportional allocation. Integer arithmetic can leave a cent unallocated across
+        # the order; that is deliberate — rounding a fraction of a cent UP on every line
+        # would mean paying out slightly more than was collected.
+        share_of_discount = int(round(discount * gross / gross_total)) if gross_total else 0
+        amount = max(0, gross - share_of_discount)
         if amount <= 0:
             continue
-        out["lines"] += 1
+        # One rate, both paths. attribute_sale still decides WHETHER a care plan named this
+        # product; it no longer decides what that is worth.
         share = ac.attribute_sale(q, q1, order_id=order_id, product_id=pid,
-                                  amount_cents=amount, owner_user_id=owner_user_id)
+                                  amount_cents=amount, owner_user_id=owner_user_id,
+                                  share_pct=pct)
         if share:
             q("""UPDATE plan_attributions SET source='plan', owner_user_id=%s
                  WHERE order_id=%s AND product_id=%s""",
@@ -508,20 +573,69 @@ def attribute_order(q, q1, *, order_id, items, owner_user_id):
             continue
         if not link:
             continue
-        pct = int(link.get("rev_share_pct") or PRACTICE_REV_SHARE_PCT)
         cents = int(round(amount * pct / 100.0))
         q("""INSERT INTO plan_attributions
              (vet_id, practice_id, owner_user_id, order_id, product_id, amount_cents,
               share_pct, share_cents, source)
              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'practice')
-             ON CONFLICT (order_id, product_id) DO NOTHING""",
+             ON CONFLICT DO NOTHING""",
           (link["vet_id"], link["practice_id"], owner_user_id, order_id, pid, amount,
            pct, cents), fetch=False)
         out["practice_cents"] += cents
     if out["plan_cents"] or out["practice_cents"]:
-        log.info("[practice] order %s credited: plan %s¢, practice %s¢",
-                 order_id, out["plan_cents"], out["practice_cents"])
+        log.info("[practice] order %s credited %s%%: plan %s¢, practice %s¢ "
+                 "(gross %s¢ less %s¢ discount)",
+                 order_id, pct, out["plan_cents"], out["practice_cents"],
+                 gross_total, discount)
     return out
+
+
+def reverse_order(q, q1, *, order_id, refunded_cents=None, reason="refund"):
+    """Undo credit when the money goes back. Called on refund and on a lost dispute.
+
+    Writes NEGATIVE rows rather than deleting or editing the originals. A clinic must be
+    able to open last month's statement and see that a sale happened and was then reversed —
+    a number that silently shrinks is the fastest way to lose a partner's trust in the
+    ledger, and an audit trail you can edit is not an audit trail.
+
+    A partial refund reverses proportionally. Returns a summary dict.
+    """
+    rows = q("""SELECT * FROM plan_attributions
+                WHERE order_id=%s AND source <> 'reversal'""", (order_id,)) or []
+    if not rows:
+        return {"order_id": order_id, "reversed_cents": 0, "note": "nothing was credited"}
+    done = q1("""SELECT 1 AS x FROM plan_attributions
+                 WHERE order_id=%s AND source='reversal' LIMIT 1""", (order_id,))
+    if done:
+        return {"order_id": order_id, "reversed_cents": 0,
+                "note": "already reversed"}
+
+    credited_on = sum(int(r["amount_cents"] or 0) for r in rows)
+    # No amount given, or a refund at least as large as what we credited on, is a full
+    # reversal. Anything smaller is prorated against the value we actually paid a share of.
+    if refunded_cents is None or refunded_cents >= credited_on or credited_on <= 0:
+        frac = 1.0
+    else:
+        frac = max(0.0, float(refunded_cents) / float(credited_on))
+
+    total = 0
+    for r in rows:
+        back = int(round(int(r["share_cents"] or 0) * frac))
+        if not back:
+            continue
+        q("""INSERT INTO plan_attributions
+             (plan_id, item_id, vet_id, practice_id, owner_user_id, order_id, product_id,
+              amount_cents, share_pct, share_cents, source)
+             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'reversal')""",
+          (r.get("plan_id"), r.get("item_id"), r.get("vet_id"), r.get("practice_id"),
+           r.get("owner_user_id"), order_id, r.get("product_id"),
+           -int(round(int(r["amount_cents"] or 0) * frac)), r.get("share_pct"), -back),
+          fetch=False)
+        total += back
+    log.info("[practice] order %s reversed (%s): %s¢ clawed back at %.0f%%",
+             order_id, reason, total, frac * 100)
+    return {"order_id": order_id, "reversed_cents": total,
+            "partial": frac < 1.0, "reason": reason}
 
 
 def practice_earnings(q, q1, practice_id, days=30):

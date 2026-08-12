@@ -25,6 +25,7 @@ Monetary amounts throughout crittr are integers in cents. This module preserves 
 
 import os
 import json
+import logging
 import stripe
 from flask import request, jsonify, session
 
@@ -493,6 +494,45 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                         except Exception as _e:
                             import logging
                             logging.getLogger(__name__).error(f"[emails] webhook send failed: {_e}")
+
+            elif etype in ("charge.refunded", "charge.dispute.closed",
+                           "charge.dispute.created"):
+                # THE MONEY WENT BACK, SO THE CREDIT MUST TOO. Without this a clinic keeps
+                # its share of a sale the customer reversed, paid out of crittr's margin,
+                # and nobody notices until a statement is queried months later. A partial
+                # refund claws back proportionally; a dispute we LOST is a full reversal,
+                # while one we won leaves the credit alone.
+                reverse = True
+                reason = etype
+                amount = None
+                if etype == "charge.dispute.closed":
+                    reverse = (obj.get("status") == "lost")
+                    reason = f"dispute_{obj.get('status')}"
+                    amount = None
+                elif etype == "charge.dispute.created":
+                    reverse = False          # not yet decided — wait for closed
+                else:
+                    amount = obj.get("amount_refunded")
+                if reverse:
+                    try:
+                        from vet_practice import reverse_order
+                        pi = obj.get("payment_intent") or (
+                            obj.get("charge") if isinstance(obj.get("charge"), str) else None)
+                        _row = q1(
+                            "SELECT id FROM orders WHERE stripe_payment_id = %s", (pi,)
+                        ) if pi else None
+                        if _row:
+                            res = reverse_order(q, q1, order_id=_row["id"],
+                                                refunded_cents=amount, reason=reason)
+                            logging.getLogger(__name__).info(
+                                f"[attribution] {reason} on order {_row['id']}: {res}")
+                        else:
+                            logging.getLogger(__name__).warning(
+                                f"[attribution] {reason}: no order matches payment_intent "
+                                f"{pi} — a vet may retain credit for reversed money")
+                    except Exception as _re:
+                        logging.getLogger(__name__).error(
+                            f"[attribution] reversal failed on {etype}: {_re}")
 
             elif etype in ("checkout.session.expired", "checkout.session.async_payment_failed"):
                 md = obj.get("metadata") or {}

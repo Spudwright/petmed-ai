@@ -134,8 +134,8 @@ def main():
     check("practice created", r.status_code == 200, r.get_json())
     practice_id = int(r.get_json()["practice"]["id"])
     check("it carries the default revenue share",
-          int(r.get_json()["practice"]["rev_share_pct"]) == vpr.PRACTICE_REV_SHARE_PCT,
-          f"{vpr.PRACTICE_REV_SHARE_PCT}%")
+          int(r.get_json()["practice"]["rev_share_pct"]) == vpr.REV_SHARE_PCT,
+          f"{vpr.REV_SHARE_PCT}%")
 
     step("The client book: an unsigned upload is REFUSED")
     csv = ("Client Name,Primary Email,Patient,Species,Last Visit\n"
@@ -229,12 +229,12 @@ def main():
                                       "price_cents": prod["price_cents"], "quantity": 2}],
                               owner_user_id=maria_id)
     gross = prod["price_cents"] * 2
-    expect = int(round(gross * vpr.PRACTICE_REV_SHARE_PCT / 100.0))
-    check(f"credited {vpr.PRACTICE_REV_SHARE_PCT}% of the LINE (qty 2), not the unit price",
+    expect = int(round(gross * vpr.REV_SHARE_PCT / 100.0))
+    check(f"credited {vpr.REV_SHARE_PCT}% of the LINE (qty 2), not the unit price",
           out["practice_cents"] == expect, f"{out['practice_cents']}c of {gross}c")
     row = A.q1("SELECT * FROM plan_attributions WHERE order_id=%s", (order["id"],))
     check("the row records source='practice'", row["source"] == "practice")
-    check("the rate is frozen onto the row", row["share_pct"] == vpr.PRACTICE_REV_SHARE_PCT)
+    check("the rate is frozen onto the row", row["share_pct"] == vpr.REV_SHARE_PCT)
 
     step("Stripe retries the webhook — it must not pay twice")
     out2 = vpr.attribute_order(A.q, A.q1, order_id=order["id"],
@@ -260,7 +260,7 @@ def main():
     doses = A.q1("SELECT COUNT(*) n FROM med_doses")["n"]
     check("2x/day for 10 days scheduled 20 doses", doses == 20, doses)
 
-    step("She re-orders the SAME product — now the plan rate outranks the practice rate")
+    step("She re-orders the SAME product, now named in a care plan — SAME flat rate")
     o2 = A.q1("""INSERT INTO orders (user_id, status, items, subtotal_cents, total_cents)
                  VALUES (%s,'paid','[]'::jsonb,%s,%s) RETURNING id""",
               (maria_id, prod["price_cents"], prod["price_cents"]))
@@ -268,22 +268,65 @@ def main():
                                items=[{"product_id": prod["id"],
                                        "price_cents": prod["price_cents"], "quantity": 1}],
                                owner_user_id=maria_id)
-    plan_expect = int(round(prod["price_cents"] * ac.VET_REV_SHARE_PCT / 100.0))
-    check(f"paid the PLAN rate ({ac.VET_REV_SHARE_PCT}%)",
-          out3["plan_cents"] == plan_expect, f"{out3['plan_cents']}c")
-    check("and NOT also the practice rate", out3["practice_cents"] == 0,
+    flat = int(round(prod["price_cents"] * vpr.REV_SHARE_PCT / 100.0))
+    check(f"credited at the flat {vpr.REV_SHARE_PCT}%",
+          out3["plan_cents"] == flat, f"{out3['plan_cents']}c")
+    check("and NOT also credited to the practice", out3["practice_cents"] == 0,
           "one line, one payment")
+    per_unit = int(round(prod["price_cents"] * vpr.REV_SHARE_PCT / 100.0))
+    check("writing it into a plan earned exactly what buying it would have",
+          out3["plan_cents"] == per_unit,
+          "no gradient — the vet is never paid more for naming a product")
     n2 = A.q1("SELECT COUNT(*) n FROM plan_attributions WHERE order_id=%s",
               (o2["id"],))["n"]
     check("exactly one row for that line", n2 == 1, n2)
 
-    step("The earnings dashboard adds up")
+    step("A discounted order pays on what was CHARGED, not on list price")
+    o_d = A.q1("""INSERT INTO orders (user_id, status, items, subtotal_cents,
+                                      total_cents, credit_applied_cents)
+                  VALUES (%s,'paid','[]'::jsonb,5000,4000,1000) RETURNING id""",
+               (maria_id,))
+    outd = vpr.attribute_order(A.q, A.q1, order_id=o_d["id"],
+                               items=[{"product_id": prod["id"], "price_cents": 5000,
+                                       "quantity": 1}],
+                               owner_user_id=maria_id)
+    net_expect = int(round(4000 * vpr.REV_SHARE_PCT / 100.0))
+    credited = outd["plan_cents"] + outd["practice_cents"]
+    check("a $10 credit came off before the share was calculated",
+          credited == net_expect,
+          f"{credited}c on $40 paid — list would have been "
+          f"{int(5000 * vpr.REV_SHARE_PCT / 100)}c")
+    amt = A.q1("SELECT amount_cents FROM plan_attributions WHERE order_id=%s",
+               (o_d["id"],))["amount_cents"]
+    check("and the row records the NET value it was calculated on", amt == 4000, amt)
+
+    step("Maria returns it — the credit is clawed back")
+    before = A.q1("SELECT COALESCE(SUM(share_cents),0) c FROM plan_attributions")["c"]
+    res = vpr.reverse_order(A.q, A.q1, order_id=o_d["id"], reason="charge.refunded")
+    after = A.q1("SELECT COALESCE(SUM(share_cents),0) c FROM plan_attributions")["c"]
+    check("the reversal removed exactly what the sale added",
+          before - after == net_expect, f"{before} -> {after}")
+    rev = A.q1("""SELECT * FROM plan_attributions
+                  WHERE order_id=%s AND source='reversal'""", (o_d["id"],))
+    check("it is a NEGATIVE row, not an edit", rev and rev["share_cents"] == -net_expect)
+    orig = A.q1("""SELECT * FROM plan_attributions
+                   WHERE order_id=%s AND source <> 'reversal'""", (o_d["id"],))
+    check("the original sale row is untouched — the statement shows both",
+          orig and orig["share_cents"] == net_expect)
+    res2 = vpr.reverse_order(A.q, A.q1, order_id=o_d["id"])
+    check("a duplicate refund webhook claws back nothing more",
+          res2["reversed_cents"] == 0, res2.get("note"))
+
+    step("The earnings dashboard adds up, net of the reversal")
     e = vet_c.get("/api/vet/practice/earnings").get_json()
-    check("total = practice credit + plan credit",
-          e["total_cents"] == expect + plan_expect,
-          f"{e['total_cents']}c = {expect} + {plan_expect}")
-    check("and it is split by WHY it was earned",
-          set(e["by_source"]) == {"practice", "plan"}, e["by_source"])
+    check("total = practice + plan + the refunded sale and its reversal",
+          e["total_cents"] == expect + flat,
+          f"{e['total_cents']}c = {expect} + {flat} (refund nets to zero)")
+    check("it is split by WHY it was earned",
+          {"practice", "plan"} <= set(e["by_source"]), e["by_source"])
+    check("the reversal appears as its own negative line, not a silent deduction",
+          e["by_source"].get("reversal", {}).get("cents", 0) < 0,
+          e["by_source"].get("reversal"))
 
     step("The chart assistant: Dr. Claude reads HIS OWN patient")
     r = vet_c.get(f"/api/vet/chart?owner_user_id={maria_id}&pet_id={pet_id}")
@@ -322,13 +365,22 @@ def main():
         check(f"audited: {want}", want in actions)
 
     step("Maria disconnects — and the credit stops")
+    # Counted before, compared after: the point is that leaving DELETES nothing of hers,
+    # and a hard-coded number only tests that I can still count.
+    before_pets = A.q1("SELECT COUNT(*) n FROM pets WHERE user_id=%s", (maria_id,))["n"]
+    before_orders = A.q1("SELECT COUNT(*) n FROM orders WHERE user_id=%s",
+                         (maria_id,))["n"]
     r = own_c.post("/api/practice/release")
     check("she can leave in one call", r.status_code == 200, r.get_json())
     check("she is no longer connected",
           own_c.get("/api/practice/me").get_json()["connected"] is False)
-    check("her account, pets and orders are untouched",
-          A.q1("SELECT COUNT(*) n FROM pets WHERE user_id=%s", (maria_id,))["n"] >= 1
-          and A.q1("SELECT COUNT(*) n FROM orders WHERE user_id=%s", (maria_id,))["n"] == 2)
+    after_pets = A.q1("SELECT COUNT(*) n FROM pets WHERE user_id=%s", (maria_id,))["n"]
+    after_orders = A.q1("SELECT COUNT(*) n FROM orders WHERE user_id=%s", (maria_id,))["n"]
+    check("her pets and orders are untouched",
+          after_pets == before_pets >= 1 and after_orders == before_orders >= 1,
+          f"{before_pets} pets / {before_orders} orders, unchanged")
+    check("and her account still exists",
+          bool(A.q1("SELECT id FROM users WHERE id=%s", (maria_id,))))
     o3 = A.q1("""INSERT INTO orders (user_id, status, items, subtotal_cents, total_cents)
                  VALUES (%s,'paid','[]'::jsonb,100,100) RETURNING id""", (maria_id,))
     out4 = vpr.attribute_order(A.q, A.q1, order_id=o3["id"],

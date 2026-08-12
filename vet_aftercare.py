@@ -343,11 +343,20 @@ def decide_refill(q, q1, vet, refill_id, approve, vet_note=""):
 
 # ── attribution: the vet's share of what their advice sells ──────────────────
 
-def attribute_sale(q, q1, *, order_id, product_id, amount_cents, owner_user_id):
+def attribute_sale(q, q1, *, order_id, product_id, amount_cents, owner_user_id,
+                   share_pct=None):
     """Credit a sale to the vet who recommended that product, if one did.
 
     Matched on an ACTIVE plan for that owner containing that product. Silent no-op when
     nothing matches, because most shop sales have no plan behind them and that is fine.
+
+    `share_pct` is the rate to pay. This used to be fixed here at a HIGHER number than a
+    plain relationship sale earned, which meant a veterinarian was paid more for having
+    made a clinical decision about a particular product. That gradient is gone: the caller
+    passes one flat rate for every line of the order, and this function's only remaining
+    job is deciding WHETHER a plan named this product — not what that is worth.
+
+    `amount_cents` must be what the customer actually paid for the line, net of discounts.
     """
     row = q1("""SELECT i.id AS item_id, i.plan_id, p.vet_id
                 FROM care_plan_items i
@@ -356,13 +365,15 @@ def attribute_sale(q, q1, *, order_id, product_id, amount_cents, owner_user_id):
                 ORDER BY p.created_at DESC LIMIT 1""", (owner_user_id, product_id))
     if not row or not row.get("vet_id"):
         return None
-    share = int(round(int(amount_cents) * VET_REV_SHARE_PCT / 100.0))
+    pct = int(VET_REV_SHARE_PCT if share_pct is None else share_pct)
+    share = int(round(int(amount_cents) * pct / 100.0))
     q("""INSERT INTO plan_attributions
          (plan_id, item_id, vet_id, order_id, product_id, amount_cents, share_pct,
           share_cents)
-         VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+         VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+         ON CONFLICT DO NOTHING""",
       (row["plan_id"], row["item_id"], row["vet_id"], order_id, product_id,
-       int(amount_cents), VET_REV_SHARE_PCT, share), fetch=False)
+       int(amount_cents), pct, share), fetch=False)
     return share
 
 

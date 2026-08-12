@@ -22,7 +22,8 @@ FAIL = []
 
 
 def check(label, cond, detail=""):
-    print(f"  {'PASS' if cond else 'FAIL'}  {label}{(' — ' + detail) if detail else ''}")
+    print(f"  {'PASS' if cond else 'FAIL'}  {label}"
+          f"{(' — ' + str(detail)[:120]) if detail else ''}")
     if not cond:
         FAIL.append(label)
 
@@ -65,7 +66,7 @@ class DB:
 
 
 VET = {"id": 1, "email": "jane@clinic.com"}
-LINK = {"id": 9, "practice_id": 3, "vet_id": 1, "rev_share_pct": 8,
+LINK = {"id": 9, "practice_id": 3, "vet_id": 1, "rev_share_pct": 15,
         "practice_name": "Sapillo Animal Hospital"}
 
 
@@ -107,34 +108,117 @@ def main():
                               items=[{"product_id": 42, "price_cents": 4999,
                                       "quantity": 1}],
                               owner_user_id=7)
+    claimed_cents = int(round(4999 * LINK["rev_share_pct"] / 100.0))
     check("a CLAIMED client's order credits the practice",
-          out["practice_cents"] == int(round(4999 * 8 / 100.0)),
-          f"{out['practice_cents']}c of 4999c at 8%")
+          out["practice_cents"] == claimed_cents,
+          f"{out['practice_cents']}c of 4999c at {LINK['rev_share_pct']}%")
 
     print("\n== invariant 5: the rate is frozen onto the row ==")
     ins = claimed.inserts("plan_attributions")
-    expected_cents = int(round(4999 * 8 / 100.0))
-    check("the row carries the pct it was calculated at", ins and 8 in ins[0])
+    expected_cents = claimed_cents
+    check("the row carries the pct it was calculated at",
+          ins and LINK["rev_share_pct"] in ins[0])
     check("the row carries the cash amount too", ins and expected_cents in ins[0],
           f"{expected_cents}c")
     check("the row records WHY it was credited",
           claimed.insert_sql("plan_attributions")
           and "'practice'" in claimed.insert_sql("plan_attributions")[0])
 
-    print("\n== precedence: a plan outranks the relationship, and never both ==")
+    print("\n== ONE FLAT RATE: naming the product in a plan is worth nothing extra ==")
     both = DB(link=LINK, plan_match=True)
     out = vpr.attribute_order(both.q, both.q1, order_id=3,
                               items=[{"product_id": 42, "price_cents": 4999,
                                       "quantity": 1}],
                               owner_user_id=7)
-    check("a planned product pays the PLAN rate", out["plan_cents"] > 0,
+    check("a planned product credits the vet", out["plan_cents"] > 0,
           f"{out['plan_cents']}c")
     check("and the practice is NOT also credited for it", out["practice_cents"] == 0,
           "one line, one payment")
-    plan_rate = int(round(4999 * 15 / 100.0))
-    check("the plan rate is higher than the practice rate",
-          out["plan_cents"] == plan_rate and plan_rate > 399,
-          "writing it into a plan is worth more than owning the relationship")
+    check("the planned rate EQUALS the relationship rate",
+          out["plan_cents"] == claimed_cents,
+          "no gradient = no incentive to write a product into a plan for the money")
+    ins = both.inserts("plan_attributions")
+    check("and the row is stamped with that same flat rate",
+          ins and LINK["rev_share_pct"] in ins[0], f"{LINK['rev_share_pct']}%")
+
+    print("\n== the vet earns on what was PAID, not on list price ==")
+    class Discounted(DB):
+        def q1(self, sql, params=None):
+            if "credit_applied_cents" in " ".join(sql.split()):
+                return {"d": 1000}          # a $10 referral credit was applied
+            return super().q1(sql, params)
+
+    disc = Discounted(link=LINK)
+    out = vpr.attribute_order(disc.q, disc.q1, order_id=5,
+                              items=[{"product_id": 42, "price_cents": 5000,
+                                      "quantity": 1}],
+                              owner_user_id=7)
+    check("the discount is seen", out["discount_cents"] == 1000)
+    check("credited on $40 paid, not $50 listed",
+          out["practice_cents"] == int(round(4000 * 15 / 100.0)),
+          f"{out['practice_cents']}c — list would have been {int(5000*15/100)}c")
+
+    split = Discounted(link=LINK)
+    out = vpr.attribute_order(split.q, split.q1, order_id=6,
+                              items=[{"product_id": 1, "price_cents": 3000, "quantity": 1},
+                                     {"product_id": 2, "price_cents": 1000, "quantity": 1}],
+                              owner_user_id=7)
+    rows = split.inserts("plan_attributions")
+    amounts = sorted(r[5] for r in rows)
+    check("an order-level discount is split across lines in proportion",
+          amounts == [750, 2250], f"{amounts} from $30 + $10 less $10")
+    check("and never pays out more than was collected",
+          sum(amounts) == 3000, f"{sum(amounts)}c net of a 4000c order")
+
+    print("\n== a refund claws the credit back ==")
+    class Credited(DB):
+        def __init__(self, rows, reversed_already=False):
+            super().__init__()
+            self.rows = rows
+            self.rev = reversed_already
+
+        def q(self, sql, params=None, fetch=True):
+            s = " ".join(sql.split())
+            self.writes.append((s, params))
+            if s.startswith("SELECT * FROM plan_attributions"):
+                return self.rows
+            return []
+
+        def q1(self, sql, params=None):
+            s = " ".join(sql.split())
+            self.writes.append((s, params))
+            if "source='reversal' LIMIT 1" in s:
+                return {"x": 1} if self.rev else None
+            return None
+
+    ROW = [{"plan_id": None, "item_id": None, "vet_id": 1, "practice_id": 3,
+            "owner_user_id": 7, "product_id": 42, "amount_cents": 4000,
+            "share_pct": 15, "share_cents": 600}]
+    c = Credited(ROW)
+    res = vpr.reverse_order(c.q, c.q1, order_id=5)
+    check("a full refund reverses the whole credit", res["reversed_cents"] == 600, res)
+    rev = c.inserts("plan_attributions")
+    check("the reversal is a NEGATIVE row, not an edit",
+          rev and -600 in rev[0] and -4000 in rev[0],
+          "a statement shows the sale AND the reversal")
+    check("no UPDATE or DELETE touched the original",
+          not any(w.startswith(("UPDATE plan_attributions", "DELETE"))
+                  for w, _ in c.writes))
+
+    c = Credited(ROW)
+    res = vpr.reverse_order(c.q, c.q1, order_id=5, refunded_cents=2000)
+    check("a HALF refund reverses half the credit", res["reversed_cents"] == 300, res)
+    check("and is marked partial", res.get("partial") is True)
+
+    c = Credited(ROW, reversed_already=True)
+    res = vpr.reverse_order(c.q, c.q1, order_id=5)
+    check("reversing twice claws back nothing the second time",
+          res["reversed_cents"] == 0 and res["note"] == "already reversed")
+
+    c = Credited([])
+    res = vpr.reverse_order(c.q, c.q1, order_id=99)
+    check("refunding an order nobody was credited on is a safe no-op",
+          res["reversed_cents"] == 0, res["note"])
 
     print("\n== quantity is honoured, and free lines are skipped ==")
     qty = DB(link=LINK)
@@ -144,7 +228,7 @@ def main():
                                      {"product_id": 43, "price_cents": 0, "quantity": 1},
                                      {"name": "Shipping", "price_cents": 599}],
                               owner_user_id=7)
-    check("3 x $10 credits on $30, not $10", out["practice_cents"] == 240,
+    check("3 x $10 credits on $30, not $10", out["practice_cents"] == 450,
           f"{out['practice_cents']}c")
     check("a zero-priced line credits nothing", out["lines"] == 1)
     check("shipping and tax have no product_id and are ignored",
