@@ -825,6 +825,10 @@ try:
     register_aftercare_routes(app, q, q1)
     from care_pages import register_care_pages
     register_care_pages(app)
+    # Operator screens for the rollout: state activation and vet verification, so running
+    # it does not require curl and a copy of the admin password in your shell history.
+    from vet_admin_pages import register_vet_admin_pages
+    register_vet_admin_pages(app, _vet_admin_required)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 
