@@ -843,7 +843,7 @@ try:
     # was never re-ordered — and their PIMS does not. Gated so a vet can only ever read the
     # record of a connected client of their own practice, or one they hold a live VCPR with.
     from vet_ai import register_vet_ai_routes
-    register_vet_ai_routes(app, q, q1)
+    register_vet_ai_routes(app, q, q1, _vet_admin_required)
     # READINESS. Every silent failure crittr has had is a missing env var turning a feature
     # into a no-op that still returns 200. This says which ones are missing and what each
     # one silently breaks, without ever printing a secret.
