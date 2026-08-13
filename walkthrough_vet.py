@@ -316,17 +316,56 @@ def main():
     res2 = vpr.reverse_order(A.q, A.q1, order_id=o_d["id"])
     check("a duplicate refund webhook claws back nothing more",
           res2["reversed_cents"] == 0, res2.get("note"))
+    check("and because it had NOT been paid out, it was silent",
+          res["carried"] is False and res["settled_cents"] == 0,
+          "netted off an open statement — no email about money she never had")
 
-    step("The earnings dashboard adds up, net of the reversal")
+    step("Month end: the statement is closed and paid")
+    st = vpr.open_statement(A.q, A.q1, practice_id)
+    payout, why = vpr.close_statement(A.q, A.q1, practice_id, reference="AUG-2026")
+    check("the payout froze exactly what was owed",
+          payout and payout["amount_cents"] == st["owed_cents"],
+          f"{st['owed_cents']}c across {st['lines']} lines")
+    check("the open statement is now empty",
+          vpr.open_statement(A.q, A.q1, practice_id)["owed_cents"] == 0)
+    unstamped = A.q1("""SELECT COUNT(*) n FROM plan_attributions
+                        WHERE practice_id=%s AND payout_id IS NULL""", (practice_id,))["n"]
+    check("every line is stamped with the payout", unstamped == 0, unstamped)
+    vpr.mark_payout_paid(A.q, A.q1, payout["id"], reference="ACH-12345")
+    check("and the money is marked as gone",
+          A.q1("SELECT status FROM practice_payouts WHERE id=%s",
+               (payout["id"],))["status"] == "paid")
+
+    step("NOW a refund lands on an already-paid sale — that one is a real clawback")
+    res3 = vpr.reverse_order(A.q, A.q1, order_id=order["id"], reason="charge.refunded")
+    check("it is flagged as carried, not netted",
+          res3["carried"] is True and res3["settled_cents"] == expect, res3)
+    st2 = vpr.open_statement(A.q, A.q1, practice_id)
+    check("the debit lands on the NEXT statement as a negative",
+          st2["owed_cents"] == -expect, f"{st2['owed_cents']}c owed")
+    check("and it is visible as an adjustment, not a mystery",
+          st2["adjustments_cents"] == -expect, st2)
+    check("the already-paid payout is NOT retroactively altered",
+          A.q1("SELECT amount_cents FROM practice_payouts WHERE id=%s",
+               (payout["id"],))["amount_cents"] == payout["amount_cents"],
+          "history stays what it was; the correction is a new line")
+
+    step("The earnings dashboard adds up, net of both reversals")
     e = vet_c.get("/api/vet/practice/earnings").get_json()
-    check("total = practice + plan + the refunded sale and its reversal",
-          e["total_cents"] == expect + flat,
-          f"{e['total_cents']}c = {expect} + {flat} (refund nets to zero)")
+    # Three sales happened; two were refunded. Only the un-refunded plan sale should stand.
+    check("two refunded sales net to zero, leaving only the sale that stuck",
+          e["total_cents"] == flat,
+          f"{e['total_cents']}c — the one order nobody sent back")
+    ledger = A.q1("SELECT COALESCE(SUM(share_cents),0) c FROM plan_attributions")["c"]
+    check("the dashboard equals the ledger, with nothing hidden",
+          e["total_cents"] == ledger, f"dashboard {e['total_cents']}c vs ledger {ledger}c")
     check("it is split by WHY it was earned",
           {"practice", "plan"} <= set(e["by_source"]), e["by_source"])
-    check("the reversal appears as its own negative line, not a silent deduction",
+    check("reversals appear as their own negative line, not a silent deduction",
           e["by_source"].get("reversal", {}).get("cents", 0) < 0,
           e["by_source"].get("reversal"))
+    check("and the open statement shows the carried debit a clinic will ask about",
+          e["open_statement"]["adjustments_cents"] < 0, e["open_statement"])
 
     step("The chart assistant: Dr. Claude reads HIS OWN patient")
     r = vet_c.get(f"/api/vet/chart?owner_user_id={maria_id}&pet_id={pet_id}")

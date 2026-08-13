@@ -176,11 +176,12 @@ def main():
             super().__init__()
             self.rows = rows
             self.rev = reversed_already
+            self.notified = []
 
         def q(self, sql, params=None, fetch=True):
             s = " ".join(sql.split())
             self.writes.append((s, params))
-            if s.startswith("SELECT * FROM plan_attributions"):
+            if "FROM plan_attributions a" in s:
                 return self.rows
             return []
 
@@ -189,12 +190,17 @@ def main():
             self.writes.append((s, params))
             if "source='reversal' LIMIT 1" in s:
                 return {"x": 1} if self.rev else None
+            if s.startswith("SELECT * FROM practices WHERE id"):
+                self.notified.append(params)
+                return {"id": 3, "name": "Sapillo", "contact_email": "front@clinic.example"}
             return None
 
-    ROW = [{"plan_id": None, "item_id": None, "vet_id": 1, "practice_id": 3,
-            "owner_user_id": 7, "product_id": 42, "amount_cents": 4000,
-            "share_pct": 15, "share_cents": 600}]
-    c = Credited(ROW)
+    def row(payout_status=None):
+        return [{"plan_id": None, "item_id": None, "vet_id": 1, "practice_id": 3,
+                 "owner_user_id": 7, "product_id": 42, "amount_cents": 4000,
+                 "share_pct": 15, "share_cents": 600, "payout_status": payout_status}]
+
+    c = Credited(row())
     res = vpr.reverse_order(c.q, c.q1, order_id=5)
     check("a full refund reverses the whole credit", res["reversed_cents"] == 600, res)
     rev = c.inserts("plan_attributions")
@@ -205,12 +211,12 @@ def main():
           not any(w.startswith(("UPDATE plan_attributions", "DELETE"))
                   for w, _ in c.writes))
 
-    c = Credited(ROW)
+    c = Credited(row())
     res = vpr.reverse_order(c.q, c.q1, order_id=5, refunded_cents=2000)
     check("a HALF refund reverses half the credit", res["reversed_cents"] == 300, res)
     check("and is marked partial", res.get("partial") is True)
 
-    c = Credited(ROW, reversed_already=True)
+    c = Credited(row(), reversed_already=True)
     res = vpr.reverse_order(c.q, c.q1, order_id=5)
     check("reversing twice claws back nothing the second time",
           res["reversed_cents"] == 0 and res["note"] == "already reversed")
@@ -219,6 +225,45 @@ def main():
     res = vpr.reverse_order(c.q, c.q1, order_id=99)
     check("refunding an order nobody was credited on is a safe no-op",
           res["reversed_cents"] == 0, res["note"])
+
+    print("\n== TIMING decides whether a refund is an event or just arithmetic ==")
+    # Not yet paid out: the reversal nets off an open statement nobody has seen.
+    unpaid = Credited(row(payout_status=None))
+    res = vpr.reverse_order(unpaid.q, unpaid.q1, order_id=5)
+    check("a refund BEFORE payout is netted off silently",
+          res["reversed_cents"] == 600 and res["settled_cents"] == 0
+          and res["carried"] is False, res)
+    check("and the practice is NOT emailed about it", not unpaid.notified,
+          "no notice about money they never had")
+
+    pending = Credited(row(payout_status="pending"))
+    res = vpr.reverse_order(pending.q, pending.q1, order_id=5)
+    check("a statement that is CLOSED but not yet paid also just nets off",
+          res["carried"] is False and res["settled_cents"] == 0, res)
+    check("still no email", not pending.notified)
+
+    # Already paid: crittr has sent money it is no longer owed.
+    paid = Credited(row(payout_status="paid"))
+    res = vpr.reverse_order(paid.q, paid.q1, order_id=5)
+    check("a refund AFTER payout is a real clawback",
+          res["settled_cents"] == 600 and res["carried"] is True, res)
+    check("and THAT one notifies the practice", paid.notified == [(3,)],
+          "an unexplained deduction next month is how you lose a clinic")
+    carried = paid.inserts("plan_attributions")
+    check("the debit carries with payout_id unset, so it lands on the NEXT statement",
+          carried and "payout_id" not in paid.insert_sql("plan_attributions")[0],
+          "it settles like any other line rather than needing a special case")
+
+    print("\n== statements: closing one is what makes a later refund a clawback ==")
+    import inspect
+    src = inspect.getsource(vpr.close_statement)
+    check("closing stamps every unpaid line with the payout id",
+          "SET payout_id=%s" in src and "payout_id IS NULL" in src)
+    check("closing does NOT move money", "stripe." not in src.lower(),
+          "no payment API call — Stripe Connect is a separate step, this is only the ledger")
+    paid_src = inspect.getsource(vpr.mark_payout_paid)
+    check("marking paid is what flips later refunds into clawbacks",
+          "status='paid'" in paid_src)
 
     print("\n== quantity is honoured, and free lines are skipped ==")
     qty = DB(link=LINK)

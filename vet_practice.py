@@ -156,6 +156,27 @@ def init_practice_tables(q):
     # webhook, on an order the customer has already paid for.
     q("ALTER TABLE orders ADD COLUMN IF NOT EXISTS credit_applied_cents INT DEFAULT 0",
       fetch=False)
+    q("""
+    CREATE TABLE IF NOT EXISTS practice_payouts (
+        id              SERIAL PRIMARY KEY,
+        practice_id     INTEGER NOT NULL REFERENCES practices(id) ON DELETE CASCADE,
+        period_start    DATE,
+        period_end      DATE,
+        amount_cents    INTEGER NOT NULL DEFAULT 0,
+        -- 'pending' = closed and owed, 'paid' = the money has left. The distinction is the
+        -- whole point: a refund on a PENDING statement is arithmetic, a refund on a PAID
+        -- one is money we have to ask for back.
+        status          TEXT NOT NULL DEFAULT 'pending',
+        reference       TEXT,
+        created_at      TIMESTAMPTZ DEFAULT NOW(),
+        paid_at         TIMESTAMPTZ
+    )""", fetch=False)
+    # NULL = still on the open statement, nobody has been paid for this line yet.
+    q("""ALTER TABLE plan_attributions
+         ADD COLUMN IF NOT EXISTS payout_id INTEGER REFERENCES practice_payouts(id)""",
+      fetch=False)
+    q("""CREATE INDEX IF NOT EXISTS idx_attr_unpaid
+         ON plan_attributions(practice_id) WHERE payout_id IS NULL""", fetch=False)
     # Invariant: a given order line is credited at most once, whatever the source. This is
     # the database enforcing "never pay two clinics for one purchase" rather than the
     # application remembering to. It can only fail if history already contains a duplicate,
@@ -593,21 +614,35 @@ def attribute_order(q, q1, *, order_id, items, owner_user_id):
 def reverse_order(q, q1, *, order_id, refunded_cents=None, reason="refund"):
     """Undo credit when the money goes back. Called on refund and on a lost dispute.
 
-    Writes NEGATIVE rows rather than deleting or editing the originals. A clinic must be
-    able to open last month's statement and see that a sale happened and was then reversed —
-    a number that silently shrinks is the fastest way to lose a partner's trust in the
-    ledger, and an audit trail you can edit is not an audit trail.
+    WHETHER THIS IS AN EVENT DEPENDS ENTIRELY ON TIMING, which is the point. Payouts run on
+    a cycle; refunds do not. So there are two completely different situations wearing the
+    same name:
+
+      * The sale has NOT been paid out yet. The reversal just nets off an open statement
+        before anyone sees it. This is arithmetic. Nobody needs telling, and telling them
+        would be noise about money they never had.
+      * The sale WAS already paid out. Now crittr has sent a clinic money it is no longer
+        owed, and the debit has to be carried into the next statement. That is worth a
+        notification, because a practice finding an unexplained deduction next month is how
+        you lose one.
+
+    Either way the reversal is a NEGATIVE row, never an edit — a statement must show that a
+    sale happened and was then reversed, not quietly shrink. A carried debit is left with
+    payout_id NULL so it lands on the next statement like any other line.
 
     A partial refund reverses proportionally. Returns a summary dict.
     """
-    rows = q("""SELECT * FROM plan_attributions
-                WHERE order_id=%s AND source <> 'reversal'""", (order_id,)) or []
+    rows = q("""SELECT a.*, p.status AS payout_status
+                FROM plan_attributions a
+                LEFT JOIN practice_payouts p ON p.id = a.payout_id
+                WHERE a.order_id=%s AND a.source <> 'reversal'""", (order_id,)) or []
     if not rows:
-        return {"order_id": order_id, "reversed_cents": 0, "note": "nothing was credited"}
+        return {"order_id": order_id, "reversed_cents": 0, "settled_cents": 0,
+                "note": "nothing was credited"}
     done = q1("""SELECT 1 AS x FROM plan_attributions
                  WHERE order_id=%s AND source='reversal' LIMIT 1""", (order_id,))
     if done:
-        return {"order_id": order_id, "reversed_cents": 0,
+        return {"order_id": order_id, "reversed_cents": 0, "settled_cents": 0,
                 "note": "already reversed"}
 
     credited_on = sum(int(r["amount_cents"] or 0) for r in rows)
@@ -619,10 +654,13 @@ def reverse_order(q, q1, *, order_id, refunded_cents=None, reason="refund"):
         frac = max(0.0, float(refunded_cents) / float(credited_on))
 
     total = 0
+    settled = 0            # of that, how much was already in a PAID payout
+    practice_id = None
     for r in rows:
         back = int(round(int(r["share_cents"] or 0) * frac))
         if not back:
             continue
+        practice_id = practice_id or r.get("practice_id")
         q("""INSERT INTO plan_attributions
              (plan_id, item_id, vet_id, practice_id, owner_user_id, order_id, product_id,
               amount_cents, share_pct, share_cents, source)
@@ -632,10 +670,110 @@ def reverse_order(q, q1, *, order_id, refunded_cents=None, reason="refund"):
            -int(round(int(r["amount_cents"] or 0) * frac)), r.get("share_pct"), -back),
           fetch=False)
         total += back
-    log.info("[practice] order %s reversed (%s): %s¢ clawed back at %.0f%%",
-             order_id, reason, total, frac * 100)
-    return {"order_id": order_id, "reversed_cents": total,
-            "partial": frac < 1.0, "reason": reason}
+        if r.get("payout_status") == "paid":
+            settled += back
+
+    carried = settled > 0
+    log.info("[practice] order %s reversed (%s): %s¢ at %.0f%%, of which %s¢ had already "
+             "been paid out%s", order_id, reason, total, frac * 100, settled,
+             " — carried as a debit to the next statement" if carried else
+             " — netted off the open statement, no notice needed")
+    if carried and practice_id:
+        _notify_clawback(q1, practice_id, settled, order_id, reason)
+    return {"order_id": order_id, "reversed_cents": total, "settled_cents": settled,
+            "carried": carried, "partial": frac < 1.0, "reason": reason}
+
+
+def _notify_clawback(q1, practice_id, cents, order_id, reason):
+    """Tell a practice only when it is money they were ALREADY PAID.
+
+    Deliberately not sent for a reversal on an open statement — a clinic does not need an
+    email about a number that changed before they ever saw it.
+    """
+    practice = q1("SELECT * FROM practices WHERE id=%s", (practice_id,))
+    to = (practice or {}).get("contact_email")
+    api_key = os.environ.get("RESEND_API_KEY", "")
+    if not (to and api_key):
+        log.warning("[practice] clawback of %s¢ on order %s not notified to practice %s "
+                    "(no contact email or no RESEND_API_KEY)", cents, order_id,
+                    practice_id)
+        return False
+    amount = f"${cents / 100:.2f}"
+    word = "was refunded" if "refund" in (reason or "") else "was charged back"
+    html = f"""
+      <div style="font:16px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;color:#1C2A1F;
+                  max-width:520px">
+        <p>An order your practice earned on {word}, after we had already paid you for it.</p>
+        <p><strong>{amount}</strong> will be deducted from your next statement — you don't
+           need to do anything, and there is nothing to send back.</p>
+        <p style="color:#6E7D70;font-size:14px">Order #{order_id}. It stays on your ledger
+           as the original sale plus a matching reversal, so the maths is always
+           checkable rather than a number that changed.</p>
+      </div>"""
+    try:
+        import resend
+        resend.api_key = api_key
+        resend.Emails.send({
+            "from": os.environ.get("FROM_EMAIL", "crittr <hello@crittr.ai>"),
+            "to": [to],
+            "subject": f"{amount} adjustment on your next crittr statement",
+            "html": html,
+            "text": (f"An order your practice earned on {word} after we had already paid "
+                     f"you. {amount} will be deducted from your next statement. Order "
+                     f"#{order_id}. Nothing to send back."),
+            "reply_to": os.environ.get("REPLY_TO_EMAIL", "hello@crittr.ai"),
+        })
+        return True
+    except Exception as e:                                  # noqa: BLE001
+        log.error("[practice] clawback notice failed for practice %s: %s", practice_id, e)
+        return False
+
+
+# ── statements: what is owed, what has been paid ─────────────────────────────
+
+def open_statement(q, q1, practice_id):
+    """Everything earned but not yet paid out — including carried debits from refunds."""
+    row = q1("""SELECT COALESCE(SUM(share_cents),0) AS cents, COUNT(*) AS n
+                FROM plan_attributions
+                WHERE practice_id=%s AND payout_id IS NULL""", (practice_id,))
+    debits = q1("""SELECT COALESCE(SUM(share_cents),0) AS cents
+                   FROM plan_attributions
+                   WHERE practice_id=%s AND payout_id IS NULL AND source='reversal'""",
+                (practice_id,))
+    return {"practice_id": practice_id,
+            "owed_cents": int((row or {}).get("cents") or 0),
+            "lines": int((row or {}).get("n") or 0),
+            "adjustments_cents": int((debits or {}).get("cents") or 0)}
+
+
+def close_statement(q, q1, practice_id, *, period_start=None, period_end=None,
+                    reference=None):
+    """Freeze the open statement into a payout. Does NOT move money — that is Stripe's job.
+
+    Stamping the lines is what makes a later refund answerable: after this, a reversal on
+    any of them is a clawback rather than an adjustment, and the code can tell which.
+    """
+    st = open_statement(q, q1, practice_id)
+    if st["lines"] == 0:
+        return None, "nothing to settle"
+    row = q1("""INSERT INTO practice_payouts
+                (practice_id, period_start, period_end, amount_cents, status, reference)
+                VALUES (%s,%s,%s,%s,'pending',%s) RETURNING *""",
+             (practice_id, period_start, period_end, st["owed_cents"], reference))
+    if not row:
+        return None, "could not create the payout"
+    q("""UPDATE plan_attributions SET payout_id=%s
+         WHERE practice_id=%s AND payout_id IS NULL""", (row["id"], practice_id),
+      fetch=False)
+    return row, ""
+
+
+def mark_payout_paid(q, q1, payout_id, reference=None):
+    """The money has actually left. From here, a refund on those lines is a clawback."""
+    q("""UPDATE practice_payouts
+         SET status='paid', paid_at=NOW(), reference=COALESCE(%s, reference)
+         WHERE id=%s""", (reference, payout_id), fetch=False)
+    return q1("SELECT * FROM practice_payouts WHERE id=%s", (payout_id,))
 
 
 def practice_earnings(q, q1, practice_id, days=30):
@@ -758,9 +896,14 @@ def register_practice_routes(app, q, q1):
         if not practice:
             return jsonify({"error": "create your practice first"}), 400
         days = int(request.args.get("days") or 30)
+        payouts = q("""SELECT id, period_start, period_end, amount_cents, status, paid_at
+                       FROM practice_payouts WHERE practice_id=%s
+                       ORDER BY id DESC LIMIT 12""", (practice["id"],)) or []
         return jsonify({"practice": practice["name"],
                         "rev_share_pct": practice["rev_share_pct"],
-                        **practice_earnings(q, q1, practice["id"], days)})
+                        **practice_earnings(q, q1, practice["id"], days),
+                        "open_statement": open_statement(q, q1, practice["id"]),
+                        "payouts": [_ser(p) for p in payouts]})
 
     # ── the owner's side ─────────────────────────────────────────────────────
 
