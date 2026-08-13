@@ -855,6 +855,16 @@ try:
     from connect_payouts import ensure_connect_schema, register_payout_routes
     ensure_connect_schema(q)
     register_payout_routes(app, q, q1, _vet_admin_required)
+    # PRODUCT ECONOMICS. The revenue share was a percentage with nothing to check it
+    # against — products carried no cost. This makes margin visible and shows which
+    # products can earn a practice anything at all (an affiliate link cannot: the customer
+    # leaves and no crittr order exists to attribute).
+    from product_economics import register_economics_routes
+    register_economics_routes(app, q, q1, _vet_admin_required)
+    # The recruitment page. Leads with the patient record, not the money — the money is
+    # real but modest, and a clinic that signs up expecting thousands leaves at hundreds.
+    from for_vets_page import register_for_vets
+    register_for_vets(app)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 
