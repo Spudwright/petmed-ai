@@ -440,6 +440,24 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                             logging.getLogger(__name__).error(
                                 f"[attribution] order {order_id} not credited: {_ae}")
 
+                        # FULFILMENT. Split the paid order into one purchase order per
+                        # supplier and send them. Wrapped for the same reason as
+                        # attribution: the customer has already paid, so a supplier-side
+                        # problem must not surface as a failed payment. It logs at error
+                        # level because an order that never becomes a purchase order is
+                        # money taken for a box that will not arrive.
+                        try:
+                            from dropship import create_fulfilments
+                            _fr = create_fulfilments(q, q1, order_id)
+                            if _fr.get("unfulfillable"):
+                                logging.getLogger(__name__).error(
+                                    f"[dropship] order {order_id} has lines with NO "
+                                    f"supplier: {_fr['unfulfillable']} — will not ship")
+                        except Exception as _fe:
+                            logging.getLogger(__name__).error(
+                                f"[dropship] order {order_id} not routed to a supplier: "
+                                f"{_fe}")
+
                         try:
                             from emails import send_order_confirmation
                             cust = obj.get("customer_details") or {}

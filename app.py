@@ -871,6 +871,12 @@ try:
     # never updates an existing row, so this migration does it.
     from crittr_calm_compliance import ensure_calm_compliance
     ensure_calm_compliance(q, q1)
+    # DROPSHIPPING. An order used to reach 'paid' and stop — no supplier, no purchase
+    # order, no tracking, no state after payment. This routes a paid order to whoever
+    # actually ships it, and makes "sellable" mean "has a route to the customer".
+    from dropship import init_dropship_tables, register_dropship_routes
+    init_dropship_tables(q)
+    register_dropship_routes(app, q, q1, _vet_admin_required)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 
