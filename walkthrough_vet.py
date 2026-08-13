@@ -59,6 +59,13 @@ def main():
            vet_state_rules, vet_compliance_audit, orders, pets, users CASCADE""",
         fetch=False)
     A.init_db()
+    # `products` is deliberately NOT dropped above — init_db only seeds an empty catalogue,
+    # and re-seeding on every run would be slow. But that means product state SURVIVES,
+    # including anything another test left behind. This bit me: the economics test marks
+    # affiliate products rev_share_eligible=FALSE, after which this walkthrough's purchase
+    # step correctly credited nothing and looked like an attribution regression. State the
+    # preconditions rather than inheriting them.
+    A.q("UPDATE products SET rev_share_eligible = TRUE, cost_cents = NULL", fetch=False)
     vp.init_vet_tables(A.q)
     ac.init_aftercare_tables(A.q)
     vpr.init_practice_tables(A.q)
