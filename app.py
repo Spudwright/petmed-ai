@@ -844,6 +844,11 @@ try:
     # record of a connected client of their own practice, or one they hold a live VCPR with.
     from vet_ai import register_vet_ai_routes
     register_vet_ai_routes(app, q, q1)
+    # READINESS. Every silent failure crittr has had is a missing env var turning a feature
+    # into a no-op that still returns 200. This says which ones are missing and what each
+    # one silently breaks, without ever printing a secret.
+    from readiness import register_readiness
+    register_readiness(app, _vet_admin_required, q)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 

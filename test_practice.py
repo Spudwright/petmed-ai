@@ -31,14 +31,19 @@ def check(label, cond, detail=""):
 class DB:
     """Records every write so tests can assert on what would have hit the database."""
 
-    def __init__(self, *, link=None, plan_match=False):
+    def __init__(self, *, link=None, plan_match=False, ineligible=()):
         self.writes = []
         self.link = link                # what practice_client_for_user returns
         self.plan_match = plan_match    # does a care plan name the product?
+        self.ineligible = set(ineligible)   # products that earn no share
         self._id = 0
 
     def q(self, sql, params=None, fetch=True):
-        self.writes.append((" ".join(sql.split()), params))
+        s = " ".join(sql.split())
+        self.writes.append((s, params))
+        if "FROM products WHERE id = ANY" in s:
+            return [{"id": p} for p in (params[0] if params else [])
+                    if p not in self.ineligible]
         return []
 
     def q1(self, sql, params=None):
@@ -278,6 +283,33 @@ def main():
     check("a zero-priced line credits nothing", out["lines"] == 1)
     check("shipping and tax have no product_id and are ignored",
           len(qty.inserts("plan_attributions")) == 1)
+
+    print("\n== a product that cannot afford a share earns none ==")
+    # 12 of 13 live products are affiliate lines where crittr receives a few percent of
+    # retail. Paying 15% OF RETAIL on one loses money on every sale, so it is excluded
+    # rather than given a quiet second rate — the vet-facing number stays flat and honest.
+    inel = DB(link=LINK, ineligible={42})
+    out = vpr.attribute_order(inel.q, inel.q1, order_id=7,
+                              items=[{"product_id": 42, "price_cents": 3899,
+                                      "quantity": 1}],
+                              owner_user_id=7)
+    check("an ineligible product credits nobody", out["practice_cents"] == 0, out)
+    check("it never reaches the ledger at all",
+          not inel.inserts("plan_attributions"))
+    check("and the order says which lines were excluded",
+          out.get("ineligible_products") == [42], out.get("ineligible_products"))
+
+    mixed = DB(link=LINK, ineligible={42})
+    out = vpr.attribute_order(mixed.q, mixed.q1, order_id=8,
+                              items=[{"product_id": 42, "price_cents": 3899,
+                                      "quantity": 1},
+                                     {"product_id": 99, "price_cents": 2999,
+                                      "quantity": 1}],
+                              owner_user_id=7)
+    check("a mixed basket credits only the eligible line",
+          out["practice_cents"] == int(round(2999 * 15 / 100.0)),
+          f"{out['practice_cents']}c — on the $29.99 line only")
+    check("exactly one row written", len(mixed.inserts("plan_attributions")) == 1)
 
     print("\n== Stripe retries the webhook: crediting must be idempotent ==")
 

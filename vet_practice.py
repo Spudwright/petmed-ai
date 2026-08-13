@@ -156,6 +156,17 @@ def init_practice_tables(q):
     # webhook, on an order the customer has already paid for.
     q("ALTER TABLE orders ADD COLUMN IF NOT EXISTS credit_applied_cents INT DEFAULT 0",
       fetch=False)
+    # WHAT A THING COSTS US. crittr has never recorded this, which means no revenue-share
+    # rate can be checked against reality — 15% of retail is comfortable on own-label and
+    # ruinous on a line we earn an affiliate commission on. Nullable on purpose: unknown is
+    # an honest state, and the readiness page counts how many are still unknown.
+    q("ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_cents INT", fetch=False)
+    # Not every product can afford a share. An affiliate line earns crittr a few percent of
+    # retail, so paying a vet a share OF RETAIL on it loses money on every sale. Marking a
+    # product ineligible keeps the vet-facing rate flat and honest — the answer is "this
+    # item doesn't earn", not a second secret rate.
+    q("""ALTER TABLE products
+         ADD COLUMN IF NOT EXISTS rev_share_eligible BOOLEAN DEFAULT TRUE""", fetch=False)
     q("""
     CREATE TABLE IF NOT EXISTS practice_payouts (
         id              SERIAL PRIMARY KEY,
@@ -556,6 +567,24 @@ def attribute_order(q, q1, *, order_id, items, owner_user_id):
         gross = int(it.get("price_cents") or 0) * int(it.get("quantity") or 1)
         if pid and gross > 0:
             lines.append((pid, gross))
+    # Drop the lines that cannot afford a share before anything else happens, so an
+    # ineligible product never reaches the ledger at all.
+    if lines:
+        try:
+            ok_ids = {r["id"] for r in (q(
+                "SELECT id FROM products WHERE id = ANY(%s) AND rev_share_eligible",
+                ([p for p, _ in lines],)) or [])}
+            dropped = [p for p, _ in lines if p not in ok_ids]
+            if dropped:
+                out["ineligible_products"] = dropped
+                log.info("[practice] order %s: %s line(s) excluded from revenue share",
+                         order_id, len(dropped))
+            lines = [(p, g) for p, g in lines if p in ok_ids]
+        except Exception as e:                              # noqa: BLE001
+            # Never block crediting on this check failing — but say so, because the
+            # fallback pays a share on everything.
+            log.error("[practice] eligibility check failed on order %s (%s) — crediting "
+                      "ALL lines", order_id, e)
     gross_total = sum(g for _, g in lines)
     discount = 0
     if gross_total:
