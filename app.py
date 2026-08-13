@@ -865,6 +865,12 @@ try:
     # real but modest, and a clinic that signs up expecting thousands leaves at hundreds.
     from for_vets_page import register_for_vets
     register_for_vets(app)
+    # Bring CRITTR Calm's live copy inside the lines: hemp (not an accepted feed
+    # ingredient), "veterinarian-formulated" (not true yet), and "anxiety" (a condition
+    # claim, which makes a supplement an unapproved drug). The seed is idempotent and
+    # never updates an existing row, so this migration does it.
+    from crittr_calm_compliance import ensure_calm_compliance
+    ensure_calm_compliance(q, q1)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 

@@ -148,6 +148,19 @@ anyway — not a business, and not presented as one.</p>
   reason, it's ready now.
 </div>
 
+<h2>"We already use Vetsource. Why would I do this twice?"</h2>
+<p>You wouldn't. Keep it. crittr isn't a home-delivery store and isn't trying to become
+one — a fulfilment platform is a genuinely good thing to have and we're not asking you to
+swap it out.</p>
+<p>What it can't tell you is whether the drops were ever given, what the owner typed at
+2am on a Sunday before deciding whether to call, or that the course was never re-ordered.
+It knows what shipped. It has no way to know what happened.</p>
+<p>The other half is where your clients come from. A fulfilment platform reaches the
+clients you send it. crittr is the place an owner lands at 2am with a worried question —
+and if they're your client, it routes them back to you rather than to whoever is open.</p>
+<p class=plain>Different job. If you already have a store, this is the part that sits in
+front of it.</p>
+
 <h2>What we don't do</h2>
 <ul>
   <li>We don't practise veterinary medicine. Triage output is never presented as a vet's
