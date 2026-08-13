@@ -80,6 +80,43 @@ for the next one.
    *valid*, every invitation silently vanishes.
 3. **One own-label SKU.** Joint is the strongest candidate — highest-priced affiliate
    category, the most common vet recommendation, easiest format to co-pack.
+   **Supplier shortlist below — contact Pet Tech Labs and Bimini.**
+
+## Supplier shortlist (researched 2026-08-13)
+
+**Recommended: Pet Tech Labs**, a FoodScience company. FoodScience owns **VetriScience**
+(40 years in the veterinary channel) and **Pet Naturals**, and acquired Pet Tech Labs in
+2021 as its contract-manufacturing arm. crittr already sells VetriScience Nu Cat — so the
+line to a vet is "made by the same manufacturer as VetriScience," which solves the
+credibility problem a new supplement brand has in this channel.
+
+| | Pet Tech Labs | Bimini Pet Health | Garmon (Swedencare) |
+|---|---|---|---|
+| MOQ, soft chews | **504 units** | "ultra-low" on some formulas | higher — scale player |
+| Certifications | NASC, NSF, SQF, cGMP | NASC Preferred, cGMP, FDA, USDA/APHIS | NASC Preferred, cGMP |
+| Turnkey formulas | dozens | yes, standard packaging | yes |
+| Fulfilment / dropship | not offered — needs a 3PL | **lists Fulfilment & Logistics** | not confirmed |
+
+**Capital, revised down.** 504 units at ~$6 landed ≈ **$3,000** for a first run, against
+~$15,000 revenue at $29.99 full sell-through. This replaces the earlier ~$50–70k estimate,
+which assumed five SKUs at 2,000 units — the wrong shape under a grow-from-revenue rule.
+
+**Do not use generic dropship platforms** (Supliful, CJ, Eprolo). Zero inventory is
+tempting and it is the wrong trade: they are not NASC, and a vet will not recommend a
+supplement without the seal. For a brand distributed by veterinarians, NASC *is* the
+product.
+
+**The structural finding:** private label + true dropship + NASC barely exists as a
+combination. NASC manufacturers ship bulk; dropship platforms aren't NASC. The shape is
+therefore *NASC manufacturer + 3PL* — which is why `dropship.py` is supplier-agnostic with
+an email-PO route as the default.
+
+**Three questions for each:**
+1. MOQ and landed cost for a joint soft chew, 60-count jar, at 504 and 1,000 units.
+2. Will you fulfil direct to consumer, or ship bulk to a 3PL? (Decides whether a second
+   vendor is needed at all — Bimini may cover both.)
+3. Who holds the state feed registrations, and can we use your NASC membership on the
+   label or do we need our own? (Most-missed question; costs the most later.)
 
 ## Open decisions
 
