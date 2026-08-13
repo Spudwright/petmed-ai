@@ -69,7 +69,7 @@ log = logging.getLogger("crittr.practice")
 # anything extra. `source` is still recorded, because knowing WHY a sale happened is useful
 # reporting — it just no longer changes what anyone is paid.
 REV_SHARE_PCT = int(os.environ.get("CRITTR_REV_SHARE_PCT",
-                                   os.environ.get("CRITTR_VET_REV_SHARE_PCT", "15")))
+                                   os.environ.get("CRITTR_VET_REV_SHARE_PCT", "10")))
 # Retained so existing imports keep working; both now resolve to the same flat rate.
 PRACTICE_REV_SHARE_PCT = REV_SHARE_PCT
 
@@ -101,8 +101,9 @@ def init_practice_tables(q):
         contact_email   TEXT,
         phone           TEXT,
         -- The rate this practice was quoted. Stored per practice so a founding clinic can
-        -- be given better terms than the hundredth without a code change.
-        rev_share_pct   INTEGER NOT NULL DEFAULT 8,
+        -- be given better terms than the hundredth without a code change — and so changing
+        -- the global default never silently re-rates an existing partner.
+        rev_share_pct   INTEGER NOT NULL DEFAULT 10,
         status          TEXT NOT NULL DEFAULT 'active',
         created_at      TIMESTAMPTZ DEFAULT NOW()
     )""", fetch=False)
@@ -776,24 +777,34 @@ def open_statement(q, q1, practice_id):
 
 
 def close_statement(q, q1, practice_id, *, period_start=None, period_end=None,
-                    reference=None):
+                    reference=None, holdback_days=0):
     """Freeze the open statement into a payout. Does NOT move money — that is Stripe's job.
 
     Stamping the lines is what makes a later refund answerable: after this, a reversal on
     any of them is a clawback rather than an adjustment, and the code can tell which.
+
+    `holdback_days` leaves recent lines on the open statement. Money we have not sent yet
+    costs nothing to reverse, so letting a sale age past the refund window turns most
+    clawbacks back into arithmetic.
     """
-    st = open_statement(q, q1, practice_id)
-    if st["lines"] == 0:
+    where = "practice_id=%s AND payout_id IS NULL"
+    params = [practice_id]
+    if holdback_days:
+        where += " AND created_at < NOW() - (%s || ' days')::interval"
+        params.append(str(int(holdback_days)))
+    agg = q1(f"""SELECT COALESCE(SUM(share_cents),0) AS cents, COUNT(*) AS n
+                 FROM plan_attributions WHERE {where}""", tuple(params)) or {}
+    if int(agg.get("n") or 0) == 0:
         return None, "nothing to settle"
     row = q1("""INSERT INTO practice_payouts
                 (practice_id, period_start, period_end, amount_cents, status, reference)
                 VALUES (%s,%s,%s,%s,'pending',%s) RETURNING *""",
-             (practice_id, period_start, period_end, st["owed_cents"], reference))
+             (practice_id, period_start, period_end, int(agg.get("cents") or 0),
+              reference))
     if not row:
         return None, "could not create the payout"
-    q("""UPDATE plan_attributions SET payout_id=%s
-         WHERE practice_id=%s AND payout_id IS NULL""", (row["id"], practice_id),
-      fetch=False)
+    q(f"UPDATE plan_attributions SET payout_id=%s WHERE {where}",
+      tuple([row["id"]] + params), fetch=False)
     return row, ""
 
 

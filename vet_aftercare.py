@@ -43,7 +43,8 @@ log = logging.getLogger("crittr.aftercare")
 # What share of a plan-attributed sale is credited to the recommending vet. Stored on every
 # line at the time of sale rather than read live, so changing the rate never rewrites
 # history — a clinic must be able to reconcile last month against what they were told then.
-VET_REV_SHARE_PCT = int(os.environ.get("CRITTR_VET_REV_SHARE_PCT", "15"))
+VET_REV_SHARE_PCT = int(os.environ.get("CRITTR_REV_SHARE_PCT",
+                                       os.environ.get("CRITTR_VET_REV_SHARE_PCT", "10")))
 
 ITEM_FEED = "feed"          # a food / diet instruction
 ITEM_GIVE = "give"          # a supplement or OTC to administer

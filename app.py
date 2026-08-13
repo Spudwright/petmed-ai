@@ -849,6 +849,12 @@ try:
     # one silently breaks, without ever printing a secret.
     from readiness import register_readiness
     register_readiness(app, _vet_admin_required, q)
+    # PAYING THE PRACTICES. Stripe Connect Express: Stripe holds the vet's bank details, so
+    # a crittr breach cannot reroute anyone's money. Creating a transfer is ADMIN-only —
+    # a vet can see what they are owed and connect an account, never move money.
+    from connect_payouts import ensure_connect_schema, register_payout_routes
+    ensure_connect_schema(q)
+    register_payout_routes(app, q, q1, _vet_admin_required)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 

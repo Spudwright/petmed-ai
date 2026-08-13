@@ -131,7 +131,7 @@ def readiness(q=None):
         "llm": llm,
         "admin": admin,
         "rev_share_pct": os.environ.get("CRITTR_REV_SHARE_PCT",
-                                        os.environ.get("CRITTR_VET_REV_SHARE_PCT", "15")),
+                                        os.environ.get("CRITTR_VET_REV_SHARE_PCT", "10")),
         "margin": margin_visibility(q) if q else None,
         "app_url": os.environ.get("APP_URL", "https://crittr.ai"),
     }
