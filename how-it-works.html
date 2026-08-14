@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>crittr — how an order reaches a customer</title>
+<style>
+  :root{--ink:#1C2A1F;--mut:#6E7D70;--line:#DFE5DB;--sage:#527E54;--sage-d:#3E6340;
+        --cream:#FDFBF5;--rust:#B4541F;--warn:#A32020}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--cream);color:var(--ink);
+       font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:34px;line-height:1.15;margin:0 0 8px;letter-spacing:-.025em}
+  h2{font-size:20px;margin:40px 0 12px;letter-spacing:-.015em}
+  .sub{color:var(--mut);margin:0 0 8px;font-size:18px}
+  .stamp{color:var(--mut);font-size:13px;margin:0 0 32px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin:18px 0}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th{text-align:left;color:var(--mut);font-weight:600;font-size:12px;
+     text-transform:uppercase;letter-spacing:.04em;padding:8px}
+  td{padding:9px 8px;border-top:1px solid var(--line)}
+  td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .tot td{border-top:2px solid var(--ink);font-weight:800}
+  .note{background:#F2F7F1;border:1px solid #C7DEC4;border-radius:10px;padding:16px;
+        font-size:15px;color:var(--sage-d);margin:18px 0}
+  .warnbox{background:#FBEDEA;border:1px solid #E7C3B9;border-radius:10px;padding:16px;
+        font-size:15px;color:#8A2C10;margin:18px 0}
+  ol{padding-left:22px}li{margin:10px 0}
+  .who{display:flex;gap:16px;flex-wrap:wrap}
+  .who>div{flex:1;min-width:240px;background:#fff;border:1px solid var(--line);
+           border-radius:12px;padding:18px}
+  .who b{display:block;font-size:17px;margin-bottom:4px}
+  .who span{color:var(--mut);font-size:14px}
+  svg{max-width:100%;height:auto;display:block}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  @media print{body{background:#fff}.wrap{padding:0}h2{page-break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>How a crittr order reaches a customer's house</h1>
+<p class="sub">Two companies, two different jobs. That's the whole thing.</p>
+<p class="stamp">crittr.ai · 13 August 2026</p>
+
+<div class="who">
+  <div><b>Pet Tech Labs</b><span><strong>Makes it.</strong> Once, in bulk. 504 jars with your
+  label on them, shipped as one pallet. Then they're done until you reorder.</span></div>
+  <div><b>KAK Sourcing</b><span><strong>Stores and posts it.</strong> Every order, one jar at
+  a time, forever. Houston, Texas.</span></div>
+</div>
+<p class="stamp">They never deal with each other after the pallet arrives.</p>
+
+<h2>Once — setting up the stock</h2>
+<div class="scroll">
+<svg viewBox="0 0 780 110" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pet Tech Labs in Nebraska makes 504 jars and ships one pallet to the KAK warehouse in Houston Texas">
+ <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+  <path d="M0,0 L9,4.5 L0,9 z" fill="#527E54"/></marker></defs>
+ <rect x="0" y="14" width="210" height="72" rx="9" fill="#fff" stroke="#DFE5DB"/>
+ <text x="105" y="42" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#1C2A1F">Pet Tech Labs</text>
+ <text x="105" y="60" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#6E7D70">Nebraska · makes 504 jars</text>
+ <text x="105" y="74" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#6E7D70">with your label applied</text>
+ <path d="M218 50 L 292 50" stroke="#527E54" stroke-width="2" marker-end="url(#ar)"/>
+ <text x="255" y="42" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#6E7D70">1 pallet</text>
+ <rect x="300" y="14" width="210" height="72" rx="9" fill="#EAF5E9" stroke="#A6C9A2"/>
+ <text x="405" y="42" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#1C2A1F">KAK warehouse</text>
+ <text x="405" y="60" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#6E7D70">Houston, Texas</text>
+ <text x="405" y="74" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#6E7D70">504 jars on a shelf</text>
+ <rect x="530" y="20" width="250" height="60" rx="9" fill="#FFFBF0" stroke="#E8D9A8"/>
+ <text x="546" y="42" font-family="sans-serif" font-size="11" font-weight="700" fill="#1C2A1F">That's the whole setup.</text>
+ <text x="546" y="58" font-family="sans-serif" font-size="10" fill="#6E7D70">~$3,000 once. ~$50/month for the shelf.</text>
+ <text x="546" y="71" font-family="sans-serif" font-size="10" fill="#6E7D70">You never touch a jar.</text>
+</svg>
+</div>
+
+<h2>Every order — automatic</h2>
+<div class="card">
+<ol>
+  <li><strong>Customer buys.</strong> Clicks Add to cart on crittr.ai. Pays <strong>$39.99 —
+      one price</strong>, postage already in it, nothing to work out.</li>
+  <li><strong>Stripe takes the payment</strong> and collects the delivery address. The money
+      lands in your account.</li>
+  <li><strong>crittr emails KAK automatically.</strong> "Send one jar of CRITTR Joint to this
+      address." No action from you.</li>
+  <li><strong>KAK posts it.</strong> Picks a jar, boxes it, hands it to USPS. $2.75 plus
+      postage at cost.</li>
+  <li><strong>Customer gets a tracking email</strong> and the box arrives.</li>
+</ol>
+</div>
+
+<div class="warnbox">
+  <strong>The only manual step in the entire flow.</strong> Someone types the tracking number
+  into <code>/admin/fulfilments</code> — that's what sends the customer their "on its way"
+  email. Ask KAK to email tracking back and it's ten seconds an order, or hand it to a VA.
+</div>
+
+<h2>What you make on each jar</h2>
+<table>
+  <tr><th>&nbsp;</th><th style="text-align:right">CRITTR Calm $34.99</th><th style="text-align:right">CRITTR Joint $39.99</th></tr>
+  <tr><td>Product cost</td><td class="n">−$6.00</td><td class="n">−$7.00</td></tr>
+  <tr><td>Postage</td><td class="n">−$7.00</td><td class="n">−$7.00</td></tr>
+  <tr><td>Pick &amp; pack (KAK)</td><td class="n">−$2.75</td><td class="n">−$2.75</td></tr>
+  <tr><td>Storage, per jar</td><td class="n">−$1.19</td><td class="n">−$1.19</td></tr>
+  <tr><td>Stripe fee</td><td class="n">−$1.31</td><td class="n">−$1.46</td></tr>
+  <tr class="tot"><td>Net — sold direct</td><td class="n">$16.74</td><td class="n">$20.60</td></tr>
+  <tr><td>Vet share (10%)</td><td class="n">−$3.50</td><td class="n">−$4.00</td></tr>
+  <tr class="tot"><td>Net — sold via a practice</td><td class="n">$13.24</td><td class="n">$16.60</td></tr>
+</table>
+<p class="stamp">Product cost is the only estimate here — everything else is a published
+rate. A real quote moves the bottom line by about $500 per $1 of product cost.</p>
+
+<div class="note">
+  <strong>Lead with Joint.</strong> Not because the margin per jar is higher, but because it
+  is taken <em>daily</em> — a 60-count jar lasts a 40lb dog about a month, so customers
+  reorder monthly. Calm is situational (fireworks, travel) and a jar lasts months.
+  Over a year that's roughly <strong>$200 per customer versus $34</strong>.
+</div>
+
+<h2>Sales tax, in one line</h2>
+<p>It is never your money. The customer pays it, Stripe calculates it by destination, and you
+pass it to the state once a quarter. Stock sitting in a Texas warehouse means you register in
+Texas and charge Texas customers only — everyone else pays none until you sell over $100,000
+into their state.</p>
+
+<h2>What's already built</h2>
+<div class="card">
+  <p style="margin:0 0 10px">All of the software exists and is live on crittr.ai:</p>
+  <ul style="margin:0;padding-left:22px">
+    <li>One-price checkout with Stripe Tax by destination</li>
+    <li>Paid order automatically split into purchase orders and emailed to the warehouse</li>
+    <li>Despatch desk at <code>/admin/fulfilments</code> for tracking numbers</li>
+    <li>Customer tracking emails and an order status page</li>
+    <li>A product cannot be sold unless it has a supplier — so "we took the money and
+        nothing shipped" is impossible by design</li>
+    <li>CRITTR Joint is listed at $39.99 and deliberately <strong>not purchasable</strong>
+        until stock exists</li>
+  </ul>
+</div>
+
+<h2>What's still needed — two real-world things</h2>
+<div class="card">
+  <ol style="margin:0">
+    <li><strong>A pallet of CRITTR Joint.</strong> Quote from Pet Tech Labs (504 units) or
+        Bimini. ~$3,000.</li>
+    <li><strong>A KAK account.</strong> $2.75/order, $25/pallet biweekly, no minimum,
+        no setup fee.</li>
+  </ol>
+  <p style="margin:12px 0 0;color:var(--mut);font-size:14px">Plus two dashboard visits:
+  switch on Stripe Tax and Stripe Connect.</p>
+</div>
+
+</div>
+</body>
+</html>
