@@ -118,6 +118,43 @@ an email-PO route as the default.
 3. Who holds the state feed registrations, and can we use your NASC membership on the
    label or do we need our own? (Most-missed question; costs the most later.)
 
+## Fulfilment — decided 2026-08-13
+
+**Manufacturer makes it once; a 3PL posts it forever.** Two companies, two jobs.
+
+- **Make:** Pet Tech Labs (Nebraska), 504 units, ~$3,528. Reorder lead time ~8-12 weeks on
+  an existing formula; Nebraska to Houston is 2-4 days LTL. **Plan ~3 months door to door.**
+- **Post:** KAK Sourcing (Houston, TX) — $2.75/order, $25/pallet biweekly (~$54/mo),
+  no setup fee, no minimum, no peak surcharge. Central for national postage.
+- **Register for sales tax in Texas only.** Stock location creates nexus; nothing owed
+  elsewhere until ~$100k into a single state. Sales tax is never crittr's money.
+- **Reorder trigger is a SIGNATURE, not a shelf level.** 504 jars is 12 months at 42
+  orders/month but only 5 WEEKS if one practice with 400 clients signs — against a 3-month
+  lead time. Reorder the day a clinic signs. Ask about blanket/standing orders.
+
+**Rejected: Amazon MCF.** Aged-inventory surcharges ($1.50/cu ft at 181 days, $3.80 at 271,
+$6.90 at 365) punish exactly a 12-month sell-through. KAK's flat $54/month does not care how
+long stock sits. Revisit if stock ever turns in under 3 months.
+
+**Rejected for now: selling ON Amazon.** It breaks the model — no crittr order means no
+attribution, so the vet earns nothing, and crittr loses the customer, the repeat purchase
+and the adherence record. It is the affiliate problem again with our own product.
+
+⏳ **But it is the agreed Plan B.** crittr has no traffic; Amazon's 15% is the price of not
+having to find buyers. **If no practice signs within ~90 days of stock landing, list on
+Amazon** — 15% of something beats 100% of inventory that expires at 18 months.
+
+## Unit economics — CRITTR Joint @ $39.99
+
+| | Per jar | 504 sold out |
+|---|---|---|
+| Net, direct | $20.49 | **~$10,300 (51%)** |
+| Net, via a practice | $16.49 | **~$8,300 (41%)** |
+
+Cash needed up front: **$3,528 — the stock only.** Postage, pick-and-pack and Stripe come
+out of each sale after the customer has paid. ⚠ The $7 product cost is an ESTIMATE and the
+only unverified number in the model — at $9 the margin is 34%, at $5 it is 47%.
+
 ## Open decisions
 
 - **Rx compensation.** Pay the vet a telehealth consult fee, *not* a share of a drug they
