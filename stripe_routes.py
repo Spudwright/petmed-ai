@@ -171,9 +171,21 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                 "price_data": {
                     "currency": "usd",
                     "unit_amount": int(prod["price_cents"]),
+                    # Stripe Tax needs to know whether the price already contains tax.
+                    # 'exclusive' = tax is added at checkout, which is the US convention
+                    # and what a customer expects. Shipping is baked into the price;
+                    # sales tax deliberately is not, because absorbing a rate that varies
+                    # from 0% to over 10% by destination would silently eat the margin in
+                    # exactly the states you sell most in.
+                    "tax_behavior": "exclusive",
                     "product_data": {
                         "name": prod["name"],
                         "description": (prod.get("description") or "")[:500] or None,
+                        # Dietary/nutritional supplement. Several states tax supplements
+                        # differently from general goods (and a few not at all), which is
+                        # the entire reason a hardcoded rate was wrong.
+                        "tax_code": os.environ.get("STRIPE_TAX_CODE_SUPPLEMENT",
+                                                   "txcd_40060003"),
                     },
                 },
                 "quantity": qty,
@@ -186,28 +198,20 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
             })
             subtotal += int(prod["price_cents"]) * qty
 
-        tax = int(round(subtotal * 0.08))
-        shipping = 0 if subtotal >= 5000 else 599
-        total = subtotal + tax + shipping
-
-        if tax:
-            line_items.append({
-                "price_data": {
-                    "currency": "usd",
-                    "unit_amount": tax,
-                    "product_data": {"name": "Sales tax"},
-                },
-                "quantity": 1,
-            })
-        if shipping:
-            line_items.append({
-                "price_data": {
-                    "currency": "usd",
-                    "unit_amount": shipping,
-                    "product_data": {"name": "Shipping"},
-                },
-                "quantity": 1,
-            })
+        # ONE PRICE. Shipping is baked into the ticket price — no shipping line, no
+        # free-over-$50 threshold, nothing to work out at checkout. Postage costs roughly
+        # $7 on a 1lb jar and varies by about $3 between the nearest and furthest zone;
+        # averaging that into the price is worth more in conversion than the variance
+        # costs, and it is what the supplement category does.
+        shipping = 0
+        # TAX IS NOW STRIPE'S JOB, NOT A HARDCODED 8%. The old line charged every customer
+        # 8% regardless of destination — over-collecting in low-rate states, under-
+        # collecting in high-rate ones, and charging tax at all in states where crittr has
+        # no nexus and no registration. Stripe Tax computes it per destination and tracks
+        # registration thresholds. The real figure comes back on the webhook; this is a
+        # placeholder for the pending row only.
+        tax = 0
+        total = subtotal
 
         customer_id = None if is_guest else _get_or_create_stripe_customer(user)
 
@@ -281,9 +285,17 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
             payment_intent_data={
                 "metadata": {"crittr_order_id": str(order_id)},
             },
+            # Stripe Tax. It cannot compute a destination rate without a destination, so
+            # the shipping address is collected for it — that address is also what the
+            # supplier's purchase order needs, so nothing extra is asked of the customer.
+            automatic_tax={"enabled": True},
+            shipping_address_collection={"allowed_countries": ["US"]},
         )
         if customer_id:
             session_kwargs["customer"] = customer_id
+            # Required by Stripe when automatic_tax is on and a customer is attached:
+            # the address Stripe taxes against has to be allowed to update from checkout.
+            session_kwargs["customer_update"] = {"address": "auto", "shipping": "auto"}
         else:
             # Guest flow — let Stripe collect email + create a customer record
             session_kwargs["customer_creation"] = "always"
@@ -417,6 +429,23 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                             (payment_intent, order_id),
                             fetch=False,
                         )
+                        # THE REAL TAX COMES BACK FROM STRIPE, NOT FROM US. The pending row
+                        # was written with tax 0 because the destination was not known yet
+                        # — Stripe Tax computes it at checkout against the shipping address.
+                        # Write the authoritative figures back, or the order record and the
+                        # confirmation email both under-report what the customer paid.
+                        try:
+                            _td = obj.get("total_details") or {}
+                            q(
+                                """UPDATE orders SET tax_cents = %s, total_cents = %s
+                                   WHERE id = %s""",
+                                (int(_td.get("amount_tax") or 0),
+                                 int(obj.get("amount_total") or 0), order_id),
+                                fetch=False,
+                            )
+                        except Exception as _te:
+                            logging.getLogger(__name__).error(
+                                f"[tax] order {order_id} kept its placeholder totals: {_te}")
                         # REVENUE SHARE. Credit the vet or the practice for this order.
                         # Wrapped because a failure here must never look like a failed
                         # payment to a customer who has already been charged — but it logs

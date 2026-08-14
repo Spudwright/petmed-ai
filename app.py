@@ -877,6 +877,11 @@ try:
     from dropship import init_dropship_tables, register_dropship_routes
     init_dropship_tables(q)
     register_dropship_routes(app, q, q1, _vet_admin_required)
+    # ONE PRICE: postage baked into the ticket price, no shipping line at checkout. And
+    # CRITTR Joint listed but in_stock FALSE with no supplier, so fulfillable() refuses it
+    # until stock exists. Sales tax is NOT baked in — Stripe Tax adds it per destination.
+    from one_price import ensure_one_price
+    ensure_one_price(q, q1)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 
