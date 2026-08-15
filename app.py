@@ -882,6 +882,14 @@ try:
     # until stock exists. Sales tax is NOT baked in — Stripe Tax adds it per destination.
     from one_price import ensure_one_price
     ensure_one_price(q, q1)
+    # PAID TELEHEALTH CONSULTS — the first revenue stream that costs nothing to run.
+    # crittr is free to use; the owner pays only when a vet actually does something, and
+    # crittr keeps a percentage. Stripe destination charges mean the money settles into the
+    # VET'S account with crittr's fee retained at payment — crittr never holds a
+    # clinician's fee, and `on_behalf_of` makes the consult legibly the vet's service.
+    from consults import init_consult_tables, register_consult_routes
+    init_consult_tables(q)
+    register_consult_routes(app, q, q1, _vet_admin_required)
 except Exception as _e:
     print(f"Warning: register_vet_routes failed: {_e}")
 

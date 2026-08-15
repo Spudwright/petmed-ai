@@ -198,6 +198,18 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
             })
             subtotal += int(prod["price_cents"]) * qty
 
+        # MEMBER DISCOUNT. crittr Care promises 10% off the shop; this is where that
+        # promise has to become money, or the membership is a page of adjectives. Applied
+        # to the subtotal before tax, so the member sees it on the Stripe page.
+        member_discount = 0
+        if user:
+            try:
+                from vet_aftercare import is_member
+                if is_member(q1, user["id"])[0]:
+                    member_discount = int(round(subtotal * 0.10))
+            except Exception as _me:
+                app.logger.warning(f"[checkout] member lookup failed: {_me}")
+
         # ONE PRICE. Shipping is baked into the ticket price — no shipping line, no
         # free-over-$50 threshold, nothing to work out at checkout. Postage costs roughly
         # $7 on a 1lb jar and varies by about $3 between the nearest and furthest zone;
@@ -416,7 +428,21 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
             if etype == "checkout.session.completed":
                 md = obj.get("metadata") or {}
                 flow = md.get("flow")
-                if flow == "one_time_order":
+                if flow == "consult":
+                    # A paid telehealth consult. The money has ALREADY split — it settled
+                    # into the vet's connected account with crittr's fee retained at the
+                    # moment of payment — so this only records what Stripe already did.
+                    # Note this must live inside the checkout.session.completed branch:
+                    # an elif on etype further down would never be reached.
+                    try:
+                        from consults import mark_paid
+                        _cid = int(md.get("crittr_consult_id", 0))
+                        if _cid:
+                            mark_paid(q, q1, _cid, obj.get("payment_intent"))
+                    except Exception as _ce:
+                        logging.getLogger(__name__).error(
+                            f"[consults] consult paid but not recorded: {_ce}")
+                elif flow == "one_time_order":
                     order_id = int(md.get("crittr_order_id", 0))
                     payment_intent = obj.get("payment_intent")
                     if order_id:
@@ -686,6 +712,26 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                          interval, status, current_period_end, cancel_at_period_end),
                         fetch=False,
                     )
+                    # THE MISSING WIRE. Until now this recorded the subscription and
+                    # stopped — nothing ever wrote to care_members, so is_member() was
+                    # false for everyone and a paying member got nothing for their money.
+                    # crittr Care has existed as a priced tier with a working gate and no
+                    # way to actually become a member.
+                    if md.get("flow") == "membership":
+                        try:
+                            from vet_aftercare import start_membership
+                            if status in ("active", "trialing"):
+                                start_membership(_q, _q1, user_id, tier="care",
+                                                 stripe_sub_id=sub_id)
+                                logging.getLogger(__name__).info(
+                                    f"[care] user {user_id} is now a member ({status})")
+                            else:
+                                _q("""UPDATE care_members SET status=%s
+                                      WHERE user_id=%s""", (status, user_id), fetch=False)
+                        except Exception as _me:
+                            logging.getLogger(__name__).error(
+                                f"[care] user {user_id} PAID but membership not "
+                                f"activated: {_me}")
 
             elif etype == "customer.subscription.deleted":
                 _q(
@@ -697,6 +743,15 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                     (obj["id"],),
                     fetch=False,
                 )
+                # And take the membership away. A cancelled subscriber who keeps unlimited
+                # triage forever is a slow leak that nobody notices for months.
+                try:
+                    _q("""UPDATE care_members SET status='canceled'
+                          WHERE stripe_sub_id = %s""", (obj["id"],), fetch=False)
+                except Exception as _ce:
+                    logging.getLogger(__name__).error(
+                        f"[care] subscription {obj['id']} cancelled but membership "
+                        f"still active: {_ce}")
 
             elif etype == "invoice.payment_failed":
                 sub_id = obj.get("subscription")
