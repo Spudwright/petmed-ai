@@ -34,6 +34,30 @@ Vetster or Vetsource.** Partner for fulfilment; never rebuild it.
 2. **The at-home record.** `NONE of 20 doses marked given`. Vetsource knows what shipped.
    It has no way to know what happened. A fulfilment company has no reason to build this.
 
+## The revenue model — corrected 2026-08-15
+
+**crittr is free to use. It takes a percentage of the medical transaction.** This is the
+MEDVi shape, and MBD's correction: MEDVi charges no subscription, it takes a cut of the
+medical revenue. I had assumed a membership and started building one; that was wrong.
+
+Why it is right for pets: a membership asks an owner to pay every month for something they
+need twice a year, and they say no. **$55 at 2am, when the dog is unwell and their own vet
+answers, is an easy yes.** The willingness to pay is concentrated in the moment of worry,
+so the price should be too.
+
+| Stream | Who pays | crittr keeps | Status |
+|---|---|---|---|
+| **Telehealth consults** | the owner, per consult | **20%** | ✅ built |
+| Products the vet recommends | the owner | product margin | ✅ built, needs stock |
+
+**200 consults/month ≈ $2,200/month to crittr, with no inventory and no cash outlay.**
+That is the year-one revenue stream. Product is the second act, not the first.
+
+The money never touches crittr: Stripe destination charges settle into the practice's
+account with crittr's 20% retained at payment, and `on_behalf_of` makes the practice the
+settlement merchant — the ledger reads as their service with a commission taken, not crittr
+selling veterinary care.
+
 ## The capital principle
 
 **Simple core, expansion funded by core revenue.** No large up-front commitments, no
@@ -78,7 +102,9 @@ for the next one.
    the payout path is untested end to end.
 2. **Open `/admin/readiness`** with admin credentials. If Resend reads *set* but not
    *valid*, every invitation silently vanishes.
-3. **One own-label SKU.** Joint is the strongest candidate — highest-priced affiliate
+3. **Set a consult fee and take the first payment.** This is the revenue stream that
+   needs no stock, no supplier and no cash. Everything for it is built and live.
+4. **One own-label SKU — the SECOND act, not the first.** Joint is the strongest candidate — highest-priced affiliate
    category, the most common vet recommendation, easiest format to co-pack.
    **Supplier shortlist below — contact Pet Tech Labs and Bimini.**
 
