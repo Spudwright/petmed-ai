@@ -221,11 +221,39 @@ def practice_for_vet(q1, vet_id):
     return q1("SELECT * FROM practices WHERE vet_id=%s AND status='active'", (vet_id,))
 
 
+def state_ok_for_practice(q, q1, vet, state):
+    """May this practice operate in this state? (bool, reason)
+
+    WHY THE GATE IS SOFTER HERE THAN ELSEWHERE. Routing a triage case and writing a
+    prescription are regulated veterinary acts, so vet_compliance gates them hard and
+    defaults to deny. Selling a client their own vet's recommended joint supplement is
+    commerce, not medicine — a practice has always been able to do that from a shelf behind
+    the front desk without asking anyone.
+
+    So this checks the two things that ARE ours to check: that the vet actually holds a
+    licence in the state they claim to practise in, and that crittr has opened that state at
+    all. It deliberately does not require prescribing to be permitted — a state where we may
+    not yet prescribe is still a state where a clinic may sell its clients a supplement.
+    """
+    st = (state or "").strip().upper()[:2]
+    if not st:
+        return False, "a practice needs a state — it decides which rules apply to it"
+    active = vp.active_states_for_vet(q, q1, vet["id"])
+    if st not in active:
+        return False, (f"you hold no verified, unexpired licence in {st}"
+                       + (f" — your active states are {', '.join(active)}" if active else
+                          ", and crittr is not yet open in any state you're licensed in"))
+    return True, ""
+
+
 def create_practice(q, q1, vet, *, name, state=None, contact_email=None, phone=None):
     """One practice per vet account. Re-calling updates rather than duplicating."""
     name = (name or "").strip()
     if not name:
         return None, "the practice needs a name"
+    ok, why = state_ok_for_practice(q, q1, vet, state)
+    if not ok:
+        return None, why
     existing = practice_for_vet(q1, vet["id"])
     if existing:
         q("""UPDATE practices SET name=%s, state=%s, contact_email=%s, phone=%s
@@ -388,6 +416,13 @@ def invite_clients(q, q1, vet, practice_id, *, client_ids=None, limit=500):
     practice = q1("SELECT * FROM practices WHERE id=%s", (practice_id,))
     if not practice:
         return None, "no such practice"
+    # Re-checked at SEND time, not just at setup. A licence expires or a state gets
+    # suspended between creating a practice and mailing four hundred of its clients, and
+    # the invitation is the irreversible step — once it is in someone's inbox it cannot be
+    # recalled.
+    ok, why = state_ok_for_practice(q, q1, vet, practice.get("state"))
+    if not ok:
+        return None, f"cannot send invitations right now — {why}"
     if client_ids:
         rows = q("""SELECT * FROM practice_clients
                     WHERE practice_id=%s AND id = ANY(%s) AND status='imported'
