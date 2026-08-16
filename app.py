@@ -874,9 +874,20 @@ try:
     # DROPSHIPPING. An order used to reach 'paid' and stop — no supplier, no purchase
     # order, no tracking, no state after payment. This routes a paid order to whoever
     # actually ships it, and makes "sellable" mean "has a route to the customer".
-    from dropship import init_dropship_tables, register_dropship_routes
+    from dropship import (init_dropship_tables, register_dropship_routes,
+                          enforce_stock_matches_fulfilment)
     init_dropship_tables(q)
     register_dropship_routes(app, q, q1, _vet_admin_required)
+    # NOTHING IS ON SALE WITHOUT A ROUTE TO THE CUSTOMER. Run at boot rather than left as
+    # an admin button someone has to remember: CRITTR Calm sat purchasable at $34.99 for
+    # weeks with no supplier, no stock and no way to ship, which is money taken for a box
+    # that would never arrive. Now that state cannot persist past a deploy.
+    #
+    # This HIDES rather than deletes — in_stock=FALSE removes a product from the shop, the
+    # product API and the AI recommender while keeping the row, its copy and its pricing
+    # intact. Link a supplier and it comes straight back. Affiliate products are exempt:
+    # their button sends the customer to Amazon, so crittr never owes anyone a box.
+    enforce_stock_matches_fulfilment(q)
     # ONE PRICE: postage baked into the ticket price, no shipping line at checkout. And
     # CRITTR Joint listed but in_stock FALSE with no supplier, so fulfillable() refuses it
     # until stock exists. Sales tax is NOT baked in — Stripe Tax adds it per destination.
