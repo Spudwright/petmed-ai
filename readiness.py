@@ -52,11 +52,43 @@ def _probe_resend():
                 "impact": f"could not reach Resend to check ({e}); the key is set"}
 
 
+def _probe_connect():
+    """Is Connect actually switched on for this account, and which account is it?
+
+    Listing connected accounts is a read-only call that costs nothing and creates nothing.
+    If Connect is not enabled Stripe refuses it, which is the difference between "we clicked
+    through the dashboard" and "a practice can actually onboard". The account id is
+    reported too, because the expensive mistake here is enabling Connect on one Stripe
+    account while crittr's key belongs to another.
+    """
+    key = os.environ.get("STRIPE_SECRET_KEY", "")
+    if not key:
+        return {"enabled": None, "reason": "no STRIPE_SECRET_KEY"}
+    try:
+        import stripe as _s
+        _s.api_key = key
+        acct = _s.Account.retrieve()
+        _s.Account.list(limit=1)
+        return {"enabled": True, "account_id": getattr(acct, "id", None),
+                "account_name": (getattr(acct, "settings", None) or {}).get(
+                    "dashboard", {}).get("display_name")
+                if isinstance(getattr(acct, "settings", None), dict) else None,
+                "charges_enabled": bool(getattr(acct, "charges_enabled", False)),
+                "payouts_enabled": bool(getattr(acct, "payouts_enabled", False))}
+    except Exception as e:                                  # noqa: BLE001
+        msg = str(e)[:220]
+        looks_off = ("Connect" in msg or "not enabled" in msg or "signed up" in msg)
+        return {"enabled": False if looks_off else None, "error": msg,
+                "impact": ("no practice can connect a bank account, so neither consult "
+                           "fees nor product payouts can move money")}
+
+
 def _probe_stripe():
     key = os.environ.get("STRIPE_SECRET_KEY", "")
     hook = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
     out = {"secret_key_set": bool(key), "webhook_secret_set": bool(hook),
-           "livemode": key.startswith("sk_live_") if key else None}
+           "livemode": key.startswith("sk_live_") if key else None,
+           "connect": _probe_connect()}
     if not hook:
         out["impact"] = ("no webhook secret: crittr never receives "
                          "checkout.session.completed, so orders are never marked paid AND "
@@ -117,6 +149,8 @@ def readiness(q=None):
         blocking.append("DATABASE_URL")
     if not stripe_["webhook_secret_set"]:
         blocking.append("STRIPE_WEBHOOK_SECRET")
+    if (stripe_.get("connect") or {}).get("enabled") is False:
+        blocking.append("STRIPE_CONNECT_NOT_ENABLED")
     if resend["set"] is False or resend.get("valid") is False:
         blocking.append("RESEND_API_KEY")
     if not admin["set"]:
@@ -171,6 +205,13 @@ def register_readiness(app, admin_required, q=None):
             "live mode" if r["stripe"].get("livemode") else "TEST mode key")
         row("Stripe webhook secret", r["stripe"]["webhook_secret_set"],
             r["stripe"].get("impact", ""))
+        _cn = r["stripe"].get("connect") or {}
+        row("Stripe Connect",
+            _cn.get("enabled") is True,
+            (f"account {_cn.get('account_id')} · charges "
+             f"{'on' if _cn.get('charges_enabled') else 'OFF'} · payouts "
+             f"{'on' if _cn.get('payouts_enabled') else 'OFF'}")
+            if _cn.get("enabled") else (_cn.get("impact") or _cn.get("error", "")))
         row("LLM provider", r["llm"]["anthropic_set"] or r["llm"]["openai_set"],
             r["llm"].get("impact") or "")
         row("Admin credentials", r["admin"]["set"], r["admin"].get("impact", ""))
