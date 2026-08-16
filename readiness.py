@@ -44,10 +44,20 @@ def _probe_resend():
                 "impact": "" if ok else "the key is set but Resend rejected it"}
     except Exception as e:                                  # noqa: BLE001
         code = getattr(e, "code", None)
-        if code in (401, 403):
+        if code == 401:
             return {"set": True, "valid": False,
-                    "impact": f"the key is SET but Resend rejected it (HTTP {code}) — "
-                              f"invitations will silently fail"}
+                    "impact": "the key is SET but Resend rejected it (HTTP 401) — it is "
+                              "invalid or revoked, and invitations will silently fail"}
+        if code == 403:
+            # NOT a failure. Resend keys come in "Full access" and "Sending access"
+            # flavours, and a sending-only key can post an email perfectly well while
+            # being forbidden from listing domains — which is all this probe reads. The
+            # first version of this treated 403 as broken and would have sent someone off
+            # to regenerate a key that was working correctly.
+            return {"set": True, "valid": None, "scope": "sending-only",
+                    "impact": "the key is valid but scoped to sending only, so this check "
+                              "cannot read domains. Email should work — confirm by sending "
+                              "one real invitation."}
         return {"set": True, "valid": None,
                 "impact": f"could not reach Resend to check ({e}); the key is set"}
 
