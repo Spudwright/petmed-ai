@@ -26,9 +26,20 @@ from flask import jsonify
 
 log = logging.getLogger("crittr.ai_budget")
 
-# What crittr is willing to spend on model calls in a single day, across every visitor.
-DAILY_USD = float(os.environ.get("CRITTR_AI_DAILY_BUDGET_USD", "15"))
-# Warn once per day when spend crosses this fraction of the cap.
+# TWO CEILINGS, BECAUSE A DAILY CAP ALONE LIES ABOUT THE BILL. A daily cap is the only
+# thing that can stop a runaway in progress — a monthly cap would let a bad afternoon burn
+# the whole month before anything noticed. But a daily cap is ALSO a monthly cap multiplied
+# by thirty, and that is the number that actually shows up on a card. $15/day sounds modest
+# and is $450/month. So: the daily cap stops the runaway, the monthly cap bounds the bill,
+# and whichever is hit first wins.
+#
+# The defaults are sized off real cost, not off what sounds safe. A triage exchange on
+# haiku is roughly 1,500 input + 300 output tokens ≈ $0.0033 — about a third of a cent.
+# $2/day is ~600 messages a day; $25/month is ~7,500 messages a month. Both sit far above
+# anything crittr sees today, and both are survivable if something goes wrong overnight.
+DAILY_USD = float(os.environ.get("CRITTR_AI_DAILY_BUDGET_USD", "2"))
+MONTHLY_USD = float(os.environ.get("CRITTR_AI_MONTHLY_BUDGET_USD", "25"))
+# Warn once per day when spend crosses this fraction of either cap.
 WARN_AT = float(os.environ.get("CRITTR_AI_WARN_AT", "0.75"))
 
 # USD per 1M tokens (input, output). Rough, and deliberately rounded UP so the governor
@@ -78,28 +89,54 @@ def spent_today_micros(q1):
     return int((row or {}).get("c") or 0), int((row or {}).get("n") or 0)
 
 
+def spent_month_micros(q1):
+    """Calendar month to date, UTC — the window a card statement is cut on."""
+    row = q1("""SELECT COALESCE(SUM(cost_micros),0) AS c, COUNT(*) AS n
+                FROM ai_usage
+                WHERE day >= date_trunc('month', (NOW() AT TIME ZONE 'utc'))::date""")
+    return int((row or {}).get("c") or 0), int((row or {}).get("n") or 0)
+
+
 def status(q1):
-    micros, calls = spent_today_micros(q1)
-    cap = int(DAILY_USD * 1_000_000)
+    d_micros, d_calls = spent_today_micros(q1)
+    m_micros, m_calls = spent_month_micros(q1)
+    d_cap = int(DAILY_USD * 1_000_000)
+    m_cap = int(MONTHLY_USD * 1_000_000)
+    d_hit = DAILY_USD > 0 and d_micros >= d_cap
+    m_hit = MONTHLY_USD > 0 and m_micros >= m_cap
     return {
         "day": str(_today()),
-        "spent_usd": round(micros / 1_000_000, 4),
+        "spent_usd": round(d_micros / 1_000_000, 4),
         "cap_usd": DAILY_USD,
-        "used_pct": round(100.0 * micros / cap, 1) if cap else None,
-        "calls": calls,
-        "exhausted": micros >= cap,
+        "used_pct": round(100.0 * d_micros / d_cap, 1) if d_cap else None,
+        "calls": d_calls,
+        "month_spent_usd": round(m_micros / 1_000_000, 4),
+        "month_cap_usd": MONTHLY_USD,
+        "month_used_pct": round(100.0 * m_micros / m_cap, 1) if m_cap else None,
+        "month_calls": m_calls,
+        # Kept for callers that only ever asked "can it still spend?"
+        "exhausted": d_hit or m_hit,
+        "exhausted_by": "month" if m_hit else ("day" if d_hit else None),
     }
 
 
 def may_call(q1):
-    """Checked before every model call. (allowed, reason)."""
-    if DAILY_USD <= 0:
-        return True, ""          # 0 or negative = no cap configured
-    micros, _ = spent_today_micros(q1)
-    if micros >= DAILY_USD * 1_000_000:
-        return False, (f"crittr's AI budget for today (${DAILY_USD:.2f}) is used up. "
-                       f"It resets at midnight UTC.")
-    return True, ""
+    """Checked before every model call. (allowed, reason).
+
+    Either ceiling can stop it, and the message names which one — "come back tomorrow" is
+    wrong and annoying if the real answer is "come back in September".
+    """
+    if MONTHLY_USD > 0:
+        micros, _ = spent_month_micros(q1)
+        if micros >= MONTHLY_USD * 1_000_000:
+            return False, (f"crittr's AI budget for this month (${MONTHLY_USD:.2f}) is used "
+                           f"up. It resets on the 1st.")
+    if DAILY_USD > 0:
+        micros, _ = spent_today_micros(q1)
+        if micros >= DAILY_USD * 1_000_000:
+            return False, (f"crittr's AI budget for today (${DAILY_USD:.2f}) is used up. "
+                           f"It resets at midnight UTC.")
+    return True, ""              # 0 or negative on both = no cap configured
 
 
 def record(q, q1, *, provider, model, purpose, prompt_tokens=0, output_tokens=0):
@@ -119,11 +156,14 @@ def record(q, q1, *, provider, model, purpose, prompt_tokens=0, output_tokens=0)
 
 
 def _maybe_warn(q, q1):
-    """One email per day when spend crosses the warning line. Once, not per call."""
-    if DAILY_USD <= 0:
-        return
+    """One email per day when spend crosses the warning line on EITHER ceiling. The monthly
+    line matters more: a month can creep past 75% over three quiet weeks without any single
+    day ever looking unusual, which is exactly the drift a daily-only warning misses."""
     micros, calls = spent_today_micros(q1)
-    if micros < DAILY_USD * 1_000_000 * WARN_AT:
+    m_micros, m_calls = spent_month_micros(q1)
+    day_hot = DAILY_USD > 0 and micros >= DAILY_USD * 1_000_000 * WARN_AT
+    month_hot = MONTHLY_USD > 0 and m_micros >= MONTHLY_USD * 1_000_000 * WARN_AT
+    if not (day_hot or month_hot):
         return
     try:
         row = q1("SELECT 1 AS x FROM ai_budget_alerts WHERE day=(NOW() AT TIME ZONE 'utc')::date")
@@ -133,9 +173,11 @@ def _maybe_warn(q, q1):
              ON CONFLICT (day) DO NOTHING""", fetch=False)
     except Exception:
         return
-    spent = micros / 1_000_000
-    log.error("[ai_budget] spend is at $%.2f of $%.2f today across %s calls",
-              spent, DAILY_USD, calls)
+    spent, m_spent = micros / 1_000_000, m_micros / 1_000_000
+    which = "month" if month_hot else "day"
+    log.error("[ai_budget] spend is at $%.2f/$%.2f today and $%.2f/$%.2f this month "
+              "(%s calls today, %s this month) — %s ceiling is the hot one",
+              spent, DAILY_USD, m_spent, MONTHLY_USD, calls, m_calls, which)
     key = os.environ.get("RESEND_API_KEY", "")
     to = os.environ.get("ALERT_EMAIL") or os.environ.get("REPLY_TO_EMAIL")
     if not (key and to):
@@ -146,11 +188,13 @@ def _maybe_warn(q, q1):
         resend.Emails.send({
             "from": os.environ.get("FROM_EMAIL", "crittr <hello@crittr.ai>"),
             "to": [to],
-            "subject": f"crittr AI spend at ${spent:.2f} today",
-            "text": (f"crittr has spent about ${spent:.2f} of its ${DAILY_USD:.2f} daily "
-                     f"AI budget across {calls} calls.\n\n"
-                     f"At the cap the assistant stops calling the model and tells visitors "
-                     f"it is unavailable — it will not keep spending.\n\n"
+            "subject": (f"crittr AI spend at ${m_spent:.2f} this month"
+                        if month_hot else f"crittr AI spend at ${spent:.2f} today"),
+            "text": (f"Today:      ${spent:.2f} of ${DAILY_USD:.2f} across {calls} calls\n"
+                     f"This month: ${m_spent:.2f} of ${MONTHLY_USD:.2f} across {m_calls} "
+                     f"calls\n\n"
+                     f"At either ceiling the assistant stops calling the model and tells "
+                     f"visitors it is unavailable — it will not keep spending.\n\n"
                      f"Detail: https://crittr.ai/admin/ai-spend\n"),
         })
     except Exception as e:                                  # noqa: BLE001
@@ -199,8 +243,33 @@ def register_budget_routes(app, q, q1, admin_required):
                      f"font-variant-numeric:tabular-nums'>${m/1_000_000:,.2f}</td>"
                      f"<td style='padding:7px 0 7px 14px;text-align:right;color:#6E7D70;"
                      f"font-variant-numeric:tabular-nums'>{int(r['calls'])}</td></tr>")
-        colour = "#A32020" if st["exhausted"] else (
-            "#B4541F" if (st["used_pct"] or 0) >= WARN_AT * 100 else "#3E6340")
+        def _card(label, spent, cap, pct, calls, hit, note):
+            colour = "#A32020" if hit else (
+                "#B4541F" if (pct or 0) >= WARN_AT * 100 else "#3E6340")
+            return (
+                f"<div style='flex:1 1 260px;background:#fff;border:1px solid #DFE5DB;"
+                f"border-radius:12px;padding:22px'>"
+                f"<div style='color:#6E7D70;font-size:12px;letter-spacing:.06em;"
+                f"text-transform:uppercase'>{label}</div>"
+                f"<div style='font-size:38px;font-weight:800;color:{colour};margin:6px 0;"
+                f"letter-spacing:-.02em;font-variant-numeric:tabular-nums'>${spent:,.2f}"
+                f"<span style='font-size:18px;font-weight:400;color:#6E7D70'> of "
+                f"${cap:,.2f}</span></div>"
+                f"<div style='background:#EEF2ED;border-radius:99px;height:8px;"
+                f"overflow:hidden'><div style='background:{colour};height:8px;"
+                f"width:{min(100, pct or 0)}%'></div></div>"
+                f"<div style='color:#6E7D70;font-size:14px;margin-top:10px'>{calls} calls"
+                + (f"  ·  <strong style='color:#A32020'>{note}</strong>" if hit else "")
+                + "</div></div>")
+
+        cards = (
+            "<div style='display:flex;flex-wrap:wrap;gap:16px;margin-bottom:22px'>"
+            + _card("Today", st["spent_usd"], st["cap_usd"], st["used_pct"], st["calls"],
+                    st["exhausted_by"] == "day", "capped until midnight UTC")
+            + _card("This month", st["month_spent_usd"], st["month_cap_usd"],
+                    st["month_used_pct"], st["month_calls"],
+                    st["exhausted_by"] == "month", "capped until the 1st")
+            + "</div>")
         return (
             "<!doctype html><html lang=en><head><meta charset=utf-8>"
             "<meta name=viewport content='width=device-width,initial-scale=1'>"
@@ -210,30 +279,17 @@ def register_budget_routes(app, q, q1, admin_required):
             "<div style='max-width:820px;margin:0 auto;padding:32px 20px 64px'>"
             "<h1 style='font-size:28px;margin:0 0 6px'>AI spend</h1>"
             "<p style='color:#6E7D70;margin:0 0 24px'>Every model call crittr makes, and "
-            "what it cost. The cap is enforced, not advisory.</p>"
-            f"<div style='background:#fff;border:1px solid #DFE5DB;border-radius:12px;"
-            f"padding:22px;margin-bottom:22px'>"
-            f"<div style='color:#6E7D70;font-size:12px;letter-spacing:.06em;"
-            f"text-transform:uppercase'>Today</div>"
-            f"<div style='font-size:38px;font-weight:800;color:{colour};margin:6px 0;"
-            f"letter-spacing:-.02em'>${st['spent_usd']:,.2f}"
-            f"<span style='font-size:18px;font-weight:400;color:#6E7D70'> of "
-            f"${st['cap_usd']:,.2f}</span></div>"
-            f"<div style='background:#EEF2ED;border-radius:99px;height:8px;overflow:hidden'>"
-            f"<div style='background:{colour};height:8px;"
-            f"width:{min(100, st['used_pct'] or 0)}%'></div></div>"
-            f"<div style='color:#6E7D70;font-size:14px;margin-top:10px'>"
-            f"{st['calls']} calls today"
-            + ("  ·  <strong style='color:#A32020'>cap reached — the assistant is telling "
-               "visitors it is unavailable rather than spending more</strong>"
-               if st["exhausted"] else "") +
-            "</div></div>"
+            "what it cost. Whichever ceiling is reached first stops the spending — "
+            "enforced, not advisory.</p>"
+            + cards +
             "<h2 style='font-size:18px;margin:0 0 10px'>Last 14 days</h2>"
             "<table style='width:100%;border-collapse:collapse;font-size:14px'>"
             + (bars or "<tr><td style='padding:20px 0;color:#6E7D70'>No model calls "
                        "recorded yet.</td></tr>") + "</table>"
-            f"<p style='color:#6E7D70;font-size:13px;margin-top:22px'>Cap set by "
-            f"<code>CRITTR_AI_DAILY_BUDGET_USD</code> (currently ${DAILY_USD:,.2f}). "
-            f"Costs are estimated from token counts — the provider's dashboard is the bill "
-            f"of record.</p>"
+            f"<p style='color:#6E7D70;font-size:13px;margin-top:22px'>Caps set by "
+            f"<code>CRITTR_AI_DAILY_BUDGET_USD</code> (${DAILY_USD:,.2f}) and "
+            f"<code>CRITTR_AI_MONTHLY_BUDGET_USD</code> (${MONTHLY_USD:,.2f}). A typical "
+            f"exchange costs about a third of a cent, so ${DAILY_USD:,.2f} is roughly "
+            f"{int(DAILY_USD / 0.0033):,} messages a day. Costs are estimated from token "
+            f"counts and rounded up — the provider's dashboard is the bill of record.</p>"
             "</div></body></html>")
