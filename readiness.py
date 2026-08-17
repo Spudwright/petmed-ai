@@ -164,6 +164,27 @@ def _probe_turnstile():
     """
     site = (os.environ.get("TURNSTILE_SITE_KEY") or "").strip()
     secret = (os.environ.get("TURNSTILE_SECRET_KEY") or "").strip()
+
+    # HAVING THE KEY IS NOT THE SAME AS SHIPPING IT. The site key only reaches the browser
+    # as a <meta> tag injected into the served HTML. That injection silently no-opped for
+    # weeks because its "already present?" guard matched the JavaScript that READS the tag,
+    # so the server demanded a token the browser had no way to make and every visitor got
+    # 403. Env vars looked perfect throughout. Check what is actually served.
+    meta_ok = None
+    if site:
+        try:
+            import app as _app                       # late: avoids a circular import
+            meta_ok = getattr(_app, "TURNSTILE_META_OK", None)
+        except Exception:                            # noqa: BLE001
+            meta_ok = None
+        if meta_ok is False:
+            return {"site_key_set": True, "secret_key_set": bool(secret),
+                    "meta_tag_served": False, "ok": False,
+                    "impact": "TURNSTILE_SITE_KEY is set but the meta tag is NOT in the "
+                              "served HTML, so the browser cannot produce a token and "
+                              "EVERY chat request is rejected with 403 'Verification "
+                              "required'. The AI will look completely dead to visitors."}
+
     if secret and not site:
         return {"site_key_set": False, "secret_key_set": True, "ok": False,
                 "impact": "SECRET set without SITE key — the browser cannot produce a "
@@ -174,7 +195,8 @@ def _probe_turnstile():
         return {"site_key_set": True, "secret_key_set": False, "ok": True,
                 "impact": "widget renders but nothing is verified server-side — harmless, "
                           "just not protecting anything"}
-    return {"site_key_set": bool(site), "secret_key_set": bool(secret), "ok": True,
+    return {"site_key_set": bool(site), "secret_key_set": bool(secret),
+            "meta_tag_served": meta_ok, "ok": True,
             "impact": "" if site else "bot gate disabled (neither key set)"}
 
 

@@ -72,6 +72,9 @@ STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 SITE_NAME = "Crittr"
 SITE_TAGLINE = "Your AI-Powered Pet Pharmacy"
 
+import re
+import html as html_lib
+
 # ---------------------------------------------------------------------------
 # Database helpers
 # ---------------------------------------------------------------------------
@@ -656,10 +659,31 @@ if FRONTEND_PATH.exists():
     # Phase I.2 — inject Cloudflare Turnstile site key meta tag if configured.
     # Frontend reads <meta name="cf-turnstile-site-key" content="..."> to know
     # whether to render the invisible CAPTCHA. Without it, Turnstile stays off.
+    # THE GUARD USED TO MATCH ITS OWN CONSUMER. It tested `"cf-turnstile-site-key" not in
+    # FRONTEND_HTML` to avoid double-injecting — but that string also appears in the two
+    # lines of JS that READ the tag:
+    #
+    #     var sk = (document.querySelector('meta[name="cf-turnstile-site-key"]')||{}).content
+    #
+    # So the guard was always False, the meta tag was never injected, the frontend read ""
+    # and returned early without loading Turnstile — while the SERVER, seeing the site key
+    # set, went on demanding a token no browser could produce. Every visitor got
+    # "Verification required" and the AI looked dead from the website. Match a real <meta>
+    # tag, not the bare name.
     _ts_site_key = (os.environ.get("TURNSTILE_SITE_KEY") or "").strip()
-    if _ts_site_key and "cf-turnstile-site-key" not in FRONTEND_HTML:
-        _meta = f'<meta name="cf-turnstile-site-key" content="{_ts_site_key}">'
+    _META_RE = re.compile(r"""<meta[^>]+name=["']cf-turnstile-site-key["']""", re.I)
+    if _ts_site_key and not _META_RE.search(FRONTEND_HTML):
+        _meta = ('<meta name="cf-turnstile-site-key" content="'
+                 + html_lib.escape(_ts_site_key, quote=True) + '">')
         FRONTEND_HTML = FRONTEND_HTML.replace("</head>", _meta + "\n</head>", 1)
+    # Never let this fail quietly again: if the key is configured but the tag is not in what
+    # we serve, the bot gate will reject 100% of real traffic. Say so at boot, and expose it
+    # to /admin/readiness rather than waiting for someone to notice the chat is dead.
+    TURNSTILE_META_OK = bool(_META_RE.search(FRONTEND_HTML)) if _ts_site_key else None
+    if _ts_site_key and not TURNSTILE_META_OK:
+        print("FATAL-ish: TURNSTILE_SITE_KEY is set but the meta tag is NOT in the served "
+              "HTML — the browser cannot produce a token and every chat request will be "
+              "rejected with 403. Check that index-v2.html still contains </head>.")
 
 @app.route("/")
 def index():
