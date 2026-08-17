@@ -19,8 +19,9 @@ Bill of record is always the provider's own dashboard.
 """
 import os
 import json
+import calendar
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from flask import jsonify
 
@@ -72,6 +73,15 @@ def init_budget_tables(q):
         day     DATE PRIMARY KEY,
         sent_at TIMESTAMPTZ DEFAULT NOW()
     )""", fetch=False)
+    # There are two kinds of alert now and they must not silence each other: a 'pace' warning
+    # on the 3rd would otherwise consume the day's slot and suppress the 'level' warning that
+    # matters when the cap is genuinely close. Widen the key rather than add a second table.
+    q("ALTER TABLE ai_budget_alerts ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'level'",
+      fetch=False)
+    q("ALTER TABLE ai_budget_alerts DROP CONSTRAINT IF EXISTS ai_budget_alerts_pkey",
+      fetch=False)
+    q("""CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_alert_day_kind
+         ON ai_budget_alerts(day, kind)""", fetch=False)
 
 
 def _today():
@@ -95,6 +105,62 @@ def spent_month_micros(q1):
                 FROM ai_usage
                 WHERE day >= date_trunc('month', (NOW() AT TIME ZONE 'utc'))::date""")
     return int((row or {}).get("c") or 0), int((row or {}).get("n") or 0)
+
+
+# A pace alert needs enough signal to mean something. Two guards, because they fail
+# differently: the elapsed floor stops a burst at 00:20 on the 1st from dividing by nearly
+# zero and projecting a fortune, and the spend floor stops a few cents of genuine traffic
+# from projecting a fortune honestly. Both must clear before crittr claims to know a rate.
+MIN_ELAPSED_DAYS = 0.5
+MIN_SPEND_FRACTION = 0.15
+# Below this there is no story to tell — landing 1 day early is arithmetic noise, not news.
+PACE_ALERT_DAYS_EARLY = 3
+
+
+def projection(q1):
+    """Where this month lands if the current rate holds — and what date the money runs out.
+
+    This is the question a level alert cannot answer. 75% of the cap on the 28th is a
+    perfectly normal month; 75% on the 3rd means it is gone by the 5th and then crittr is
+    silent for twenty-six days. Same number, opposite meaning, and only the date separates
+    them.
+    """
+    micros, calls = spent_month_micros(q1)
+    now = datetime.now(timezone.utc)
+    start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    days_in_month = calendar.monthrange(now.year, now.month)[1]
+    elapsed = (now - start).total_seconds() / 86400.0
+    cap = MONTHLY_USD * 1_000_000
+    spent = micros / 1_000_000
+
+    out = {
+        "spent_usd": round(spent, 4),
+        "cap_usd": MONTHLY_USD,
+        "calls": calls,
+        "elapsed_days": round(elapsed, 2),
+        "days_in_month": days_in_month,
+        "per_day_usd": None, "projected_usd": None,
+        "exhausts_on": None, "days_early": None, "overshooting": False,
+        "confident": False,
+    }
+    if cap <= 0 or elapsed < MIN_ELAPSED_DAYS or micros < cap * MIN_SPEND_FRACTION:
+        return out
+
+    out["confident"] = True
+    per_day = micros / elapsed
+    out["per_day_usd"] = round(per_day / 1_000_000, 4)
+    out["projected_usd"] = round(per_day * days_in_month / 1_000_000, 2)
+    if per_day <= 0:
+        return out
+
+    # Day-of-month, as a fraction, at which cumulative spend would reach the cap.
+    exhaust_at = cap / per_day
+    if exhaust_at >= days_in_month:
+        return out                      # lands inside the month's own budget — nothing to say
+    out["overshooting"] = True
+    out["exhausts_on"] = (start + timedelta(days=exhaust_at)).date().isoformat()
+    out["days_early"] = round(days_in_month - exhaust_at, 1)
+    return out
 
 
 def status(q1):
@@ -155,32 +221,30 @@ def record(q, q1, *, provider, model, purpose, prompt_tokens=0, output_tokens=0)
         return 0
 
 
-def _maybe_warn(q, q1):
-    """One email per day when spend crosses the warning line on EITHER ceiling. The monthly
-    line matters more: a month can creep past 75% over three quiet weeks without any single
-    day ever looking unusual, which is exactly the drift a daily-only warning misses."""
-    micros, calls = spent_today_micros(q1)
-    m_micros, m_calls = spent_month_micros(q1)
-    day_hot = DAILY_USD > 0 and micros >= DAILY_USD * 1_000_000 * WARN_AT
-    month_hot = MONTHLY_USD > 0 and m_micros >= MONTHLY_USD * 1_000_000 * WARN_AT
-    if not (day_hot or month_hot):
-        return
+def _claim_alert_slot(q, q1, kind):
+    """True exactly once per (day, kind). The DB is the lock, so two web workers racing on
+    the same call cannot both send. Returns False on any DB trouble — a missed warning is
+    better than a mail loop."""
     try:
-        row = q1("SELECT 1 AS x FROM ai_budget_alerts WHERE day=(NOW() AT TIME ZONE 'utc')::date")
+        row = q1("""SELECT 1 AS x FROM ai_budget_alerts
+                    WHERE day=(NOW() AT TIME ZONE 'utc')::date AND kind=%s""", (kind,))
         if row:
-            return
-        q("""INSERT INTO ai_budget_alerts (day) VALUES ((NOW() AT TIME ZONE 'utc')::date)
-             ON CONFLICT (day) DO NOTHING""", fetch=False)
-    except Exception:
-        return
-    spent, m_spent = micros / 1_000_000, m_micros / 1_000_000
-    which = "month" if month_hot else "day"
-    log.error("[ai_budget] spend is at $%.2f/$%.2f today and $%.2f/$%.2f this month "
-              "(%s calls today, %s this month) — %s ceiling is the hot one",
-              spent, DAILY_USD, m_spent, MONTHLY_USD, calls, m_calls, which)
+            return False
+        q("""INSERT INTO ai_budget_alerts (day, kind)
+             VALUES ((NOW() AT TIME ZONE 'utc')::date, %s)
+             ON CONFLICT (day, kind) DO NOTHING""", (kind,), fetch=False)
+        return True
+    except Exception as e:                                  # noqa: BLE001
+        log.warning("[ai_budget] could not claim alert slot %s: %s", kind, e)
+        return False
+
+
+def _send_alert(subject, body):
+    log.error("[ai_budget] %s", subject)
     key = os.environ.get("RESEND_API_KEY", "")
     to = os.environ.get("ALERT_EMAIL") or os.environ.get("REPLY_TO_EMAIL")
     if not (key and to):
+        log.warning("[ai_budget] no RESEND_API_KEY/ALERT_EMAIL — alert logged, not emailed")
         return
     try:
         import resend
@@ -188,17 +252,60 @@ def _maybe_warn(q, q1):
         resend.Emails.send({
             "from": os.environ.get("FROM_EMAIL", "crittr <hello@crittr.ai>"),
             "to": [to],
-            "subject": (f"crittr AI spend at ${m_spent:.2f} this month"
-                        if month_hot else f"crittr AI spend at ${spent:.2f} today"),
-            "text": (f"Today:      ${spent:.2f} of ${DAILY_USD:.2f} across {calls} calls\n"
-                     f"This month: ${m_spent:.2f} of ${MONTHLY_USD:.2f} across {m_calls} "
-                     f"calls\n\n"
-                     f"At either ceiling the assistant stops calling the model and tells "
-                     f"visitors it is unavailable — it will not keep spending.\n\n"
-                     f"Detail: https://crittr.ai/admin/ai-spend\n"),
+            "subject": subject,
+            "text": body + "\n\nDetail: https://crittr.ai/admin/ai-spend\n",
         })
     except Exception as e:                                  # noqa: BLE001
         log.warning("[ai_budget] alert email failed: %s", e)
+
+
+def _maybe_warn(q, q1):
+    """Two independent warnings, because they answer different questions.
+
+    LEVEL — "the cap is close." Fires at 75% of either ceiling.
+    PACE  — "the cap is close TOO EARLY." Fires when the current burn rate exhausts the
+            month before the month ends. This is the one that gives you time to act: at 75%
+            on the 3rd, a level alert tells you a number, and a pace alert tells you the
+            money is gone on the 5th and crittr goes quiet for the next twenty-six days.
+
+    Each kind gets its own once-per-day slot so neither suppresses the other.
+    """
+    micros, calls = spent_today_micros(q1)
+    m_micros, m_calls = spent_month_micros(q1)
+    spent, m_spent = micros / 1_000_000, m_micros / 1_000_000
+
+    # ── level ────────────────────────────────────────────────────────────────
+    day_hot = DAILY_USD > 0 and micros >= DAILY_USD * 1_000_000 * WARN_AT
+    month_hot = MONTHLY_USD > 0 and m_micros >= MONTHLY_USD * 1_000_000 * WARN_AT
+    if (day_hot or month_hot) and _claim_alert_slot(q, q1, "level"):
+        _send_alert(
+            (f"crittr AI spend at ${m_spent:.2f} this month" if month_hot
+             else f"crittr AI spend at ${spent:.2f} today"),
+            (f"Today:      ${spent:.2f} of ${DAILY_USD:.2f} across {calls} calls\n"
+             f"This month: ${m_spent:.2f} of ${MONTHLY_USD:.2f} across {m_calls} calls\n\n"
+             f"At either ceiling the assistant stops calling the model and tells visitors "
+             f"it is unavailable — it will not keep spending."))
+
+    # ── pace ─────────────────────────────────────────────────────────────────
+    p = projection(q1)
+    if not (p["overshooting"] and (p["days_early"] or 0) >= PACE_ALERT_DAYS_EARLY):
+        return
+    if not _claim_alert_slot(q, q1, "pace"):
+        return
+    _send_alert(
+        f"crittr AI budget runs out {int(p['days_early'])} days early — on {p['exhausts_on']}",
+        (f"crittr is spending faster than the month can afford.\n\n"
+         f"  Spent so far   ${p['spent_usd']:.2f} of ${p['cap_usd']:.2f} "
+         f"({p['calls']} calls in {p['elapsed_days']:.1f} days)\n"
+         f"  Current rate   ${p['per_day_usd']:.2f}/day\n"
+         f"  On track for   ${p['projected_usd']:.2f} this month\n"
+         f"  Runs out       {p['exhausts_on']} — {p['days_early']:.0f} days before the "
+         f"month resets\n\n"
+         f"Nothing is broken and nothing has overspent: the ${p['cap_usd']:.2f} ceiling "
+         f"still holds. But if this rate continues the assistant goes quiet on "
+         f"{p['exhausts_on']} and stays quiet until the 1st.\n\n"
+         f"Either raise CRITTR_AI_MONTHLY_BUDGET_USD, or find out what is driving the "
+         f"traffic — /admin/ai-spend breaks today down by purpose."))
 
 
 def register_budget_routes(app, q, q1, admin_required):
@@ -214,6 +321,7 @@ def register_budget_routes(app, q, q1, admin_required):
                           GROUP BY purpose ORDER BY micros DESC""") or []
         return jsonify({
             "today": status(q1),
+            "pace": projection(q1),
             "last_14_days": [{"day": str(r["day"]), "calls": int(r["calls"]),
                               "usd": round(int(r["micros"] or 0) / 1_000_000, 4)}
                              for r in days],
@@ -270,6 +378,30 @@ def register_budget_routes(app, q, q1, admin_required):
                     st["month_used_pct"], st["month_calls"],
                     st["exhausted_by"] == "month", "capped until the 1st")
             + "</div>")
+
+        # The pace line. Shown whenever there is enough signal to state a rate — not only
+        # when it is bad news, because "on track for $6 of $25" is the reassurance that
+        # makes the warning worth believing when it does appear.
+        p = projection(q1)
+        if not p["confident"]:
+            pace = (f"<div style='color:#6E7D70;font-size:14px;margin:-6px 0 24px'>"
+                    f"Not enough spend yet this month to project a rate.</div>")
+        elif p["overshooting"]:
+            pace = (
+                f"<div style='background:#FBF1E8;border:1px solid #E8CDB2;border-left:3px "
+                f"solid #B4541F;border-radius:10px;padding:16px 18px;margin:-6px 0 24px'>"
+                f"<strong style='color:#B4541F'>Running out {p['days_early']:.0f} days "
+                f"early.</strong> At ${p['per_day_usd']:.2f}/day this month is on track for "
+                f"<strong>${p['projected_usd']:,.2f}</strong>, so the ${p['cap_usd']:,.2f} "
+                f"ceiling is reached on <strong>{p['exhausts_on']}</strong> — after which "
+                f"the assistant is unavailable until the 1st.</div>")
+        else:
+            pace = (
+                f"<div style='color:#6E7D70;font-size:14px;margin:-6px 0 24px'>"
+                f"At ${p['per_day_usd']:.2f}/day, on track for "
+                f"<strong style='color:#3E6340'>${p['projected_usd']:,.2f}</strong> "
+                f"this month — inside the ${p['cap_usd']:,.2f} ceiling.</div>")
+        cards += pace
         return (
             "<!doctype html><html lang=en><head><meta charset=utf-8>"
             "<meta name=viewport content='width=device-width,initial-scale=1'>"

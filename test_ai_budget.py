@@ -99,13 +99,125 @@ B.DAILY_USD, B.MONTHLY_USD = 0, 0
 check("uncapped allows through", B.may_call(q1)[0], True)
 B.DAILY_USD, B.MONTHLY_USD = 1.0, 2.0
 
-print("\n== the warning fires once, not once per call ==")
+print("\n== the warning fires once per kind, not once per call ==")
 q("DELETE FROM ai_usage", fetch=False)
 q("DELETE FROM ai_budget_alerts", fetch=False)
 for _ in range(5):
     spend(0.35)
     B._maybe_warn(q, q1)
-check("exactly one alert row for today", len(q("SELECT * FROM ai_budget_alerts")), 1)
+rows = q("SELECT kind FROM ai_budget_alerts")
+check("exactly one 'level' alert despite 5 calls",
+      len([r for r in rows if r["kind"] == "level"]), 1)
+check("no kind is sent twice", len(rows), len({r["kind"] for r in rows}))
+
+print("\n== burn rate: the cap is close TOO EARLY ==")
+# Rebuild the month so the arithmetic is exact regardless of today's date.
+import datetime as _dt
+
+B.MONTHLY_USD = 25.0
+# Lift the DAY cap out of the way: this section is about the month's pace, and the $1 daily
+# cap used above would otherwise be what blocks the call, proving nothing about the month.
+# Production has the same shape ($2/day × 31 = $62 against a $25 month), so the month is
+# the binding ceiling there too.
+B.DAILY_USD = 100.0
+now = _dt.datetime.now(_dt.timezone.utc)
+elapsed_days = (now - now.replace(day=1, hour=0, minute=0, second=0,
+                                  microsecond=0)).total_seconds() / 86400.0
+import calendar as _cal
+dim = _cal.monthrange(now.year, now.month)[1]
+
+q("DELETE FROM ai_usage", fetch=False)
+q("DELETE FROM ai_budget_alerts", fetch=False)
+if elapsed_days < B.MIN_ELAPSED_DAYS or elapsed_days / dim > 0.85:
+    print(f"  SKIP  {elapsed_days:.1f}d into a {dim}d month — no room to sit between "
+          f"'pacing badly' and 'already blocked'")
+else:
+    # THE CASE THAT MATTERS: overspending the RATE while still under the CAP. That gap is
+    # the whole point — it is the only window in which a warning can still change anything.
+    # Anything at or above the cap is just the governor, and by then it is too late to act.
+    # Must satisfy cap*(elapsed/days) < spend < cap; the midpoint of that range always does.
+    spend(25.0 * (elapsed_days / dim + 1) / 2)
+    p = B.projection(q1)
+    print(f"  ${p['spent_usd']:.2f} in {p['elapsed_days']:.1f}d "
+          f"= ${p['per_day_usd']:.2f}/day -> ${p['projected_usd']:.2f}/month, "
+          f"out on {p['exhausts_on']} ({p['days_early']:.0f}d early)")
+    check("rate is confident", p["confident"], True)
+    check("flags the overshoot", p["overshooting"], True)
+    check("projects over the cap", p["projected_usd"] > 25.0, True)
+    check("names an exhaustion date", bool(p["exhausts_on"]), True)
+    check("early enough to be worth an alert",
+          p["days_early"] >= B.PACE_ALERT_DAYS_EARLY, True)
+    check("exhaustion date is in the future", p["exhausts_on"] > str(B._today()), True)
+    check("but nothing is blocked yet — there is still time to act", B.may_call(q1)[0], True)
+
+    print("\n  -- and the alert is a PACE alert, distinct from the level one --")
+    B._maybe_warn(q, q1)
+    kinds = sorted(r["kind"] for r in q("SELECT kind FROM ai_budget_alerts"))
+    check("pace alert claimed its own slot", "pace" in kinds, True)
+    B._maybe_warn(q, q1)
+    check("does not repeat within the day", len(q("SELECT * FROM ai_budget_alerts")), len(kinds))
+
+print("\n== burn rate stays QUIET when spending is affordable ==")
+q("DELETE FROM ai_usage", fetch=False)
+q("DELETE FROM ai_budget_alerts", fetch=False)
+if elapsed_days >= B.MIN_ELAPSED_DAYS:
+    spend(0.5 * (25.0 / dim) * elapsed_days)     # half the affordable rate
+    p = B.projection(q1)
+    if p["confident"]:
+        check("no overshoot flagged", p["overshooting"], False)
+        check("projects under the cap", p["projected_usd"] < 25.0, True)
+    B._maybe_warn(q, q1)
+    check("no pace alert sent",
+          [r["kind"] for r in q("SELECT kind FROM ai_budget_alerts") if r["kind"] == "pace"],
+          [])
+
+print("\n== a burst on day 1 does not project a fortune ==")
+q("DELETE FROM ai_usage", fetch=False)
+q("DELETE FROM ai_budget_alerts", fetch=False)
+_saved = B.MIN_ELAPSED_DAYS
+B.MIN_ELAPSED_DAYS = 999                        # simulate "barely into the month"
+spend(20.0)
+p = B.projection(q1)
+check("refuses to state a rate too early", p["confident"], False)
+check("and claims no exhaustion date", p["exhausts_on"], None)
+B._maybe_warn(q, q1)
+check("no pace alert from a too-early burst",
+      [r["kind"] for r in q("SELECT kind FROM ai_budget_alerts") if r["kind"] == "pace"], [])
+check("but the LEVEL alert still fires — $20 of $25 is real",
+      [r["kind"] for r in q("SELECT kind FROM ai_budget_alerts") if r["kind"] == "level"],
+      ["level"])
+B.MIN_ELAPSED_DAYS = _saved
+
+print("\n== a trickle does not project a fortune either ==")
+q("DELETE FROM ai_usage", fetch=False)
+q("DELETE FROM ai_budget_alerts", fetch=False)
+spend(0.02)                                     # real, but far below the signal floor
+check("refuses to state a rate from pennies", B.projection(q1)["confident"], False)
+
+print("\n== the migration runs against the OLD table shape already in production ==")
+# Production has ai_budget_alerts(day PRIMARY KEY) with no 'kind'. Rebuild exactly that,
+# with a row in it, and prove the upgrade is non-destructive and repeatable — boot runs
+# init_budget_tables every time, so it has to be safe on the hundredth run too.
+q("DROP TABLE IF EXISTS ai_budget_alerts", fetch=False)
+q("""CREATE TABLE ai_budget_alerts (day DATE PRIMARY KEY,
+                                    sent_at TIMESTAMPTZ DEFAULT NOW())""", fetch=False)
+q("INSERT INTO ai_budget_alerts (day) VALUES ((NOW() AT TIME ZONE 'utc')::date - 5)",
+  fetch=False)
+B.init_budget_tables(q)
+check("existing alert row survived", len(q("SELECT * FROM ai_budget_alerts")), 1)
+check("back-filled to the 'level' kind",
+      q("SELECT kind FROM ai_budget_alerts")[0]["kind"], "level")
+B.init_budget_tables(q)
+B.init_budget_tables(q)
+check("re-running the migration is a no-op", len(q("SELECT * FROM ai_budget_alerts")), 1)
+q("DELETE FROM ai_budget_alerts", fetch=False)
+q("DELETE FROM ai_usage", fetch=False)
+B.DAILY_USD, B.MONTHLY_USD = 1.0, 2.0
+spend(0.8)
+B._maybe_warn(q, q1)
+B._maybe_warn(q, q1)
+check("and alerting still works after the upgrade",
+      len(q("SELECT * FROM ai_budget_alerts")), 1)
 
 print("\n== estimated cost is in the right order of magnitude ==")
 c = B.cost_micros("claude-haiku-4-5-20251001", 1500, 300)
