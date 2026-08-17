@@ -72,6 +72,22 @@ def verify_turnstile_token(token: str, client_ip: str | None = None) -> tuple[bo
     if not secret:
         return True, "disabled"
 
+    # THE KEYS ARE A PAIR, AND HALF A PAIR BLOCKS EVERYONE. The secret makes the server
+    # demand a token; the SITE key is what lets the browser produce one. With the secret
+    # set and the site key missing there is no meta tag, so the Turnstile script never
+    # loads, the widget never renders, and window.__cfTurnstileToken stays empty forever.
+    # Every real visitor is then told "Verification required" on every message.
+    #
+    # This exact configuration was live on crittr.ai and silently rejected 100% of VET AI
+    # traffic — it read as the AI being broken. A gate that refuses everyone is not
+    # protecting anything, so fail open and say so loudly. The rate limiter and honeypot
+    # both still apply.
+    if not turnstile_site_key():
+        log.error("turnstile: TURNSTILE_SECRET_KEY is set but TURNSTILE_SITE_KEY is NOT — "
+                  "the browser cannot produce a token, so this gate would reject every "
+                  "real user. Failing OPEN. Set TURNSTILE_SITE_KEY to re-enable it.")
+        return True, "misconfigured_site_key_missing"
+
     if not token:
         return False, "missing_token"
 

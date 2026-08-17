@@ -154,6 +154,30 @@ def _probe_llm():
     return out
 
 
+def _probe_turnstile():
+    """The bot gate's two keys are a pair. Half a pair rejects every real user.
+
+    TURNSTILE_SECRET_KEY makes the server demand a token; TURNSTILE_SITE_KEY is what lets
+    the browser make one. Set only the secret and the front end can never produce a token,
+    so every visitor is told "Verification required" — which is what happened to VET AI on
+    the live site and read as the AI being broken.
+    """
+    site = (os.environ.get("TURNSTILE_SITE_KEY") or "").strip()
+    secret = (os.environ.get("TURNSTILE_SECRET_KEY") or "").strip()
+    if secret and not site:
+        return {"site_key_set": False, "secret_key_set": True, "ok": False,
+                "impact": "SECRET set without SITE key — the browser cannot produce a "
+                          "token, so the bot gate would reject every real visitor. The "
+                          "code now fails open, but set TURNSTILE_SITE_KEY to actually "
+                          "have bot protection."}
+    if site and not secret:
+        return {"site_key_set": True, "secret_key_set": False, "ok": True,
+                "impact": "widget renders but nothing is verified server-side — harmless, "
+                          "just not protecting anything"}
+    return {"site_key_set": bool(site), "secret_key_set": bool(secret), "ok": True,
+            "impact": "" if site else "bot gate disabled (neither key set)"}
+
+
 def _probe_admin():
     u, p = os.environ.get("ADMIN_USER"), os.environ.get("ADMIN_PASS")
     return {"set": bool(u and p),
@@ -190,6 +214,7 @@ def readiness(q=None):
     stripe_ = _probe_stripe()
     llm = _probe_llm()
     admin = _probe_admin()
+    turnstile = _probe_turnstile()
     db = bool(os.environ.get("DATABASE_URL"))
 
     blocking = []
@@ -206,6 +231,9 @@ def readiness(q=None):
     if not llm.get("working"):
         # User-visible: the chat box on the front page says "I'm having trouble right now".
         blocking.append("NO_WORKING_LLM")
+    if not turnstile["ok"]:
+        # User-visible and total: every chat message is refused.
+        blocking.append("TURNSTILE_MISCONFIGURED")
 
     return {
         "ok": not blocking,
@@ -215,6 +243,7 @@ def readiness(q=None):
         "stripe": stripe_,
         "llm": llm,
         "admin": admin,
+        "turnstile": turnstile,
         "rev_share_pct": os.environ.get("CRITTR_REV_SHARE_PCT",
                                         os.environ.get("CRITTR_VET_REV_SHARE_PCT", "10")),
         "margin": margin_visibility(q) if q else None,
@@ -270,6 +299,8 @@ def register_readiness(app, admin_required, q=None):
             (f"answering via {', '.join(_l['working'])}" if _l.get("working")
              else (_err[:150] or _l.get("impact", ""))))
         row("Admin credentials", r["admin"]["set"], r["admin"].get("impact", ""))
+        _ts = r.get("turnstile") or {}
+        row("Bot gate (Turnstile)", _ts.get("ok", True), _ts.get("impact", ""))
         m = r.get("margin") or {}
         if m and not m.get("error"):
             row("Product cost data",
