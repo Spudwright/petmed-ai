@@ -675,15 +675,36 @@ if FRONTEND_PATH.exists():
     if _ts_site_key and not _META_RE.search(FRONTEND_HTML):
         _meta = ('<meta name="cf-turnstile-site-key" content="'
                  + html_lib.escape(_ts_site_key, quote=True) + '">')
-        FRONTEND_HTML = FRONTEND_HTML.replace("</head>", _meta + "\n</head>", 1)
+        # INJECT AT THE TOP OF <head>, NOT THE BOTTOM. The scripts that read this tag sit
+        # inside <head> and are synchronous, so they execute at parse time. Appending before
+        # </head> put the tag AFTER its own readers: they ran, found nothing, and the
+        # Turnstile loader took its `if (!sk) return;` branch — the same dead chat as before,
+        # with the tag now present in the HTML and still useless. Placing it immediately
+        # after the opening tag means every reader, wherever it sits, has already got it.
+        _open = re.search(r"<head[^>]*>", FRONTEND_HTML, re.I)
+        if _open:
+            FRONTEND_HTML = (FRONTEND_HTML[:_open.end()] + "\n" + _meta
+                             + FRONTEND_HTML[_open.end():])
+        else:
+            FRONTEND_HTML = FRONTEND_HTML.replace("</head>", _meta + "\n</head>", 1)
     # Never let this fail quietly again: if the key is configured but the tag is not in what
     # we serve, the bot gate will reject 100% of real traffic. Say so at boot, and expose it
     # to /admin/readiness rather than waiting for someone to notice the chat is dead.
-    TURNSTILE_META_OK = bool(_META_RE.search(FRONTEND_HTML)) if _ts_site_key else None
-    if _ts_site_key and not TURNSTILE_META_OK:
-        print("FATAL-ish: TURNSTILE_SITE_KEY is set but the meta tag is NOT in the served "
-              "HTML — the browser cannot produce a token and every chat request will be "
-              "rejected with 403. Check that index-v2.html still contains </head>.")
+    # PRESENCE IS NOT ENOUGH — POSITION IS THE REAL INVARIANT. A tag that sits after the
+    # synchronous scripts which read it is exactly as useless as no tag at all, and that
+    # failure looks identical from outside: chat 403s, HTML "contains the key". So check
+    # that the tag precedes its first reader, not merely that it exists.
+    TURNSTILE_META_OK = None
+    if _ts_site_key:
+        _m = _META_RE.search(FRONTEND_HTML)
+        _reader = re.search(r"""meta\[name=["']cf-turnstile-site-key["']\]""", FRONTEND_HTML)
+        TURNSTILE_META_OK = bool(_m) and (_reader is None or _m.start() < _reader.start())
+        if not TURNSTILE_META_OK:
+            print("FATAL-ish: TURNSTILE_SITE_KEY is set but the meta tag is missing from, or "
+                  "positioned after its readers in, the served HTML. The browser cannot "
+                  "produce a token, so every chat request will be rejected with 403. "
+                  f"(tag at {_m.start() if _m else None}, first reader at "
+                  f"{_reader.start() if _reader else None})")
 
 @app.route("/")
 def index():
