@@ -86,12 +86,19 @@ for the next one.
 | `/admin/readiness` — names silent failures, live-probes Resend | ✅ |
 | `/admin/products` — cost, margin, share affordability, sale path | ✅ |
 | `/for-vets` — recruitment page, honest economics, Vetsource objection | ✅ |
+| Consult payments — Connect destination charges, 20% platform fee | ✅ code |
+| Visitor AI chat | ✅ **verified answering on production 2026-08-17** |
+| AI spend governor — $2/day + $25/month, enforced, `/admin/ai-spend` | ✅ |
 
 ## Next — mine
 
-1. **Verify the chart assistant actually answers on production.** It is what `/for-vets`
-   leads with and it has never been seen producing a real answer (no LLM key in the test
-   environment). Nothing else ships until this is watched working once.
+1. ~~**Verify the visitor AI answers on production.**~~ Done 2026-08-17. It had been
+   returning nothing for every visitor: `TURNSTILE_SECRET_KEY` was set without
+   `TURNSTILE_SITE_KEY`, so the browser could not produce a token and the bot gate
+   rejected 100% of real traffic. The gate now fails open and says so loudly. A real
+   question ("beagle scratching her ears") came back with a real answer in 2.9s.
+   ⚠️ The **chart assistant** (`/vet/patients`) shares the LLM path but has still never
+   been watched answering — it needs a claimed client to test against.
 2. **Per-state gate on the practice layer.** Routing and prescribing are default-deny per
    state; the client book is not. Defensible today, awkward to explain later.
 3. **The walkthrough** — one hosted link, refreshed in place, once the above is done.
@@ -102,9 +109,13 @@ for the next one.
    the payout path is untested end to end.
 2. **Open `/admin/readiness`** with admin credentials. If Resend reads *set* but not
    *valid*, every invitation silently vanishes.
-3. **Set a consult fee and take the first payment.** This is the revenue stream that
+3. **Set `TURNSTILE_SITE_KEY`** (Cloudflare dashboard, same widget as the secret). The bot
+   gate is currently failing open by design — the spend caps make that survivable rather
+   than safe. Worst case today is a wasted $2, not a runaway bill; but the gate is not
+   protecting the endpoint until its other half exists.
+4. **Set a consult fee and take the first payment.** This is the revenue stream that
    needs no stock, no supplier and no cash. Everything for it is built and live.
-4. **One own-label SKU — the SECOND act, not the first.** Joint is the strongest candidate — highest-priced affiliate
+5. **One own-label SKU — the SECOND act, not the first.** Joint is the strongest candidate — highest-priced affiliate
    category, the most common vet recommendation, easiest format to co-pack.
    **Supplier shortlist below — contact Pet Tech Labs and Bimini.**
 
