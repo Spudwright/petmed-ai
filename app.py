@@ -849,6 +849,21 @@ try:
     # one silently breaks, without ever printing a secret.
     from readiness import register_readiness
     register_readiness(app, _vet_admin_required, q)
+    # A HARD CEILING ON WHAT THE AI CAN COST. Per-IP rate limiting caps one visitor at 200
+    # chats a day and says nothing about the total — a thousand visitors inside their
+    # limits is 200,000 model calls, and the first anyone would know is the invoice. This
+    # meters every call and stops calling the model when the day's budget is spent, rather
+    # than failing silently or spending on regardless.
+    from ai_budget import init_budget_tables, register_budget_routes, may_call, record
+    init_budget_tables(q)
+    register_budget_routes(app, q, q1, _vet_admin_required)
+    from llm_client import set_budget_hooks
+    set_budget_hooks(
+        check=lambda: may_call(q1),
+        recorder=lambda provider, model, purpose, pin, pout: record(
+            q, q1, provider=provider, model=model, purpose=purpose,
+            prompt_tokens=pin, output_tokens=pout),
+    )
     # PAYING THE PRACTICES. Stripe Connect Express: Stripe holds the vet's bank details, so
     # a crittr breach cannot reroute anyone's money. Creating a transfer is ADMIN-only —
     # a vet can see what they are owed and connect an account, never move money.

@@ -49,6 +49,54 @@ def set_fallback_observer(fn):
     _fallback_observer = fn
 
 
+# ── spend governor ───────────────────────────────────────────────────────────
+# Wired here rather than at each call site because THIS is the chokepoint: every model
+# call in crittr goes through this module, so a cap enforced here cannot be bypassed by
+# some future caller forgetting to ask. Both hooks are optional — with neither set the
+# module behaves exactly as it did before.
+_budget_check = None      # () -> (allowed: bool, reason: str)
+_usage_recorder = None    # (provider, model, purpose, prompt_tokens, output_tokens) -> None
+
+
+def set_budget_hooks(check=None, recorder=None):
+    global _budget_check, _usage_recorder
+    _budget_check, _usage_recorder = check, recorder
+
+
+class BudgetExhausted(RuntimeError):
+    """Raised instead of calling a provider when the daily cap is spent."""
+
+
+def _guard(purpose):
+    if _budget_check is None:
+        return
+    try:
+        ok, why = _budget_check()
+    except Exception as e:                                  # noqa: BLE001
+        log.warning("budget check failed, allowing the call: %s", e)
+        return
+    if not ok:
+        log.error("budget: refusing %s call — %s", purpose, why)
+        raise BudgetExhausted(why)
+
+
+def _meter(provider, model, purpose, resp):
+    """Record what a completed call actually used. Never raises."""
+    if _usage_recorder is None:
+        return
+    try:
+        u = getattr(resp, "usage", None)
+        pin = getattr(u, "input_tokens", None)
+        if pin is None:
+            pin = getattr(u, "prompt_tokens", 0) or 0
+        pout = getattr(u, "output_tokens", None)
+        if pout is None:
+            pout = getattr(u, "completion_tokens", 0) or 0
+        _usage_recorder(provider, model, purpose, int(pin or 0), int(pout or 0))
+    except Exception as e:                                  # noqa: BLE001
+        log.warning("usage recorder failed: %s", e)
+
+
 def _notify_fallback(provider_failed, stage, err):
     if _fallback_observer is None:
         return
@@ -67,6 +115,10 @@ def _call_with_retry(fn, label="llm"):
             if out and out.strip():
                 return out
             last = ValueError("empty reply from provider")
+        except BudgetExhausted:
+            # Not a transient failure. Retrying, or falling over to the other provider,
+            # would be spending money we have just decided not to spend.
+            raise
         except Exception as e:
             last = e
             log.warning("%s attempt %d failed: %s", label, attempt, e)
@@ -135,30 +187,36 @@ def generate_chat_reply(system_prompt, history, user_message):
         c = _get_anthropic()
         if c is None:
             raise RuntimeError("anthropic unavailable")
+        _guard("chat")
         resp = c.messages.create(
             model=ANTHROPIC_MODEL,
             max_tokens=MAX_TOKENS,
             system=system_prompt,
             messages=messages,
         )
+        _meter("anthropic", ANTHROPIC_MODEL, "chat", resp)
         return _extract_anthropic_text(resp)
 
     def _openai_call():
         c = _get_openai()
         if c is None:
             raise RuntimeError("openai unavailable")
+        _guard("chat")
         all_msgs = [{"role": "system", "content": system_prompt}] + messages
         resp = c.chat.completions.create(
             model=OPENAI_MODEL,
             messages=all_msgs,
             max_tokens=MAX_TOKENS,
         )
+        _meter("openai", OPENAI_MODEL, "chat", resp)
         return (resp.choices[0].message.content or "").strip()
 
     if _get_anthropic() is not None:
         try:
             text = _call_with_retry(_anthropic_call, label="chat/anthropic")
             return text or "…"
+        except BudgetExhausted:
+            raise
         except Exception as e:
             log.warning("anthropic chat failed after retries; falling over: %s", e)
             _notify_fallback("anthropic", "chat", e)
@@ -183,18 +241,21 @@ def generate_summary(system_prompt, user_content):
         c = _get_anthropic()
         if c is None:
             raise RuntimeError("anthropic unavailable")
+        _guard("summary")
         resp = c.messages.create(
             model=ANTHROPIC_MODEL,
             max_tokens=MAX_TOKENS,
             system=system_prompt,
             messages=[{"role": "user", "content": user_content}],
         )
+        _meter("anthropic", ANTHROPIC_MODEL, "summary", resp)
         return _extract_anthropic_text(resp)
 
     def _openai_call():
         c = _get_openai()
         if c is None:
             raise RuntimeError("openai unavailable")
+        _guard("summary")
         resp = c.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[
@@ -203,11 +264,14 @@ def generate_summary(system_prompt, user_content):
             ],
             max_tokens=MAX_TOKENS,
         )
+        _meter("openai", OPENAI_MODEL, "summary", resp)
         return (resp.choices[0].message.content or "").strip()
 
     if _get_anthropic() is not None:
         try:
             return _call_with_retry(_anthropic_call, label="summary/anthropic")
+        except BudgetExhausted:
+            raise
         except Exception as e:
             log.warning("anthropic summary failed; falling over: %s", e)
             _notify_fallback("anthropic", "summary", e)
