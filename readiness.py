@@ -109,11 +109,49 @@ def _probe_stripe():
 
 
 def _probe_llm():
-    a = bool(os.environ.get("ANTHROPIC_API_KEY"))
-    o = bool(os.environ.get("OPENAI_API_KEY"))
-    return {"anthropic_set": a, "openai_set": o,
-            "impact": "" if (a or o) else
-                      "the chart assistant and AI triage both refuse — no provider"}
+    """Actually call each provider. "Set" and "answers" are different questions.
+
+    This is the third time that distinction has mattered — a Resend key that was set but
+    scoped, a Connect setting that looked configured, and now VET AI failing on the live
+    site while readiness cheerfully reported openai_set: true. A key being present says
+    nothing about whether it has credit, whether the model name is still valid, or whether
+    the account is in good standing.
+
+    Costs a handful of tokens per call, on an admin-only page.
+    """
+    out = {"anthropic_set": bool(os.environ.get("ANTHROPIC_API_KEY")),
+           "openai_set": bool(os.environ.get("OPENAI_API_KEY"))}
+
+    if out["anthropic_set"]:
+        try:
+            import anthropic
+            c = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"], timeout=15.0)
+            c.messages.create(model=os.environ.get("ANTHROPIC_MODEL",
+                                                   "claude-haiku-4-5-20251001"),
+                              max_tokens=5, messages=[{"role": "user", "content": "hi"}])
+            out["anthropic"] = {"answers": True}
+        except Exception as e:                              # noqa: BLE001
+            out["anthropic"] = {"answers": False, "error": str(e)[:200]}
+
+    if out["openai_set"]:
+        try:
+            import openai
+            c = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"], timeout=15.0)
+            model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+            c.chat.completions.create(model=model, max_tokens=5,
+                                      messages=[{"role": "user", "content": "hi"}])
+            out["openai"] = {"answers": True, "model": model}
+        except Exception as e:                              # noqa: BLE001
+            out["openai"] = {"answers": False,
+                             "model": os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
+                             "error": str(e)[:200]}
+
+    working = [p for p in ("anthropic", "openai") if (out.get(p) or {}).get("answers")]
+    out["working"] = working
+    if not working:
+        out["impact"] = ("VET AI, the triage and the chart assistant all fail — the site "
+                         "shows 'I'm having trouble right now'. This is user-visible.")
+    return out
 
 
 def _probe_admin():
@@ -165,6 +203,9 @@ def readiness(q=None):
         blocking.append("RESEND_API_KEY")
     if not admin["set"]:
         blocking.append("ADMIN_USER/ADMIN_PASS")
+    if not llm.get("working"):
+        # User-visible: the chat box on the front page says "I'm having trouble right now".
+        blocking.append("NO_WORKING_LLM")
 
     return {
         "ok": not blocking,
@@ -222,8 +263,12 @@ def register_readiness(app, admin_required, q=None):
              f"{'on' if _cn.get('charges_enabled') else 'OFF'} · payouts "
              f"{'on' if _cn.get('payouts_enabled') else 'OFF'}")
             if _cn.get("enabled") else (_cn.get("impact") or _cn.get("error", "")))
-        row("LLM provider", r["llm"]["anthropic_set"] or r["llm"]["openai_set"],
-            r["llm"].get("impact") or "")
+        _l = r["llm"]
+        _err = ((_l.get("openai") or {}).get("error")
+                or (_l.get("anthropic") or {}).get("error") or "")
+        row("VET AI / chat", bool(_l.get("working")),
+            (f"answering via {', '.join(_l['working'])}" if _l.get("working")
+             else (_err[:150] or _l.get("impact", ""))))
         row("Admin credentials", r["admin"]["set"], r["admin"].get("impact", ""))
         m = r.get("margin") or {}
         if m and not m.get("error"):
