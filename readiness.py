@@ -178,6 +178,32 @@ def _probe_turnstile():
             "impact": "" if site else "bot gate disabled (neither key set)"}
 
 
+def _probe_alerts():
+    """Can a budget alert actually REACH anyone?
+
+    The spend governor warns when AI spend is running hot or is on pace to exhaust the
+    month early. Those warnings go out over Resend to ALERT_EMAIL. With no destination set
+    they are written to the log and nothing else, and a log nobody reads is not monitoring
+    — the whole point of the warning is that it arrives before the cap does.
+
+    This is the same silent-failure shape as the Turnstile pair: everything returns 200,
+    nothing errors, and the feature simply is not there.
+    """
+    to = (os.environ.get("ALERT_EMAIL") or os.environ.get("REPLY_TO_EMAIL") or "").strip()
+    key = (os.environ.get("RESEND_API_KEY") or "").strip()
+    if not to:
+        return {"destination_set": False, "ok": False,
+                "impact": "no ALERT_EMAIL — AI spend warnings are logged and never sent, "
+                          "so the first you would know is /admin/ai-spend or the invoice"}
+    if not key:
+        return {"destination_set": True, "ok": False,
+                "impact": "ALERT_EMAIL is set but RESEND_API_KEY is not, so nothing can "
+                          "send the warning"}
+    return {"destination_set": True, "ok": True,
+            "via": "ALERT_EMAIL" if os.environ.get("ALERT_EMAIL") else "REPLY_TO_EMAIL",
+            "impact": ""}
+
+
 def _probe_admin():
     u, p = os.environ.get("ADMIN_USER"), os.environ.get("ADMIN_PASS")
     return {"set": bool(u and p),
@@ -215,6 +241,7 @@ def readiness(q=None):
     llm = _probe_llm()
     admin = _probe_admin()
     turnstile = _probe_turnstile()
+    alerts = _probe_alerts()
     db = bool(os.environ.get("DATABASE_URL"))
 
     blocking = []
@@ -234,6 +261,10 @@ def readiness(q=None):
     if not turnstile["ok"]:
         # User-visible and total: every chat message is refused.
         blocking.append("TURNSTILE_MISCONFIGURED")
+    if not alerts["ok"]:
+        # Not user-visible at all, which is exactly why it belongs here: spend runs hot and
+        # nobody is told until someone happens to open the dashboard.
+        blocking.append("AI_SPEND_ALERTS_GO_NOWHERE")
 
     return {
         "ok": not blocking,
@@ -244,6 +275,7 @@ def readiness(q=None):
         "llm": llm,
         "admin": admin,
         "turnstile": turnstile,
+        "spend_alerts": alerts,
         "rev_share_pct": os.environ.get("CRITTR_REV_SHARE_PCT",
                                         os.environ.get("CRITTR_VET_REV_SHARE_PCT", "10")),
         "margin": margin_visibility(q) if q else None,
