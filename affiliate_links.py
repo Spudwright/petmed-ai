@@ -164,8 +164,12 @@ def ensure_affiliate_urls(q) -> None:
                 # map gains an ASIN. Guarded on the NEW url being a /dp/ link so
                 # a hand-set product link is never downgraded back to a search.
                 "  OR (amazon_url LIKE '%%/s?k=%%' AND %s LIKE '%%/dp/%%')"
+                # Same idea one step down: an UNSCOPED search upgrades to a
+                # brand-scoped one. Without this the two weight-dosed families
+                # keep the bare search that surfaces a rival's ad on top.
+                "  OR (amazon_url NOT LIKE '%%rh=p_89%%' AND %s LIKE '%%rh=p_89%%')"
                 ")",
-                (url, slug, f"%{placeholder_marker}%", current_tag, url),
+                (url, slug, f"%{placeholder_marker}%", current_tag, url, url),
                 fetch=False,
             )
             if "public_name" in entry:
