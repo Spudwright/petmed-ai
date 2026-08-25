@@ -20,6 +20,7 @@ Public API
 import logging
 from flask import render_template_string, abort, Response, url_for
 from shared_nav import SHARED_NAV_CSS, SHARED_NAV_JS, render_nav_html
+from affiliate_links import link_notes as _link_notes
 
 log = logging.getLogger("crittr.shop")
 
@@ -168,8 +169,13 @@ nav ul li a.active{color:var(--sage-700);border-bottom:2px solid var(--sage-600)
 .product-species{font-size:.78rem;color:var(--muted);text-transform:capitalize;margin-bottom:.8rem}
 .product-price{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;color:var(--sage-900);margin:.4rem 0 1rem}
 .product-price .compare{color:var(--muted);font-size:.9rem;font-weight:400;text-decoration:line-through;margin-left:.4rem}
-.product-actions{margin-top:auto;display:flex;gap:.5rem}
-.product-actions .btn{flex:1}
+/* Row layout put the price line, the button and the waitlist link side by side,
+   squeezing the button into an oval and wrapping the link one word per line.
+   These are sequential lines of a card, not columns. */
+.product-actions{margin-top:auto;display:flex;flex-direction:column;align-items:stretch;gap:.4rem}
+.product-actions .btn{flex:0 0 auto;width:100%}
+.product-actions .btn-ghost{width:auto;align-self:flex-start;text-align:left}
+.link-note{font-size:.72rem;color:var(--muted);line-height:1.35;margin-top:.15rem}
 .sidebar{background:linear-gradient(160deg,var(--sage-50),#fff);border:1px solid var(--line);border-radius:var(--radius);padding:1.75rem;position:sticky;top:1.25rem;height:fit-content}
 .sidebar h3{font-size:1.2rem;margin:0 0 .6rem}
 .sidebar p{font-size:.92rem;color:var(--ink);margin:0 0 1rem}
@@ -246,10 +252,12 @@ footer a{color:#B2C3B2}
                 <div class="best-price-line">Our vet advisors’ pick · <strong>ships from Amazon</strong></div>
                 <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
                 <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Join the auto-ship waitlist — 15% off at launch →</button>
+                {% if link_notes.get(p.slug) %}<div class="link-note">{{ link_notes[p.slug] }}</div>{% endif %}
               {% elif p.chewy_url %}
                 <div class="best-price-line">Our vet advisors’ pick · <strong>ships from Chewy</strong></div>
                 <a class="btn btn-primary" href="{{ p.chewy_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
                 <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Join the auto-ship waitlist — 15% off at launch →</button>
+                {% if link_notes.get(p.slug) %}<div class="link-note">{{ link_notes[p.slug] }}</div>{% endif %}
               {% else %}
                 <button class="btn btn-primary" onclick='addOrConsult({{ p|tojson }})'>Add to cart</button>
               {% endif %}
@@ -400,6 +408,7 @@ def register_shop_routes(app, q):
         return render_template_string(
             _HTML,
             cat=cat, slug=slug, products=products,
+            link_notes=_link_notes(),
             shared_nav_css=SHARED_NAV_CSS,
             shared_nav_html=render_nav_html(slug),
             shared_nav_js=SHARED_NAV_JS,

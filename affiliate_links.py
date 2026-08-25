@@ -39,14 +39,14 @@ log = logging.getLogger("crittr.affiliate")
 # where brand transparency correctly happens per Associates program rules.
 _AFFILIATE_MAP = {
     "frontline-gold": {
-        "amazon_search": "Frontline Gold dog flea tick",
-        "amazon_brand": "FRONTLINE",
+        "amazon_asin": "B08YLPQ7QM",
+        "link_note": "Links to the dog formula, medium size. Cats and other weights use a different pack — switch size on Amazon.",
         "public_name":  "Monthly flea & tick topical",
         "public_blurb": "Topical drops behind the shoulder blades, once a month. Good first-line choice for dogs and cats with active flea or tick exposure.",
     },
     "seresto-collar": {
-        "amazon_search": "Seresto flea tick collar dog",
-        "amazon_brand": "Seresto",
+        "amazon_asin": "B00B8CG602",
+        "link_note": "Links to the dog collar for pets over 18 lbs. Cats and smaller dogs use a different collar — switch size on Amazon.",
         "public_name":  "8-month flea & tick collar",
         "public_blurb": "Slow-release collar that keeps working for up to 8 months — set it and forget it. Our vet advisors' pick for low-maintenance prevention.",
     },
@@ -56,6 +56,7 @@ _AFFILIATE_MAP = {
         "public_blurb": "Glucosamine + chondroitin + MSM chew for dogs slowing down on walks or stairs. The supplement most orthopedic vets start with.",
     },
     "dasuquin-advanced": {
+        "link_note": "Dasuquin Advanced is sold through veterinarians, not Amazon — this shows Nutramax's other Dasuquin lines.",
         "amazon_search": "Dasuquin Advanced joint dog",
         "amazon_brand": "Nutramax",
         "public_name":  "Advanced joint support chew",
@@ -124,6 +125,11 @@ def _build_amazon_url(entry: dict) -> str:
         b = urllib.parse.quote_plus(brand)
         return f"https://www.amazon.com/s?k={q}&i=pets&rh=p_89%3A{b}&tag={tag}"
     return f"https://www.amazon.com/s?k={q}&tag={tag}"
+
+
+def link_notes() -> dict:
+    """slug -> caveat to print under a Buy now button, for links that cannot be exact."""
+    return {slug: e["link_note"] for slug, e in _AFFILIATE_MAP.items() if "link_note" in e}
 
 
 def ensure_affiliate_schema(q) -> None:
