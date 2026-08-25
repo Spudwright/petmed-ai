@@ -253,8 +253,14 @@ footer a{color:#B2C3B2}
                 {% set sl = species_links.get(p.slug) %}
                 {% set sp = (p.species or '')|lower %}
                 {% if sl and 'cat' in sp and 'dog' in sp %}
-                  <a class="btn btn-primary" href="{{ sl.dog }}" target="_blank" rel="nofollow noopener sponsored">Buy now · for dogs</a>
-                  <a class="btn btn-primary" href="{{ sl.cat }}" target="_blank" rel="nofollow noopener sponsored">Buy now · for cats</a>
+                  {# On the cats page the cat button leads; anywhere else, dogs. #}
+                  {% if slug == 'cats' %}
+                    <a class="btn btn-primary" href="{{ sl.cat }}" target="_blank" rel="nofollow noopener sponsored">Buy now · for cats</a>
+                    <a class="btn btn-primary" href="{{ sl.dog }}" target="_blank" rel="nofollow noopener sponsored">Buy now · for dogs</a>
+                  {% else %}
+                    <a class="btn btn-primary" href="{{ sl.dog }}" target="_blank" rel="nofollow noopener sponsored">Buy now · for dogs</a>
+                    <a class="btn btn-primary" href="{{ sl.cat }}" target="_blank" rel="nofollow noopener sponsored">Buy now · for cats</a>
+                  {% endif %}
                 {% else %}
                   <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
                 {% endif %}
