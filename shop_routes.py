@@ -38,6 +38,17 @@ def _tag_match(tags, needles):
     return any(n.lower() in hay for n in needles)
 
 
+# No category is literally slugged "supplements" and the `tags` column is empty on
+# every row, so the original tag/slug test could never match anything — /shop/supplements
+# rendered an empty shelf while sitting in the main nav. The wellness catalogue lives
+# under its clinical category slugs; these are them. Dental and flea-tick are deliberately
+# excluded: a dental chew and a tick collar are not supplements.
+_SUPPLEMENT_SLUGS = (
+    "supplements", "wellness",
+    "vitamins", "joint-mobility", "digestive", "skin-coat", "anxiety-calming",
+)
+
+
 _CATEGORIES = {
     "dogs": {
         "title": "For dogs",
@@ -68,7 +79,7 @@ _CATEGORIES = {
         ),
         "filter": lambda p: (
             _tag_match(p.get("tags"), ("supplement", "supplements", "wellness"))
-            or (p.get("category_slug") or "") in ("supplements", "wellness")
+            or (p.get("category_slug") or "") in _SUPPLEMENT_SLUGS
         ),
     },
     "rx": {
@@ -81,6 +92,15 @@ _CATEGORIES = {
             "the Rx and we ship."
         ),
         "filter": lambda p: bool(p.get("requires_rx")),
+        # There is no Rx catalogue yet (the placeholder Rx lines were removed), and the
+        # generic "our vet advisors are still curating" empty state read as a stocking
+        # delay rather than the truth: prescriptions here begin with a consult.
+        "empty_html": (
+            "<p style='margin:0 0 1rem'>Prescription items aren't browsable. Every Rx "
+            "starts with a consult — a licensed vet reviews your pet, and if a "
+            "prescription is right, it's written for your pet specifically.</p>"
+            "<a class='btn btn-primary' href='/#hero-chat'>Start a free triage</a>"
+        ),
     },
 }
 
@@ -162,7 +182,6 @@ footer a{color:#B2C3B2}
 
 .btn-ghost{background:transparent;color:var(--sage-700);border:0;cursor:pointer;font-size:.82rem;font-weight:500;padding:.5rem 0 0;text-align:left;transition:color .15s var(--ease)}
 .btn-ghost:hover{color:var(--sage-800);text-decoration:underline}
-.btn-autoship::before{content:'\2B06\FE0F  ';letter-spacing:.05em}
 
 /* Auto-ship waitlist modal */
 .as-overlay{position:fixed;inset:0;background:rgba(28,42,31,.55);display:none;align-items:center;justify-content:center;z-index:95;padding:1.5rem}
@@ -182,6 +201,7 @@ footer a{color:#B2C3B2}
 .as-success{background:var(--sage-100);border-radius:var(--radius);padding:1rem;color:var(--sage-800);font-size:.95rem;line-height:1.5;margin-top:.6rem}
 
 .best-price-line{font-size:.78rem;color:var(--muted);margin-bottom:.5rem;line-height:1.4}
+.product-price.price-external{font-size:.9rem;font-weight:500;color:var(--muted)}
 .best-price-line strong{color:var(--sage-700);font-weight:600}
 {{ shared_nav_css|safe }}
 </style>
@@ -208,24 +228,28 @@ footer a{color:#B2C3B2}
         <div class="product-card">
           <div class="product-img" style="background-image:url('{{ p.image_url or '/static/og/default.png' }}')">
             {% if p.requires_rx %}<span class="product-badge rx">Rx</span>{% endif %}
-            {% if p.compare_price_cents and p.price_cents < p.compare_price_cents %}<span class="product-badge">Sale</span>{% endif %}
+            {% if not (p.amazon_url or p.chewy_url) and p.compare_price_cents and p.price_cents < p.compare_price_cents %}<span class="product-badge">Sale</span>{% endif %}
           </div>
           <div class="product-body">
             <h3>{{ p.public_name or p.name }}</h3>
             <div class="product-species">{{ p.species or 'All pets' }}</div>
             {% if p.public_blurb %}<div class="product-blurb">{{ p.public_blurb }}</div>{% endif %}
-            <div class="product-price">${{ '{:.2f}'.format(p.price_cents/100) }}{% if p.compare_price_cents and p.price_cents < p.compare_price_cents %}<span class="compare">${{ '{:.2f}'.format(p.compare_price_cents/100) }}</span>{% endif %}</div>
+            {% if p.amazon_url or p.chewy_url %}
+              <div class="product-price price-external">Price shown at {{ 'Amazon' if p.amazon_url else 'Chewy' }}</div>
+            {% else %}
+              <div class="product-price">${{ '{:.2f}'.format(p.price_cents/100) }}{% if p.compare_price_cents and p.price_cents < p.compare_price_cents %}<span class="compare">${{ '{:.2f}'.format(p.compare_price_cents/100) }}</span>{% endif %}</div>
+            {% endif %}
             <div class="product-actions">
               {% if p.requires_rx %}
                 <button class="btn btn-secondary" onclick='addOrConsult({{ p|tojson }})'>Start consult</button>
               {% elif p.amazon_url %}
-                <div class="best-price-line">Our pick · <strong>best price found at Amazon</strong></div>
+                <div class="best-price-line">Our vet advisors’ pick · <strong>ships from Amazon</strong></div>
                 <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
-                <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Save 15% with auto-ship →</button>
+                <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Join the auto-ship waitlist — 15% off at launch →</button>
               {% elif p.chewy_url %}
-                <div class="best-price-line">Our pick · <strong>best price found online</strong></div>
+                <div class="best-price-line">Our vet advisors’ pick · <strong>ships from Chewy</strong></div>
                 <a class="btn btn-primary" href="{{ p.chewy_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
-                <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Save 15% with auto-ship →</button>
+                <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Join the auto-ship waitlist — 15% off at launch →</button>
               {% else %}
                 <button class="btn btn-primary" onclick='addOrConsult({{ p|tojson }})'>Add to cart</button>
               {% endif %}
@@ -233,7 +257,7 @@ footer a{color:#B2C3B2}
           </div>
         </div>
       {% else %}
-        <div class="empty">Nothing here yet. Our vet advisors are still curating this category — or start with a triage chat to get a personalized pick.</div>
+        <div class="empty">{% if cat.empty_html %}{{ cat.empty_html|safe }}{% else %}Nothing here yet. Our vet advisors are still curating this category — or start with a triage chat to get a personalized pick.{% endif %}</div>
       {% endfor %}
     </div>
     <aside class="sidebar">

@@ -40,61 +40,64 @@ log = logging.getLogger("crittr.affiliate")
 _AFFILIATE_MAP = {
     "frontline-gold": {
         "amazon_search": "Frontline Gold dog flea tick",
+        "amazon_brand": "FRONTLINE",
         "public_name":  "Monthly flea & tick topical",
         "public_blurb": "Topical drops behind the shoulder blades, once a month. Good first-line choice for dogs and cats with active flea or tick exposure.",
     },
     "seresto-collar": {
         "amazon_search": "Seresto flea tick collar dog",
+        "amazon_brand": "Seresto",
         "public_name":  "8-month flea & tick collar",
         "public_blurb": "Slow-release collar that keeps working for up to 8 months — set it and forget it. Our vet advisors' pick for low-maintenance prevention.",
     },
     "cosequin-ds-msm": {
-        "amazon_search": "Cosequin DS Plus MSM joint",
+        "amazon_asin": "B003ULL1NQ",
         "public_name":  "Daily joint & mobility chew",
         "public_blurb": "Glucosamine + chondroitin + MSM chew for dogs slowing down on walks or stairs. The supplement most orthopedic vets start with.",
     },
     "dasuquin-advanced": {
         "amazon_search": "Dasuquin Advanced joint dog",
+        "amazon_brand": "Nutramax",
         "public_name":  "Advanced joint support chew",
         "public_blurb": "Stepped-up joint formula for dogs already on a basic supplement — adds avocado/soy unsaponifiables and boswellia.",
     },
     "adaptil-calm": {
-        "amazon_search": "Adaptil Calm Diffuser dog",
+        "amazon_asin": "B072KP2TYK",
         "public_name":  "Calming pheromone diffuser",
         "public_blurb": "Plug-in that releases a dog-appeasing pheromone. Helps with separation, storms, and new-home anxiety. Drug-free.",
     },
     "composure-pro": {
-        "amazon_search": "VetriScience Composure Pro dog",
+        "amazon_asin": "B0H75M57ND",
         "public_name":  "Clinical-strength calming chew",
         "public_blurb": "L-theanine + colostrum chew for fast-acting situational calm — thunderstorms, vet visits, fireworks. For dogs and cats.",
     },
     "fortiflora": {
-        "amazon_search": "Purina FortiFlora Probiotic",
+        "amazon_asin": "B001650NNW",
         "public_name":  "Daily probiotic powder",
         "public_blurb": "Sprinkle-on-food probiotic for GI upset or post-antibiotic recovery. Safe for dogs and cats of any age.",
     },
     "welactin-omega3": {
-        "amazon_search": "Welactin Omega-3 dog cat",
+        "amazon_asin": "B001FB6ECQ",
         "public_name":  "Omega-3 skin & coat liquid",
         "public_blurb": "Cold-water-fish omega-3 oil for itchy skin, dull coat, and inflammation. Pump onto food daily.",
     },
     "greenies-original": {
-        "amazon_search": "Greenies Original dental treats dog",
+        "amazon_asin": "B006W6YHHI",
         "public_name":  "Daily dental chew",
         "public_blurb": "Once-a-day dental treat that mechanically cleans teeth and freshens breath. Good for dogs that won't tolerate brushing.",
     },
     "oravet-chews": {
-        "amazon_search": "Oravet Dental Hygiene Chews dog",
+        "amazon_asin": "B07NRCT9KW",
         "public_name":  "Prescription-strength dental chew",
         "public_blurb": "Clinical-grade dental chew that coats the teeth to block plaque formation. A step up from standard dental treats.",
     },
     "pet-tabs-plus": {
-        "amazon_search": "Pet-Tabs Plus multivitamin dog",
+        "amazon_asin": "B002048G3C",
         "public_name":  "Daily multivitamin for dogs",
         "public_blurb": "Complete daily multivitamin — safety net for home-cooked diets, seniors, or picky eaters.",
     },
     "nucat-multivitamin": {
-        "amazon_search": "VetriScience Nu Cat multivitamin",
+        "amazon_asin": "B013JDLZ3A",
         "public_name":  "Daily multivitamin chew for cats",
         "public_blurb": "Soft chew multivitamin for cats — covers the usual gaps in commercial feline diets (taurine, B-vitamins, antioxidants).",
     },
@@ -111,6 +114,15 @@ def _build_amazon_url(entry: dict) -> str:
     if "amazon_asin" in entry:
         return f"https://www.amazon.com/dp/{entry['amazon_asin']}?tag={tag}"
     q = urllib.parse.quote_plus(entry["amazon_search"])
+    # A bare search lands on a page whose top results are PAID COMPETITOR ADS —
+    # searching our own recommendation surfaced "PetArmor: same active ingredient
+    # as Seresto" above the Seresto. Scoping to the brand cleans the organic list.
+    # Products dosed by weight or split by species deliberately keep a search
+    # rather than an ASIN: a single ASIN would pick a size for someone's pet.
+    brand = entry.get("amazon_brand")
+    if brand:
+        b = urllib.parse.quote_plus(brand)
+        return f"https://www.amazon.com/s?k={q}&i=pets&rh=p_89%3A{b}&tag={tag}"
     return f"https://www.amazon.com/s?k={q}&tag={tag}"
 
 
@@ -148,8 +160,12 @@ def ensure_affiliate_urls(q) -> None:
                 "WHERE slug=%s AND ("
                 "  amazon_url IS NULL OR amazon_url = '' "
                 "  OR (amazon_url LIKE %s AND %s <> 'crittrai-20')"
+                # Upgrade a stored search URL to a direct product URL once this
+                # map gains an ASIN. Guarded on the NEW url being a /dp/ link so
+                # a hand-set product link is never downgraded back to a search.
+                "  OR (amazon_url LIKE '%%/s?k=%%' AND %s LIKE '%%/dp/%%')"
                 ")",
-                (url, slug, f"%{placeholder_marker}%", current_tag),
+                (url, slug, f"%{placeholder_marker}%", current_tag, url),
                 fetch=False,
             )
             if "public_name" in entry:
