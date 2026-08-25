@@ -20,7 +20,7 @@ Public API
 import logging
 from flask import render_template_string, abort, Response, url_for
 from shared_nav import SHARED_NAV_CSS, SHARED_NAV_JS, render_nav_html
-from affiliate_links import link_notes as _link_notes
+from affiliate_links import link_notes as _link_notes, species_links as _species_links
 
 log = logging.getLogger("crittr.shop")
 
@@ -250,7 +250,14 @@ footer a{color:#B2C3B2}
                 <button class="btn btn-secondary" onclick='addOrConsult({{ p|tojson }})'>Start consult</button>
               {% elif p.amazon_url %}
                 <div class="best-price-line">Our vet advisors’ pick · <strong>ships from Amazon</strong></div>
-                <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
+                {% set sl = species_links.get(p.slug) %}
+                {% set sp = (p.species or '')|lower %}
+                {% if sl and 'cat' in sp and 'dog' in sp %}
+                  <a class="btn btn-primary" href="{{ sl.dog }}" target="_blank" rel="nofollow noopener sponsored">Buy now · for dogs</a>
+                  <a class="btn btn-primary" href="{{ sl.cat }}" target="_blank" rel="nofollow noopener sponsored">Buy now · for cats</a>
+                {% else %}
+                  <a class="btn btn-primary" href="{{ p.amazon_url }}" target="_blank" rel="nofollow noopener sponsored">Buy now</a>
+                {% endif %}
                 <button class="btn btn-ghost btn-autoship" onclick='openAutoship({{ p.slug|tojson }}, {{ (p.public_name or p.name)|tojson }})' type="button">Join the auto-ship waitlist — 15% off at launch →</button>
                 {% if link_notes.get(p.slug) %}<div class="link-note">{{ link_notes[p.slug] }}</div>{% endif %}
               {% elif p.chewy_url %}
@@ -408,7 +415,7 @@ def register_shop_routes(app, q):
         return render_template_string(
             _HTML,
             cat=cat, slug=slug, products=products,
-            link_notes=_link_notes(),
+            link_notes=_link_notes(), species_links=_species_links(),
             shared_nav_css=SHARED_NAV_CSS,
             shared_nav_html=render_nav_html(slug),
             shared_nav_js=SHARED_NAV_JS,

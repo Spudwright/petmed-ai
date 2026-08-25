@@ -40,13 +40,15 @@ log = logging.getLogger("crittr.affiliate")
 _AFFILIATE_MAP = {
     "frontline-gold": {
         "amazon_asin": "B08YLPQ7QM",
-        "link_note": "Links to the dog formula, medium size. Cats and other weights use a different pack — switch size on Amazon.",
+        "amazon_asin_cat": "B0002J1F7G",
+        "link_note": "Dog button is FRONTLINE Gold, medium 23-44 lbs — switch size on Amazon. FRONTLINE Gold is not sold for cats, so the cat button is FRONTLINE Plus for Cat & Kitten, a different formula.",
         "public_name":  "Monthly flea & tick topical",
         "public_blurb": "Topical drops behind the shoulder blades, once a month. Good first-line choice for dogs and cats with active flea or tick exposure.",
     },
     "seresto-collar": {
         "amazon_asin": "B00B8CG602",
-        "link_note": "Links to the dog collar for pets over 18 lbs. Cats and smaller dogs use a different collar — switch size on Amazon.",
+        "amazon_asin_cat": "B00B8CG5NK",
+        "link_note": "Two products, not one: the dog collar is for pets over 18 lbs, the cat collar is a different item. Smaller dogs need a different size — switch on Amazon.",
         "public_name":  "8-month flea & tick collar",
         "public_blurb": "Slow-release collar that keeps working for up to 8 months — set it and forget it. Our vet advisors' pick for low-maintenance prevention.",
     },
@@ -56,9 +58,8 @@ _AFFILIATE_MAP = {
         "public_blurb": "Glucosamine + chondroitin + MSM chew for dogs slowing down on walks or stairs. The supplement most orthopedic vets start with.",
     },
     "dasuquin-advanced": {
-        "link_note": "Dasuquin Advanced is sold through veterinarians, not Amazon — this shows Nutramax's other Dasuquin lines.",
-        "amazon_search": "Dasuquin Advanced joint dog",
-        "amazon_brand": "Nutramax",
+        "link_note": "Dasuquin Advanced is a veterinary-channel product Amazon does not carry. This links to Dasuquin with MSM, the retail formula — same ASU, glucosamine and chondroitin base. Large-dog size; switch on Amazon.",
+        "amazon_asin": "B0FMB5W2HD",
         "public_name":  "Advanced joint support chew",
         "public_blurb": "Stepped-up joint formula for dogs already on a basic supplement — adds avocado/soy unsaponifiables and boswellia.",
     },
@@ -73,12 +74,16 @@ _AFFILIATE_MAP = {
         "public_blurb": "L-theanine + colostrum chew for fast-acting situational calm — thunderstorms, vet visits, fireworks. For dogs and cats.",
     },
     "fortiflora": {
+        "link_note": "Purina sells a dog formula and a cat formula separately; each button goes to the right one.",
         "amazon_asin": "B001650NNW",
+        "amazon_asin_cat": "B001650OE0",
         "public_name":  "Daily probiotic powder",
         "public_blurb": "Sprinkle-on-food probiotic for GI upset or post-antibiotic recovery. Safe for dogs and cats of any age.",
     },
     "welactin-omega3": {
+        "link_note": "Nutramax sells a dog formula and a cat formula separately; each button goes to the right one.",
         "amazon_asin": "B001FB6ECQ",
+        "amazon_asin_cat": "B003L4PRC8",
         "public_name":  "Omega-3 skin & coat liquid",
         "public_blurb": "Cold-water-fish omega-3 oil for itchy skin, dull coat, and inflammation. Pump onto food daily.",
     },
@@ -125,6 +130,24 @@ def _build_amazon_url(entry: dict) -> str:
         b = urllib.parse.quote_plus(brand)
         return f"https://www.amazon.com/s?k={q}&i=pets&rh=p_89%3A{b}&tag={tag}"
     return f"https://www.amazon.com/s?k={q}&tag={tag}"
+
+
+def species_links() -> dict:
+    """slug -> {"dog": url, "cat": url} for products sold as separate species SKUs.
+
+    A card that says "Dog, Cat" while its one button goes to a dog-only listing is
+    telling the owner the wrong thing, and for a flea product on a cat that is not
+    a cosmetic error. Where the manufacturer splits the SKU, so does the card.
+    """
+    out = {}
+    for slug, e in _AFFILIATE_MAP.items():
+        if "amazon_asin_cat" not in e:
+            continue
+        out[slug] = {
+            "dog": _build_amazon_url(e),
+            "cat": _build_amazon_url({"amazon_asin": e["amazon_asin_cat"]}),
+        }
+    return out
 
 
 def link_notes() -> dict:
