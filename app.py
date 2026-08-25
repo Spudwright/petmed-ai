@@ -880,6 +880,13 @@ try:
     # is the far larger number and the actual reason a clinic signs up.
     from vet_practice import init_practice_tables, register_practice_routes
     init_practice_tables(q)
+    # Widens plan_attributions so a membership invoice can be credited to a practice.
+    # Column + index only; it moves no money and rewrites no existing row.
+    try:
+        from member_plan import ensure_member_share_schema
+        ensure_member_share_schema(q)
+    except Exception as _mse:
+        print(f"Warning: ensure_member_share_schema failed: {_mse}")
     register_practice_routes(app, q, q1)
     from practice_pages import register_practice_pages
     register_practice_pages(app, q1)

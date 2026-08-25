@@ -92,6 +92,10 @@ def init_consult_tables(q):
         completed_at    TIMESTAMPTZ,
         refunded_at     TIMESTAMPTZ
     )""", fetch=False)
+    # A consult the membership paid for. The vet's money for it arrived through their
+    # share of the subscription, so no Stripe charge exists and none should be created.
+    q("ALTER TABLE consults ADD COLUMN IF NOT EXISTS covered BOOLEAN DEFAULT FALSE",
+      fetch=False)
     q("""CREATE INDEX IF NOT EXISTS idx_consults_owner ON consults(owner_user_id, status)""",
       fetch=False)
     q("""CREATE INDEX IF NOT EXISTS idx_consults_vet ON consults(vet_id, status)""",
@@ -144,6 +148,28 @@ def payee_account(q1, vet_id):
     return p["stripe_account_id"], ""
 
 
+def member_allowance(q1, owner_user_id):
+    """(used, included) video consults for this member in the current billing period.
+
+    Counted from the membership's start day rather than the calendar month, because an
+    owner who joined on the 20th should not get a fresh allowance eleven days later.
+    Cancelled and refunded consults do not count against it; a consult that never
+    happened should not consume an allowance.
+    """
+    import member_plan as mp
+    m = q1("""SELECT started_at FROM care_members
+              WHERE user_id=%s AND status='active'
+                AND (ends_at IS NULL OR ends_at > NOW())""", (owner_user_id,))
+    if not m:
+        return 0, 0
+    row = q1("""SELECT COUNT(*) AS n FROM consults
+                WHERE owner_user_id=%s AND covered
+                  AND status <> %s AND status <> %s
+                  AND created_at > NOW() - INTERVAL '1 month'""",
+             (owner_user_id, CANCELLED, REFUNDED))
+    return int((row or {}).get("n") or 0), mp.CONSULTS_INCLUDED
+
+
 def may_charge(q, q1, vet, state):
     """Everything that must be true before a vet can take an owner's money."""
     if vet.get("status") != vp.VET_STATUS_VERIFIED:
@@ -166,6 +192,25 @@ def quote(q, q1, vet, *, owner_user_id, pet_id=None, state=None, reason="", case
         return None, why
     if not owner_user_id:
         return None, "no owner specified"
+    # A member inside their monthly allowance pays nothing, and no Stripe session is
+    # ever created for it. The veterinarian has already been paid for this consult
+    # through their share of the subscription — charging again, or splitting a second
+    # time, would pay them twice for one piece of work.
+    used, included = member_allowance(q1, owner_user_id)
+    covered = bool(included) and used < included
+    if covered:
+        row = q1("""INSERT INTO consults
+                    (vet_id, owner_user_id, pet_id, case_id, state, reason, amount_cents,
+                     platform_fee_pct, platform_fee_cents, vet_amount_cents, status,
+                     covered, paid_at)
+                    VALUES (%s,%s,%s,%s,%s,%s,0,0,0,0,'paid',TRUE,NOW()) RETURNING *""",
+                 (vet["id"], owner_user_id, pet_id, case_id,
+                  (state or "").upper()[:2] or None, (reason or "").strip()[:500]))
+        vp.audit(q, "consult_covered", actor=vet.get("email", ""), vet_id=vet["id"],
+                 case_id=case_id,
+                 detail={"consult_id": (row or {}).get("id"),
+                         "used": used + 1, "included": included})
+        return row, ""
     amount = int(amount_cents or fee_for(q1, vet["id"]))
     if not (MIN_FEE_CENTS <= amount <= MAX_FEE_CENTS):
         return None, "that fee is outside the permitted range"
@@ -198,6 +243,8 @@ def checkout_url(q, q1, consult_id, owner_user_id, app_url):
         return None, "no such consult"
     if c["owner_user_id"] != owner_user_id:
         return None, "that consult is not yours"
+    if c.get("covered"):
+        return None, "this consult is included in your membership — nothing to pay"
     if c["status"] == PAID:
         return None, "this consult is already paid for"
     if c["status"] not in (QUOTED,):

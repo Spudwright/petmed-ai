@@ -131,7 +131,10 @@ def main():
 
     print("\n== membership ==")
     check("one tier, priced", "care" in ac.CARE_TIERS
-          and ac.CARE_TIERS["care"]["price_cents"] == 1499)
+          and ac.CARE_TIERS["care"]["price_cents"] == 1999)
+    # The shop is entirely affiliate links now, so a shop discount cannot be honoured.
+    check("no discount crittr cannot apply",
+          not any("off everything" in i for i in ac.CARE_TIERS["care"]["includes"]))
 
     print("\n" + ("ALL PASS" if not FAIL else f"{len(FAIL)} FAILED: {FAIL}"))
     return 1 if FAIL else 0

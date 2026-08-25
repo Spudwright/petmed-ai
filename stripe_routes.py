@@ -753,6 +753,49 @@ def register_stripe_routes(app, q, q1, login_required, get_db):
                         f"[care] subscription {obj['id']} cancelled but membership "
                         f"still active: {_ce}")
 
+            elif etype == "invoice.payment_succeeded":
+                # THE RENEWAL HOOK. Nothing handled this event before, so a membership
+                # activated once at checkout and then renewed in silence — which was
+                # survivable while the membership paid nobody but crittr, and is not now
+                # that a practice earns a share of every month the client stays.
+                #
+                # Membership invoices are identified through care_members rather than
+                # invoice metadata: Stripe only copies checkout metadata onto the
+                # subscription when subscription_data.metadata was set, and care_members
+                # is where a membership demonstrably is. A product auto-refill invoice
+                # has no row here and is correctly ignored.
+                sub_id = obj.get("subscription")
+                paid = int(obj.get("amount_paid") or 0)
+                inv_id = obj.get("id")
+                if sub_id and paid > 0:
+                    try:
+                        _m = _q1("""SELECT user_id FROM care_members
+                                    WHERE stripe_sub_id=%s""", (sub_id,))
+                        if _m:
+                            from member_plan import credit_subscription
+                            credit_subscription(_q, _q1, user_id=_m["user_id"],
+                                                invoice_id=inv_id, amount_cents=paid)
+                    except Exception as _se:
+                        # Loud, and not fatal: the member has paid and must keep their
+                        # access. An uncredited invoice is a reconciliation job; a 500
+                        # here would make Stripe retry a payment that already succeeded.
+                        logging.getLogger(__name__).error(
+                            f"[member_plan] invoice {inv_id} paid but practice not "
+                            f"credited: {_se}")
+
+            elif etype == "charge.refunded":
+                # A refunded membership month has to come back off the practice's
+                # statement, or crittr pays out money it gave back to the owner.
+                _inv = obj.get("invoice")
+                if _inv:
+                    try:
+                        from member_plan import reverse_subscription
+                        reverse_subscription(_q, _q1, invoice_id=_inv, reason="refund")
+                    except Exception as _re:
+                        logging.getLogger(__name__).error(
+                            f"[member_plan] invoice {_inv} refunded but credit not "
+                            f"reversed: {_re}")
+
             elif etype == "invoice.payment_failed":
                 sub_id = obj.get("subscription")
                 if sub_id:

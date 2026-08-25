@@ -389,11 +389,24 @@ def vet_earnings(q, q1, vet_id, days=30):
 
 # ── 5. crittr Care ───────────────────────────────────────────────────────────
 
+# The membership is the business, not a side plan: the practice earns a share of it every
+# month the client stays (see member_plan), which is what makes bringing a client book
+# across worth doing. Price is read from env so it cannot drift away from the Stripe Price
+# that actually does the charging.
+#
+# "10% off everything in the shop" used to be listed here and has been removed. Every
+# product in the catalogue is an affiliate link that checks out on Amazon, where no crittr
+# discount can be applied — it was a promise the checkout could not keep.
 CARE_TIERS = {
-    "care": {"label": "crittr Care", "price_cents": 1499,
-             "includes": ["Unlimited AI triage", "Follow-up check-ins included",
-                          "10% off everything in the shop",
-                          "Medication reminders and refill routing"]},
+    "care": {"label": "crittr Care",
+             "price_cents": int(os.environ.get("CRITTR_MEMBER_PRICE_CENTS", "1999")),
+             "includes": ["Unlimited AI triage, day or night",
+                          "Unlimited messaging with your own veterinary practice",
+                          f"{int(os.environ.get('CRITTR_MEMBER_CONSULTS_INCLUDED', '2'))}"
+                          " video consults a month included",
+                          "Further consults at your vet's own rate",
+                          "Medication reminders and refill routing",
+                          "Your pet's at-home record, kept in one place"]},
 }
 
 
