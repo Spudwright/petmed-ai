@@ -15,7 +15,7 @@ Public API
 ----------
     register_legal_routes(app)
 """
-from flask import render_template_string
+from flask import render_template_string, redirect
 from shared_nav import SHARED_NAV_CSS, SHARED_NAV_HTML, SHARED_NAV_JS
 
 
@@ -216,6 +216,29 @@ def _page(title, eyebrow, description, body):
 
 
 def register_legal_routes(app):
+    # ── Short aliases for the URLs people and crawlers actually try ─────────
+    # The real pages live under /legal/. Nothing served /terms or /privacy, and
+    # because app.catch_all() returns the SPA for any unmatched path they came
+    # back 200 with the HOMEPAGE — which looks fine to a link checker and is
+    # indistinguishable from a working page unless you read the title. A review
+    # on 2026-09-05 reported these as "loading" for exactly that reason.
+    #
+    # For a site taking payments, "our Terms 200 OK" while serving the homepage
+    # is worse than a 404: a 404 gets noticed and fixed.
+    for _alias, _target in (
+        ("/terms", "/legal/terms"),
+        ("/terms-of-service", "/legal/terms"),
+        ("/privacy", "/legal/privacy"),
+        ("/privacy-policy", "/legal/privacy"),
+        ("/refund-policy", "/legal/refund-policy"),
+        ("/refunds", "/legal/refund-policy"),
+    ):
+        app.add_url_rule(
+            _alias,
+            endpoint=f"legal_alias_{_alias.strip(chr(47)).replace(chr(45), chr(95))}",
+            view_func=(lambda t=_target: redirect(t, code=301)),
+        )
+
     @app.route("/legal/refund-policy")
     def legal_refund():
         return _page(
