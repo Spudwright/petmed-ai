@@ -196,8 +196,12 @@ _CONTACT_BODY = """
 <h2>If your pet is in a real emergency right now</h2>
 <p>Please don't wait for an email back. Go to your nearest emergency veterinary clinic, or call the ASPCA Animal Poison Control Center at (888) 426-4435 if you think your pet has been poisoned. crittr is not set up to handle real-time emergencies.</p>
 
-<h2>Mailing address</h2>
-<p>crittr.ai<br>[mailing address on file with Stripe]</p>
+<h2>Mailing address</h2>
+<p>Boomtastic Media LLC (trading as crittr)<br>
+1209 Mountain Road Place Northeast<br>
+Albuquerque, NM 87110<br>
+United States</p>
+<p>Support: <a href="tel:+18184457277">+1 (818) 445-7277</a></p>
 """
 
 
