@@ -733,6 +733,18 @@ def catch_all(path):
     return render_404()
 
 
+@app.route("/find-vet")
+def find_vet_redirect():
+    """"Find a vet" sat in the drawer on every page and had no route.
+
+    It is not being built. crittr's lane is the layer between an owner and the
+    vet they ALREADY have, not finding them a new one - that is somebody else's
+    product. The nav item now reads "Care plan" and points at /care; this keeps
+    any existing link, bookmark or shared URL working.
+    """
+    return redirect("/care", code=301)
+
+
 @app.route("/refer")
 def refer_redirect():
     """The drawer's "Refer a friend" link had no route and served the homepage.

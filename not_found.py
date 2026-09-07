@@ -46,12 +46,6 @@ SPA_PATHS = {
     # SPA opens its register modal on this path.
     "signup",
 
-    # No find-a-vet UI exists yet and the nav links here from every page. It
-    # keeps its current behaviour deliberately rather than becoming a 404,
-    # because 404ing a live sitewide nav item is a worse bug than the one being
-    # fixed. The real decision - build it, repoint it, or drop it from the nav
-    # - is a product call, not a routing one.
-    "find-vet",
 }
 
 

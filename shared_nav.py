@@ -105,7 +105,7 @@ SHARED_NAV_HTML = """
     <a class="s-drawer-link __CATS_ACTIVE__" href="/shop/cats">Cats <span>\u203a</span></a>
     <a class="s-drawer-link __SUPP_ACTIVE__" href="/shop/supplements">Supplements <span>\u203a</span></a>
     <a class="s-drawer-link __RX_ACTIVE__" href="/shop/rx">Prescriptions <span>\u203a</span></a>
-    <a class="s-drawer-link" href="/find-vet">Find a vet <span>\u203a</span></a>
+    <a class="s-drawer-link" href="/care">Care plan <span>\u203a</span></a>
     <a class="s-drawer-link" href="/refer">Refer a friend <span>\u203a</span></a>
     <a class="s-drawer-link" href="/#faq">FAQ <span>\u203a</span></a>
   </div>
