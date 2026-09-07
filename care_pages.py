@@ -85,7 +85,7 @@ async function load(){
   const sub=document.getElementById('sub');
   const dosesEl=document.getElementById('doses'), plansEl=document.getElementById('plans');
   const d = await (await fetch('/api/care/doses')).json();
-  if(d.error){ sub.innerHTML='<a class=plain href="/login">Sign in</a> to see your pet\\'s care plan.'; return; }
+  if(d.error){ sub.innerHTML='<a class=plain href="/account">Sign in</a> to see your pet\\'s care plan.'; return; }
   const doses = d.doses||[];
   sub.textContent = doses.length
     ? doses.length+' thing'+(doses.length>1?'s':'')+' to give today.'
