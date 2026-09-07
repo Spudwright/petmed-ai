@@ -1424,7 +1424,12 @@ window.crittrOfferPendingRx = function(){
   } catch(e){}
 };
 // Route handling: if we arrive at /order/success, activate that view.
-function crittrRoute(){const p=location.pathname;if(p==='/order/success'){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));const sv=document.getElementById('view-success');if(sv){sv.classList.add('active');document.querySelectorAll('nav, main, section, footer').forEach(el=>{if(!sv.contains(el)&&!el.closest('#view-success')&&!el.matches('.overlay, .modal, .toast, #view-success'))el.style.display='none';});loadReferralBanner('refBannerSuccess','success');}}}
+/* /signup had no route and no view: it served the homepage, so the "Save
+   profile" CTA and the drawer's create-account link both dead-ended on the
+   marketing page with nothing opened. Open the register modal instead.
+   NOTE: not_found.py's SPA_PATHS must keep listing 'signup' or this path
+   becomes a 404 before the SPA ever loads. */
+function crittrRoute(){const p=location.pathname;if(p==='/signup'){openAuth();toggleAuthMode();return;}if(p==='/order/success'){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));const sv=document.getElementById('view-success');if(sv){sv.classList.add('active');document.querySelectorAll('nav, main, section, footer').forEach(el=>{if(!sv.contains(el)&&!el.closest('#view-success')&&!el.matches('.overlay, .modal, .toast, #view-success'))el.style.display='none';});loadReferralBanner('refBannerSuccess','success');}}}
 document.addEventListener('DOMContentLoaded',()=>{updateCartCount();loadMe();crittrRoute(); _resumePendingRxSeed();});
 </script>
 

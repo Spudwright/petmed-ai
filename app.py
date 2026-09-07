@@ -38,6 +38,8 @@ from subscriptions import register_subscription_routes
 from admin_gen_images import register_admin_gen_images
 from og_images import register_og_routes
 from legal_routes import register_legal_routes
+from account_routes import register_account_routes
+from not_found import SPA_PATHS, render_404, register_not_found
 from regions import register_region_middleware
 from rate_limiting import init_rate_limiter
 try:
@@ -712,10 +714,34 @@ def index():
 
 @app.route("/<path:path>")
 def catch_all(path):
+    """Static file, SPA route, or an honest 404 - in that order.
+
+    This used to answer EVERY unmatched path with the homepage and a 200. That
+    hid broken links (two of them shipped in the sitewide nav and survived for
+    months), fed search engines unbounded duplicates of the homepage, and made
+    the site impossible to probe from outside. See not_found.py.
+    """
     static_path = Path(__file__).parent / "static" / path
     if static_path.exists() and static_path.is_file():
         return send_from_directory("static", path)
-    return FRONTEND_HTML or "<h1>Crittr</h1><p>Frontend loading...</p>"
+
+    # The SPA genuinely owns a few paths client-side; Flask cannot see its
+    # router, so they are listed explicitly.
+    if path.strip("/") in SPA_PATHS:
+        return FRONTEND_HTML or "<h1>Crittr</h1><p>Frontend loading...</p>"
+
+    return render_404()
+
+
+@app.route("/refer")
+def refer_redirect():
+    """The drawer's "Refer a friend" link had no route and served the homepage.
+
+    Referral links live on the account page - it is where the share URL, the
+    credit balance and the sign-in prompt already are - so send people there
+    rather than building a second copy of the same card.
+    """
+    return redirect("/account", code=301)
 
 # ---------------------------------------------------------------------------
 # Startup
@@ -848,6 +874,8 @@ except Exception as _e:
 # Phase C.1 — legal/policy pages required for Stripe live-mode review
 try:
     register_legal_routes(app)
+    register_account_routes(app)
+    register_not_found(app)
 except Exception as _e:
     print(f"Warning: register_legal_routes failed: {_e}")
 
