@@ -103,6 +103,34 @@ SKU changes that, before any cash is committed. Nothing here is saved.</p>
   contract-manufacturer quote is the only input worth trusting here.</div>
 </div>
 
+<h2>The starter set &mdash; four SKUs</h2>
+<p class=sub style="margin-bottom:14px">Four daily consumables a veterinarian actually
+recommends after a visit, each one a stock formula every contract manufacturer already
+holds, covering dog and cat. Edit anything; totals update.</p>
+
+<div class=card>
+  <table id=settbl>
+    <tr><th>Own-label SKU</th><th>Replaces</th><th style="width:110px">Retail</th>
+        <th style="width:110px">Our cost</th><th style="width:150px">Margin &minus; share</th></tr>
+  </table>
+
+  <div class=grid style="margin-top:16px;max-width:520px">
+    <div><label for=smoq>Minimum order / SKU</label><input id=smoq type=number step=1 value=500></div>
+    <div><label for=srate>Practice share %</label><input id=srate type=number step=0.5 value=__RATE__></div>
+    <div><label for=sunits>Orders / practice / month</label><input id=sunits type=number step=1 value=40></div>
+  </div>
+
+  <div class=out id=sout></div>
+  <div class="flag" id=sflag></div>
+
+  <div class=note><strong>Why these four and not the other five.</strong>
+  Greenies and Oravet are extruded dental chews &mdash; different manufacturing entirely, and
+  Oravet's coating is patented, so neither is a stock formula anyone will just print your name
+  on. Pet-Tabs at $18.99 and VetriScience Nu Cat at $14.99 are too thin to carry a share once
+  cost is real. Dasuquin is the premium version of the same joint category as Cosequin &mdash;
+  one joint SKU first, the premium tier second if it sells.</div>
+</div>
+
 <h2>What has to be true before a label goes on a jar</h2>
 <p class=sub style="margin-bottom:14px">Not legal advice. This is the sequence that stops
 any of it being discovered late &mdash; have the finished label reviewed by someone who does
@@ -240,6 +268,78 @@ buyable, and with nothing behind it.</p>
     $(i).addEventListener('input',calc);
   });
   calc();
+
+  /* ---- the starter set ---- */
+  var SET=[
+    ['CRITTR Joint (soft chew)','Cosequin DS Plus MSM',32.99,9.50],
+    ['CRITTR Calm (soft chew)','Composure Pro',24.99,7.25],
+    ['CRITTR Omega-3 (liquid)','Welactin Omega-3',28.99,8.00],
+    ['CRITTR Biotic (sachets)','FortiFlora Probiotic',30.99,8.75]
+  ];
+  var tbl=$('settbl');
+  SET.forEach(function(r,i){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><strong>'+r[0]+'</strong></td><td class=note style="margin:0">'+r[1]+'</td>'+
+      '<td><input class=sp data-i="'+i+'" type=number step=0.01 value="'+r[2].toFixed(2)+'"></td>'+
+      '<td><input class=sc data-i="'+i+'" type=number step=0.01 value="'+r[3].toFixed(2)+'"></td>'+
+      '<td id="sm'+i+'"></td>';
+    tbl.appendChild(tr);
+  });
+
+  function setCalc(){
+    var moq=parseInt($('smoq').value,10)||0,
+        rate=parseFloat($('srate').value)||0,
+        units=parseFloat($('sunits').value)||0,
+        cash=0,netSum=0,shareSum=0,anyBad=false;
+
+    SET.forEach(function(_,i){
+      var price=parseFloat(document.querySelector('.sp[data-i="'+i+'"]').value)||0,
+          cost=parseFloat(document.querySelector('.sc[data-i="'+i+'"]').value)||0,
+          m=price-cost, sh=price*(rate/100), net=m-sh;
+      if(net<=0) anyBad=true;
+      cash+=cost*moq; netSum+=net; shareSum+=sh;
+      $('sm'+i).innerHTML = net<=0
+        ? '<span style="color:#A32020;font-weight:700">'+money(m)+' &minus; '+money(sh)+' = '+money(net)+'</span>'
+        : money(m)+' &minus; '+money(sh)+' = <strong>'+money(net)+'</strong>';
+    });
+
+    var avgNet=netSum/SET.length, avgShare=shareSum/SET.length,
+        breakeven= avgNet>0 ? Math.ceil(cash/avgNet) : null,
+        practiceMonths= (avgNet>0 && units>0) ? Math.ceil(breakeven/units) : null;
+
+    $('sout').innerHTML=
+      '<div class="stat'+(cash>25000?' warn':'')+'"><div class=n>'+money(cash)+'</div>'+
+        '<div class=l>cash up front, all 4 SKUs</div></div>'+
+      '<div class=stat><div class=n>'+(breakeven===null?'never':breakeven.toLocaleString())+'</div>'+
+        '<div class=l>units to break even</div></div>'+
+      '<div class=stat><div class=n>'+(practiceMonths===null?'—':practiceMonths.toLocaleString())+'</div>'+
+        '<div class=l>practice-months to get there</div></div>'+
+      '<div class=stat><div class=n>'+money(avgShare*units)+'</div>'+
+        '<div class=l>a practice earns / month</div></div>'+
+      '<div class=stat><div class=n>'+money(avgNet*units)+'</div>'+
+        '<div class=l>crittr / month, per practice</div></div>';
+
+    var f=$('sflag'); f.className='flag show';
+    if(anyBad){
+      f.classList.add('bad');
+      f.innerHTML='<strong>At least one SKU loses money once the practice takes its share.</strong> Fix it before ordering four of anything.';
+    } else if(cash>25000){
+      f.classList.add('warn');
+      f.innerHTML='<strong>'+money(cash)+' is a lot to commit before a single own-label unit has sold.</strong> '+
+        'Most contract manufacturers will do 500 on a stock formula, and some will go lower on a first order — '+
+        'halving the minimum halves the risk and costs you only a slightly worse unit price. '+
+        'Ask for the 500 and the 1,000 quote side by side.';
+    } else {
+      f.classList.add('ok');
+      f.innerHTML='<strong>'+money(cash)+' at risk, back after '+breakeven.toLocaleString()+' units.</strong> '+
+        'That is roughly '+practiceMonths+' practice-months at '+units+' orders each — so '+
+        Math.ceil(practiceMonths/12)+' practices for a year, or '+Math.ceil(practiceMonths/6)+' for six months. '+
+        'Judge the order by how many clinics you can actually sign, not by the margin.';
+    }
+  }
+  ['smoq','srate','sunits'].forEach(function(i){ $(i).addEventListener('input',setCalc); });
+  document.querySelectorAll('.sp,.sc').forEach(function(el){ el.addEventListener('input',setCalc); });
+  setCalc();
 })();
 </script>
 </div></body></html>"""
