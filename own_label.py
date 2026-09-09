@@ -131,6 +131,34 @@ holds, covering dog and cat. Edit anything; totals update.</p>
   one joint SKU first, the premium tier second if it sells.</div>
 </div>
 
+<h2>Just-in-time, or a bulk run?</h2>
+<p class=sub style="margin-bottom:14px">A bulk run buys a better unit price with cash you
+spend before anything sells. Just-in-time buys zero inventory risk with a worse unit price
+&mdash; the supplier holds stock of a house formula, applies your label, and ships direct to
+the customer when an order comes. <strong>crittr already works this way:</strong> a paid
+order emails a purchase order to the supplier and they ship it; nothing is ever held here.</p>
+
+<div class=card>
+  <div class=grid style="max-width:700px">
+    <div><label for=jmult>JIT cost vs bulk (&times;)</label><input id=jmult type=number step=0.05 value=1.55></div>
+    <div><label for=jsetup>One-off label setup ($)</label><input id=jsetup type=number step=10 value=600></div>
+    <div><label for=jvol>Units / month, all SKUs</label><input id=jvol type=number step=1 value=40></div>
+  </div>
+
+  <table id=jittbl style="margin-top:18px">
+    <tr><th>SKU</th><th>Bulk margin</th><th>JIT margin</th><th>Practice share</th><th>Crossover</th></tr>
+  </table>
+
+  <div class=out id=jout></div>
+  <div class="flag" id=jflag></div>
+
+  <div class=note><strong>The multiplier and the setup fee are the two things to get real
+  quotes on.</strong> 1.55&times; is a placeholder for what a per-order private-label price
+  typically runs against a bulk unit price, and label setup is artwork plus a first label run
+  &mdash; hundreds, not thousands, because labels are cheap and product is not. Ask a
+  contract manufacturer for both numbers in the same email as the 500/1,000 quotes.</div>
+</div>
+
 <h2>What has to be true before a label goes on a jar</h2>
 <p class=sub style="margin-bottom:14px">Not legal advice. This is the sequence that stops
 any of it being discovered late &mdash; have the finished label reviewed by someone who does
@@ -340,6 +368,77 @@ buyable, and with nothing behind it.</p>
   ['smoq','srate','sunits'].forEach(function(i){ $(i).addEventListener('input',setCalc); });
   document.querySelectorAll('.sp,.sc').forEach(function(el){ el.addEventListener('input',setCalc); });
   setCalc();
+
+  /* ---- JIT vs bulk ---- */
+  var jt=$('jittbl');
+  SET.forEach(function(r,i){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><strong>'+r[0]+'</strong></td><td id="jb'+i+'"></td><td id="jj'+i+'"></td>'+
+                 '<td id="js'+i+'"></td><td id="jx'+i+'"></td>';
+    jt.appendChild(tr);
+  });
+
+  function jitCalc(){
+    var mult=parseFloat($('jmult').value)||1,
+        setup=parseFloat($('jsetup').value)||0,
+        vol=parseFloat($('jvol').value)||0,
+        moq=parseInt($('smoq').value,10)||0,
+        rate=parseFloat($('srate').value)||0,
+        bulkCash=0, jitNetSum=0, bulkNetSum=0, crossSum=0, worst=0;
+
+    SET.forEach(function(_,i){
+      var price=parseFloat(document.querySelector('.sp[data-i="'+i+'"]').value)||0,
+          bcost=parseFloat(document.querySelector('.sc[data-i="'+i+'"]').value)||0,
+          jcost=bcost*mult,
+          sh=price*(rate/100),
+          bnet=(price-bcost)-sh,
+          jnet=(price-jcost)-sh,
+          bpct=price>0?((price-bcost)/price*100):0,
+          jpct=price>0?((price-jcost)/price*100):0,
+          // Bulk becomes the cheaper option once enough units have sold that the
+          // JIT premium exceeds what the whole minimum order cost.
+          cross= jcost>bcost ? Math.ceil((moq*bcost)/jcost) : null;
+
+      bulkCash+=bcost*moq; jitNetSum+=jnet; bulkNetSum+=bnet;
+      if(cross!==null){ crossSum+=cross; }
+      if(jnet<=0) worst=1;
+
+      $('jb'+i).innerHTML=money(price-bcost)+' <span class=note>('+bpct.toFixed(0)+'%)</span>';
+      $('jj'+i).innerHTML=(jnet<=0?'<span style="color:#A32020;font-weight:700">':'<strong>')+
+        money(price-jcost)+(jnet<=0?'</span>':'</strong>')+' <span class=note>('+jpct.toFixed(0)+'%)</span>';
+      $('js'+i).innerHTML=money(sh);
+      $('jx'+i).innerHTML=(cross===null?'&mdash;':cross.toLocaleString()+' units');
+    });
+
+    var avgJit=jitNetSum/SET.length, avgBulk=bulkNetSum/SET.length,
+        avgCross=crossSum/SET.length,
+        crossMonths= vol>0 ? Math.ceil(avgCross/(vol/SET.length)) : null;
+
+    $('jout').innerHTML=
+      '<div class="stat"><div class=n>'+money(setup)+'</div><div class=l>cash to start, JIT</div></div>'+
+      '<div class="stat warn"><div class=n>'+money(bulkCash)+'</div><div class=l>cash to start, bulk</div></div>'+
+      '<div class="stat"><div class=n>'+money(avgJit*vol)+'</div><div class=l>crittr / month on JIT</div></div>'+
+      '<div class="stat"><div class=n>'+money(avgBulk*vol)+'</div><div class=l>crittr / month on bulk</div></div>'+
+      '<div class="stat"><div class=n>'+(crossMonths===null?'—':crossMonths.toLocaleString()+' mo')+'</div>'+
+        '<div class=l>before bulk overtakes JIT</div></div>';
+
+    var f=$('jflag'); f.className='flag show';
+    if(worst){
+      f.classList.add('bad');
+      f.innerHTML='<strong>At this multiplier a SKU cannot carry the practice share.</strong> Raise the retail price or drop the SKU — do not lower the share, it is the whole point of the partnership.';
+    } else {
+      f.classList.add('ok');
+      f.innerHTML='<strong>Start JIT.</strong> '+money(setup)+' against '+money(bulkCash)+
+        ' is the difference between a decision you can make this month and one you cannot. '+
+        'You give up '+money((avgBulk-avgJit)*vol)+' a month in margin, and you buy the answer to '+
+        'the question you cannot currently answer: which of the four actually sells. '+
+        'At '+vol+' units a month it takes about '+crossMonths+' months before the bulk run would have '+
+        'been cheaper — and by then you will know which SKU deserves it, instead of guessing four times.';
+    }
+  }
+  ['jmult','jsetup','jvol','smoq','srate'].forEach(function(i){ $(i).addEventListener('input',jitCalc); });
+  document.querySelectorAll('.sp,.sc').forEach(function(el){ el.addEventListener('input',jitCalc); });
+  jitCalc();
 })();
 </script>
 </div></body></html>"""
