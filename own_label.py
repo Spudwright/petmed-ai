@@ -141,7 +141,7 @@ order emails a purchase order to the supplier and they ship it; nothing is ever 
 <div class=card>
   <div class=grid style="max-width:700px">
     <div><label for=jmult>JIT cost vs bulk (&times;)</label><input id=jmult type=number step=0.05 value=1.55></div>
-    <div><label for=jsetup>One-off label setup ($)</label><input id=jsetup type=number step=10 value=600></div>
+    <div><label for=jsetup>Label setup, PER SKU ($)</label><input id=jsetup type=number step=10 value=600></div>
     <div><label for=jvol>Units / month, all SKUs</label><input id=jvol type=number step=1 value=40></div>
   </div>
 
@@ -156,7 +156,10 @@ order emails a purchase order to the supplier and they ship it; nothing is ever 
   quotes on.</strong> 1.55&times; is a placeholder for what a per-order private-label price
   typically runs against a bulk unit price, and label setup is artwork plus a first label run
   &mdash; hundreds, not thousands, because labels are cheap and product is not. Ask a
-  contract manufacturer for both numbers in the same email as the 500/1,000 quotes.</div>
+  contract manufacturer for both numbers in the same email as the 500/1,000 quotes.
+  <strong>Also ask whether they charge a monthly programme fee</strong> instead of, or on top
+  of, setup &mdash; some per-order private-label programmes do, and a recurring fee changes
+  the arithmetic far more than the setup does.</div>
 </div>
 
 <h2>What has to be true before a label goes on a jar</h2>
@@ -414,8 +417,17 @@ buyable, and with nothing behind it.</p>
         avgCross=crossSum/SET.length,
         crossMonths= vol>0 ? Math.ceil(avgCross/(vol/SET.length)) : null;
 
+    // Per SKU, not a lump sum: each product needs its own artwork and its own
+    // label run, so four products is four setups.
+    var setupAll=setup*SET.length,
+        paybackUnits= avgJit>0 ? Math.ceil(setupAll/avgJit) : null,
+        paybackMonths= (paybackUnits!==null && vol>0) ? Math.ceil(paybackUnits/vol) : null;
+
     $('jout').innerHTML=
-      '<div class="stat"><div class=n>'+money(setup)+'</div><div class=l>cash to start, JIT</div></div>'+
+      '<div class="stat"><div class=n>'+money(setupAll)+'</div><div class=l>cash to start ('+
+        SET.length+' x '+money(setup)+')</div></div>'+
+      '<div class="stat"><div class=n>'+(paybackMonths===null?'—':paybackMonths+' mo')+'</div>'+
+        '<div class=l>to earn that back</div></div>'+
       '<div class="stat warn"><div class=n>'+money(bulkCash)+'</div><div class=l>cash to start, bulk</div></div>'+
       '<div class="stat"><div class=n>'+money(avgJit*vol)+'</div><div class=l>crittr / month on JIT</div></div>'+
       '<div class="stat"><div class=n>'+money(avgBulk*vol)+'</div><div class=l>crittr / month on bulk</div></div>'+
@@ -428,10 +440,12 @@ buyable, and with nothing behind it.</p>
       f.innerHTML='<strong>At this multiplier a SKU cannot carry the practice share.</strong> Raise the retail price or drop the SKU — do not lower the share, it is the whole point of the partnership.';
     } else {
       f.classList.add('ok');
-      f.innerHTML='<strong>Start JIT.</strong> '+money(setup)+' against '+money(bulkCash)+
+      f.innerHTML='<strong>Start JIT.</strong> '+money(setupAll)+' against '+money(bulkCash)+
         ' is the difference between a decision you can make this month and one you cannot. '+
         'You give up '+money((avgBulk-avgJit)*vol)+' a month in margin, and you buy the answer to '+
         'the question you cannot currently answer: which of the four actually sells. '+
+        'The setup is back after '+(paybackUnits===null?'—':paybackUnits.toLocaleString())+
+        ' units, about '+paybackMonths+' months at this rate. '+
         'At '+vol+' units a month it takes about '+crossMonths+' months before the bulk run would have '+
         'been cheaper — and by then you will know which SKU deserves it, instead of guessing four times.';
     }
