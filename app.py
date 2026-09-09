@@ -968,6 +968,8 @@ try:
     # leaves and no crittr order exists to attribute).
     from product_economics import register_economics_routes
     register_economics_routes(app, q, q1, _vet_admin_required)
+    from own_label import register_own_label_routes
+    register_own_label_routes(app, _vet_admin_required)
     # The recruitment page. Leads with the patient record, not the money — the money is
     # real but modest, and a clinic that signs up expecting thousands leaves at hundreds.
     from for_vets_page import register_for_vets
