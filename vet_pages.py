@@ -46,15 +46,32 @@ _CSS = """
   .meta{color:var(--muted);font-size:13px;margin:8px 0}
   .empty{text-align:center;color:var(--muted);padding:34px 12px}
   code{background:#F2F1EC;padding:2px 6px;border-radius:5px;font-size:13px}
+  nav.vetnav{margin:6px 0 26px} nav.vetnav a{color:var(--sage-d);margin-right:16px;
+         font-size:14px;font-weight:600;text-decoration:none}
+  nav.vetnav a.here{border-bottom:2px solid var(--sage)}
 </style>
 """
 
+# The vet-facing portal is several files (this one, vet_dashboard.py, practice_pages.py);
+# this list is the map a vet actually sees, so every page carries it rather than only the
+# one it happens to link onward from. Duplicated in vet_dashboard.py and practice_pages.py
+# rather than imported, matching how each page module here already owns its own _CSS/_page —
+# a nav that only works if another module loaded first is worse than four short copies.
+_NAV = [
+    ("/vet/dashboard", "Dashboard"), ("/vet", "Case queue"),
+    ("/vet/practice", "Practice & clients"), ("/vet/consults", "Video consults"),
+    ("/vet/payouts", "Payouts"), ("/vet/patients", "Patient records"),
+]
 
-def _page(title, body):
+
+def _page(title, body, current=None):
+    nav = "".join(f'<a href="{h}"{" class=here" if h == current else ""}>{l}</a>'
+                  for h, l in _NAV)
     return ("<!doctype html><html lang=en><head><meta charset=utf-8>"
             "<meta name=viewport content='width=device-width,initial-scale=1'>"
             f"<title>{title} · crittr for veterinarians</title>{_CSS}</head><body>"
-            f"<div class=wrap><a class=brand href='/'>crittr</a>{body}</div></body></html>")
+            f"<div class=wrap><a class=brand href='/vet/dashboard'>crittr</a>"
+            f"<nav class=vetnav>{nav}</nav>{body}</div></body></html>")
 
 
 APPLY_HTML = _page("Apply", """
@@ -128,7 +145,7 @@ document.getElementById('f').addEventListener('submit', async function(e){
   }catch(err){ m.className='msg bad'; m.textContent='Network error: '+err; }
 });
 </script>
-""")
+""", current="/vet/apply")
 
 
 CONSOLE_HTML = _page("Case queue", """
@@ -184,7 +201,7 @@ async function claim(id){
 }
 load();
 </script>
-""")
+""", current="/vet")
 
 
 def register_vet_pages(app):

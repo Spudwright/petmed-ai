@@ -62,15 +62,33 @@ _CSS = """
   .tag.declined{background:#F4F1F1;color:#8A7C7C}
   code{background:#F2F1EC;padding:2px 6px;border-radius:5px;font-size:13px}
   .empty{text-align:center;color:var(--muted);padding:34px 12px}
+  nav.vetnav{margin:6px 0 26px} nav.vetnav a{color:var(--sage-d);margin-right:16px;
+         font-size:14px;font-weight:600;text-decoration:none}
+  nav.vetnav a.here{border-bottom:2px solid var(--sage)}
 </style>
 """
 
+# Same map as vet_pages.py / vet_dashboard.py, duplicated rather than imported — see the
+# note in vet_pages.py. `current=None` (the claim page an OWNER clicks from email, and the
+# owner's own /account/practice) deliberately gets no vet nav: that visitor is not a vet and
+# should never see a case-queue link.
+_NAV = [
+    ("/vet/dashboard", "Dashboard"), ("/vet", "Case queue"),
+    ("/vet/practice", "Practice & clients"), ("/vet/consults", "Video consults"),
+    ("/vet/payouts", "Payouts"), ("/vet/patients", "Patient records"),
+]
 
-def _page(title, body):
+
+def _page(title, body, current=None):
+    nav = ("<nav class=vetnav>" +
+           "".join(f'<a href="{h}"{" class=here" if h == current else ""}>{l}</a>'
+                   for h, l in _NAV) + "</nav>") if current else ""
+    brand_href = "/vet/dashboard" if current else "/"
     return ("<!doctype html><html lang=en><head><meta charset=utf-8>"
             "<meta name=viewport content='width=device-width,initial-scale=1'>"
             f"<title>{title} · crittr</title>{_CSS}</head><body>"
-            f"<div class=wrap><a class=brand href='/'>crittr</a>{body}</div></body></html>")
+            f"<div class=wrap><a class=brand href='{brand_href}'>crittr</a>{nav}{body}"
+            f"</div></body></html>")
 
 
 PRACTICE_HTML = _page("Your practice", r"""
@@ -264,7 +282,7 @@ el('inv').addEventListener('click', async function(){
 
 load();
 </script>
-""")
+""", current="/vet/practice")
 
 
 def _claim_page(practice_name, pet_name, token, signed_in):
@@ -415,7 +433,7 @@ el('ask').addEventListener('click', function(){
 });
 load();
 </script>
-""")
+""", current="/vet/patients")
 
 
 def register_practice_pages(app, q1):
