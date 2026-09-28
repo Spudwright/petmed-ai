@@ -930,6 +930,13 @@ try:
     register_practice_routes(app, q, q1)
     from practice_pages import register_practice_pages
     register_practice_pages(app, q1)
+    # THE PORTAL SURFACE. Video consults (consults.py) and product revenue (vet_practice.py)
+    # were already two separate, working revenue streams with no screen that showed them
+    # together, and /vet/payouts was a URL connect_payouts.py already redirected to without
+    # anything serving it. This adds three read-only pages and zero new tables or API
+    # routes — every number they show comes from an endpoint registered above.
+    from vet_dashboard import register_dashboard_pages
+    register_dashboard_pages(app)
     # THE CHART ASSISTANT. The second reason a clinic logs in: crittr knows what happened
     # at home between appointments — doses actually given, what the owner said at 2am, what
     # was never re-ordered — and their PIMS does not. Gated so a vet can only ever read the
